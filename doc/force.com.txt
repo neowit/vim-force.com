@@ -1,0 +1,582 @@
+*force.com.txt*	Plugin for developing on force.com      
+Last Change: 2012-02-27
+
+force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
+
+|force.com-description|   Description
+|force.com-system-requirements|     Installation/System requirements
+|force.com-config-example|          Minimal config example
+
+|force.com-usage|         Usage
+    |apex-project-setup|  creating new force.com project
+		|apex-with-eclipse|      using alongside Eclipse IDE
+		|apex-plugin-standalone| using without Eclipse
+	|apex-commands|       supported commands
+
+|force.com-settings|      Settings
+	|force.com-shortcuts-example| example of recommended keyboard shortcuts
+
+|force.com-features|      Features
+|force.com-limitations|   Limitations
+|Recommended-Plugins|     other recommended Vim plugins
+|force.com-credits|       Credits 
+
+For Vim version 7.3 or later.
+Requires :set nocompatible
+
+==============================================================================
+DESCRIPTION                                             *force.com-description*
+
+force.com plugin is a bunch of .vim scripts which allow to develop on force.com 
+platform using only web browser and Vim
+
+It is designed for those who do not feel productive in Force.com IDE for Eclipse
+
+==============================================================================
+                                                *force.com-system-requirements* 
+                                                       *force.com-installation*
+
+Installation/System requirements 
+
+Before force.com plugin can be used following requirements must be met:
+
+1. Vim version 7.3 or later with :set nocompatible
+	There is a chance that it will work with 7.2 as well, but I have not tested
+
+2. Java JDK/JRE, Version 6.1 or greater
+   tested with OpenJDK and Oracle JDK
+   - java version "1.6.0_18" OpenJDK Runtime Environment (IcedTea6 1.8.10)
+   - Oracle JDK
+     http://www.oracle.com/technetwork/java/javase/downloads/index.html
+
+   JDK is not strictly required, JRE will siffice.
+   With JRE Ant will complain about missing tools.jar but it is safe to ignore this warning
+
+
+3. Apache ANT 
+   tested with Apache Ant(TM) 
+   - version 1.8.2 on Win XP SP3
+   - version 1.8.0 on Linux
+
+4. Force.com Migration Tool  
+	Tested with salesforce_ant_19.0
+
+    Download it as described here:
+    http://wiki.developerforce.com/page/Force.com_Migration_Tool#How_to_Install
+
+    ant-salesforce.jar library must be made available to ANT
+
+    The order in which jars are added to the classpath is as follows:
+
+    * -lib jars in the order specified by the -lib elements on the command line
+    * jars from ${user.home}/.ant/lib (unless -nouserlib is set)
+    * jars from ANT_HOME/lib
+
+    see http://ant.apache.org/manual/running.html#libs for more details
+    as well as
+    http://www.salesforce.com/us/developer/docs/apexcode/Content/apex_deploying_ant.htm
+
+5. On MS Windows Install shortname.vim 
+    http://www.vim.org/scripts/script.php?script_id=433
+
+6. Unpack force.com plugin archive anywhere you like
+
+ex: ~/vim/force.com
+
+7. Add 'force.com' folder to vim runtime path and make sure it loads apexcode filetype detection
+
+e.g.
+	if has("unix")
+		let &runtimepath=&runtimepath . ',~/vim/force.com'
+	elseif has("win32")
+		let &runtimepath=&runtimepath . ',c:\Documents and Settings\username\vimfiles\force.com'
+	endif
+	" make sure vim loads apexcode filetype detection
+	runtime ftdetect/apexcode.vim
+
+8. Enable filetype plugin and syntax highlighting
+
+e.g. add these lines into .vimrc (or _vimrc on windows)
+	filetype plugin on
+	syntax on
+
+8. Index help file
+
+e.g.
+    :helptags ~/vim/force.com/doc
+
+    Or if using with pathogen.vim plugin and force.com is in .vim/bundle run
+    :Helptags
+
+
+==============================================================================
+Example of minimal _vimrc configuration for win32    *force.com-config-example*
+
+""""""""""""""""""""""""""""""""" _vimrc """""""""""""""""""""""""""""""""""""
+set nocompatible
+
+filetype plugin on
+syntax on
+
+let &runtimepath=&runtimepath . ',c:\Documents and\ Settings\andrey\vimfiles\force.com'
+runtime ftdetect/apexcode.vim
+
+
+if has("win32")
+		if !exists("g:apex_backup_folder")
+			let g:apex_backup_folder="c:\\temp\\apex\\backup"
+		endif
+		if !exists("g:apex_temp_folder")
+			let g:apex_temp_folder="c:\\temp\\apex\\gvim-deployment"
+		endif
+		if !exists("g:apex_deployment_error_log")
+			let g:apex_deployment_error_log="gvim-deployment-error.log"
+		endif
+		if !exists("g:apex_properties_folder")
+			let g:apex_properties_folder="c:\\temp\\vim-force.com-tests\\secure-properties"
+		endif
+endif	
+let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
+let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
+"""""""""""""""""""""" end config example """"""""""""""""""""""""""""""""""""
+
+
+==============================================================================
+USAGE                                                         *force.com-usage*
+
+There are two ways to use force.com plugin
+A.|apex-with-eclipse|                       Alongside Force.com IDE for Eclipse
+B.|apex-plugin-standalone|                  Standalone, without Eclipse
+
+Both methods assume that there is a <project-name>.properties file available
+at the location specified by |'g:apex_properties_folder'|
+Before moving next make sure to configure all global variables listed in |force.com-settings|
+
+Project Setup and Structure                                *apex-project-setup*
+
+	vim force.com plugin uses same project structure as Force.com IDE for Eclipse
+		<eclipse project folder>
+		--./src
+		----./classes
+		----./pages
+		----./triggers
+		----...
+
+	So if you have existing eclipse project then you can start using force.com plugin
+	straight away by opening .class or .trigger file with vim
+------------------------------------------------------------------------------
+A. Using alongside Force.com IDE for Eclipse                *apex-with-eclipse* 
+
+
+	1. Create Force.com project with Eclipse as usual (selecting necessary metadata types)
+	2. [optional] close Eclipse
+	3. switch back to file system
+	4. go to eclipse Eclipse workspace and locate folder of your project
+	5. open any source class (.cls) file with vim
+	
+	at this point if class code is syntax highlighted then chances are that most of your 
+	config is right
+	
+	6. issue command 
+	   :ApexRefreshProject
+
+------------------------------------------------------------------------------
+B. vim force.com plugin standalone                     *apex-plugin-standalone*
+
+In this mode Eclipse is not needed
+
+ B.1. Creating new project
+	- inside force.com plugin folder locate folder A-ProjectTemplate
+	- copy A-ProjectTemplate to the location where you want your project
+	  to reside and rename as desired, 
+	  ex: '/home/user/projects/My Org (Sandbox)'
+	- inside 'src/classes' folder locate A-Fake-Class.cls and open with Vim
+	- Issue command:  
+	  :ApexRefreshProject
+
+
+------------------------------------------------------------------------------
+Plugin exposes following commands:                              *apex-commands*
+
+|ApexCompare|                       compare two projects
+|ApexCompareWithPreRefreshVersion|  compare with pre refresh project state
+|ApexDeploy|                        deploy project to SFDC
+|ApexDeployConfirm|                 deploy with confirmation for each file
+|ApexDeployOpen|                    deploy all open files
+|ApexGitInit|                       initialise new Git repository for current 
+                                    project
+|ApexPrintChanged|                  display all modified files
+|ApexRefreshFile|                   refresh current file from SFDC
+|ApexRefreshProject|                refresh project from SFDC
+
+|ApexTListToggle|                   toggle taglist (works if 'taglist' plugin 
+                                    is installed)
+
+                                                                  *ApexCompare*
+Imagine you have 2 sandboxes of the same Org and want to compare current file
+with its counterpart in another sandbox
+
+Example:
+Assume following salesforce project folder structure
+    .../some-path/sandbox 1/src
+    .../some-path/prod org/src
+'some-path' may be root of eclipse workspace or any other folder
+
+':ApexCompare' will open durrectory selection dialogue
+Assuming current project is 'sandbox 1' select 'prod org' folder and system will 
+open specified (|'g:apex_diff_cmd'|) diff tool with both files 
+
+
+
+                                             *ApexCompareWithPreRefreshVersion*
+Every time before refresh from SFDC is executed system backs up modified files
+from current project in the location specified by |'g:apex_backup_folder'|
+Once refresh is complete it is possible to quickly open diff tool to compare
+current file with its pre-refresh version.
+Same as with |ApexCompare| you only have to pick top level folder of the relevant backup
+i.e. parent of ./src/ folder, no need to drill down into project subfolders
+
+                                                            *ApexDeploy*
+Use :|ApexDeploy| to upload/deploy/save all modified files of current project
+to SFDC
+                                                            *force.com-F11*
+Plugin also defines keyboard shortcut F11 which calls :ApexDeploy and works
+in 'normal' and 'insert' modes
+
+                                                            *ApexDeployConfirm*
+As opposite to |ApexDeploy| with |ApexDeployConfirm| system will ask for confirmation
+to deploy every modified file to SFDC
+
+                                                            *ApexDeployOpen*
+Deploy/Save to SFDC all files open in current vim instance
+
+                                                            *ApexGitInit*
+If git is available then :ApexGitInit can be used to initialise new git
+repository in current force.com project and add (with confirmation) existing
+source files
+See apexUtil#gitInit() for the list of supported force.com project resources
+
+                                                            
+                                                            *ApexPrintChanged*
+Display changed files, i.e. candidates for deployment to SFDC
+
+                                                            
+                                                            *ApexRefreshFile*
+Refresh current (single) file and replace it with its version from SFDC
+
+                                                            *ApexRefreshProject*
+Refresh current project and download new/modified files from SFDC replacing
+all local files
+
+                                                            *ApexTListToggle*
+Helper for 'Tagist' plugin (http://vim-taglist.sourceforge.ne)
+Taglist plugin does not support mixed filetypes like: apexcode.java 
+so we have to trick it like if &filetype was = 'apexcode'
+i.e. every time when Taglist is called set filetype=apexcode temporarely
+and then revert back to what it was 
+See apexcode.vim s:Apex_TList_Toggle() method for more details
+
+
+
+==============================================================================
+SETTINGS                                                   *force.com-settings*
+
+Before using force.com plgin following variables must be defined (ex: in .vimrc)
+The plugin provides the following options that can customise the behaviour the
+force.com plugin behaviour. These options should be set in your vimrc.
+
+All of the examples below are for Unix environments. When defining paths for MS Windows 
+use double slash, like this:
+let g:apex_backup_folder="c:\\temp\\apex\\backup"
+
+
+Required
+|'g:apex_backup_folder'|          project backup folder
+|'g:apex_temp_folder'|            temporary folder
+|'g:apex_deployment_error_log'|   temporary error file
+|'g:apex_properties_folder'|      login/pass/token credentials
+
+Required MS Windows only
+|'g:apex_binary_tee'|             full path to tee.exe executable
+|'g:apex_binary_touch'|           full path to touch.exe executable
+
+Optional
+|'g:apex_diff_cmd'|                 path to file comparison tool
+
+|apex-config-example|               .vimrc config example
+
+                                                        *'g:apex_backup_folder'*
+
+/path/to/folder where current project source is backed up before refresh from SFDC
+ex: 
+	let g:apex_backup_folder="/tmp/apex/backup"
+
+                                                          *'g:apex_temp_folder'*
+
+Every time when ApexDeploy is called we copy files (to be fed to ANT job and deployed to sfdc) 
+into /path/to/folder defined by g:apex_temp_folder
+ex: 
+	let g:apex_temp_folder="/tmp/apex/gvim-deployment"
+
+                                                  *'g:apex_deployment_error_log'*	
+
+ANT error log file name which is stored in "g:apex_temp_folder
+ex:
+	let g:apex_deployment_error_log="gvim-deployment-error.log"
+
+                                                    *'g:apex_properties_folder'*	
+Path to folder with *.property files which contain SFDC orgs access details
+It is recommended to store those files in encrypted folder or partition
+Example below assumes that we are using Truecrypt
+
+ex:
+	let g:apex_properties_folder="/media/truecrypt1"
+
+or for win32, assuming that Truecrypt volume is T:
+	let g:apex_properties_folder="t:"
+
+                                                          *force.com-unix_utils*
+Plugin is using unix utilities 'tee' and 'touch'
+On MS Windows these commands are not available out of the box.
+UnixUtils for Win32 can be found here: http://unxutils.sourceforge.net/
+
+See |'g:apex_binary_tee'| and |'g:apex_binary_touch'|
+On Unix setting these variables is not strictly necessary, unless 'tee' and 'touch'
+are not available via $PATH
+
+Plugin also uses other built in shell commands like
+'rm', 'mkdir', 'cp' on unix
+and
+'rmdir', 'copy' on ms windows
+But it is assumed that these are generally available out of the box.
+If you are using non standard environment then you can define paths to those commands.
+See apexOs.vim for details
+
+                                                            *'g:apex_binary_tee'*
+Full path to shell command 'tee'
+tee - read from standard input and write to standard output and files
+
+ex:
+	let g:apex_binary_tee = "/usr/bin/tee"
+or for win32
+	let g:apex_binary_tee = "d:\\bin\\UnixUtils\\tee.exe"
+
+                                                            *'g:apex_binary_touch'*
+Full path to shell command 'touch'
+tee - read from standard input and write to standard output and files
+
+ex:
+	let g:apex_binary_touch = "/usr/bin/touch"
+or for win32
+	let g:apex_binary_touch = "d:\\bin\\UnixUtils\\touch.exe"
+
+                                                             *'g:apex_diff_cmd'*
+/path/to/file/compare/tool
+ex:
+	let g:apex_diff_cmd="/usr/bin/meld"
+
+If undefined then internal vimdiff will be used
+
+                                                        *apex-config-example*
+
+Example of configuration for Unix and MS Windows environments
+
+" define local paths for force.com plugin
+if has('gui') " do not use on headless machines
+	if has("unix")
+		" g:apex_backup_folder - /path/to/folder where current project source
+		" is backed up before refresh from SFDC
+		if !exists("g:apex_backup_folder")
+			let g:apex_backup_folder="/tmp/apex/backup"
+		endif
+		" every time when ApexDeploy is called we copy files (to be fed to ANT 
+		" job and deployed to sfdc) into /path/to/folder defined by
+		" "g:apex_temp_folder
+		if !exists("g:apex_temp_folder")
+			let g:apex_temp_folder="/tmp/apex/gvim-deployment"
+		endif
+		" ANT error log file name which is stored in "g:apex_temp_folder
+		if !exists("g:apex_deployment_error_log")
+			let g:apex_deployment_error_log="gvim-deployment-error.log"
+		endif
+		" path to folder with *.property files which contain SFDC orgs access
+		" details
+		if !exists("g:apex_properties_folder")
+			let g:apex_properties_folder="/media/truecrypt1"
+		endif
+	elseif has("win32")
+		if !exists("g:apex_backup_folder")
+			let g:apex_backup_folder="c:\\temp\\apex\\backup"
+		endif
+		if !exists("g:apex_temp_folder")
+			let g:apex_temp_folder="c:\\temp\\apex\\gvim-deployment"
+		endif
+		if !exists("g:apex_deployment_error_log")
+			let g:apex_deployment_error_log="gvim-deployment-error.log"
+		endif
+		if !exists("g:apex_properties_folder")
+			let g:apex_properties_folder="t:"
+		endif
+	endif	
+	if has("win32")	|| has("win64")
+		let g:apex_binary_tee = "d:\\bin\\UnixUtils\\tee.exe"
+		let g:apex_binary_touch = "d:\\bin\\UnixUtils\\touch.exe"
+	endif	
+endif	
+
+==============================================================================
+RECOMMENDED KEYBOARD SHORTCUTS                    *force.com-shortcuts-example*
+
+To further speedup your day-to-day workflow you may want to consider adding 
+something like this in your .vimrc file
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Apex code specific Keyboard mapping
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+function! s:setApexShortcuts()
+
+	""""""""""""""""""""""""""""""""""""""""""
+	" Search in files
+	""""""""""""""""""""""""""""""""""""""""""
+
+	" search exact word
+	nmap <leader>sc :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.cls ../**/*.trigger <CR>:cwin<CR>
+	nmap <leader>st :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.trigger <CR>:cwin<CR>
+	nmap <leader>sp :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.page <CR>:cwin<CR>
+	nmap <leader>ss :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.scf <CR>:cwin<CR>
+	nmap <leader>sa :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf <CR>:cwin<CR>
+
+	" search - *contains* - partal match is allowed
+	nmap <leader>sC :noautocmd vimgrep /<C-R><C-W>/j ../**/*.cls ../**/*.trigger <CR>:cwin<CR>
+	nmap <leader>sT :noautocmd vimgrep /<C-R><C-W>/j ../**/*.trigger <CR>:cwin<CR>
+	nmap <leader>sP :noautocmd vimgrep /<C-R><C-W>/j ../**/*.page <CR>:cwin<CR>
+	nmap <leader>sS :noautocmd vimgrep /<C-R><C-W>/j ../**/*.scf <CR>:cwin<CR>
+	nmap <leader>sA :noautocmd vimgrep /<C-R><C-W>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf <CR>:cwin<CR>
+
+	" prepare search string, but do not run
+	nmap <leader>sm :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf \|cwin
+
+	" search visual selection
+	" in this mode we have to delete leading 5 characters '<,'> which system
+	" inserts into command line by default
+	" we also need to use Control+R* combination to get selection into command
+	" line
+	vmap <leader>sc :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.cls ../**/*.trigger <CR>:cwin<CR>
+	vmap <leader>st :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.trigger <CR>:cwin<CR>
+	vmap <leader>sp :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.page <CR>:cwin<CR>
+	vmap <leader>ss :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.scf <CR>:cwin<CR>
+	vmap <leader>sa :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf <CR>:cwin<CR>
+
+
+	""""""""""""""""""""""""""""""""""""""""""
+	" CTags shortcuts
+	""""""""""""""""""""""""""""""""""""""""""
+	" shortcut to update ctags DB manually
+	" note for XFCE: disable default workspace 11 switch (Ctrl-F11) shortcut
+	" (settings-> Window Manager -> Keyboard),
+	" otherwise C-F11 in vim does not work
+	map <C-F11> <Esc>:ApexUpdateCtags<CR>
+
+
+	""""""""""""""""""""""""""""""""""""""""""
+	" Tagglist shortcuts
+	""""""""""""""""""""""""""""""""""""""""""
+	" use F3 to toggle Tagglist
+	nmap <silent> <F3> :ApexTListToggle<CR>
+	imap <silent> <F3> <Esc>:ApexTListToggle<CR>
+	vmap <silent> <F3> <Esc>:ApexTListToggle<CR>
+
+	""""""""""""""""""""""""""""""""""""""""""
+	" Apex build shorctuts 
+	""""""""""""""""""""""""""""""""""""""""""
+	" build without saving current file
+	map <F11> :call apex#MakeProject()<CR>
+	imap <F11> <Esc>:call apex#MakeProject()<CR>
+
+endfunction
+
+" load shortcut mapping when one of apexcode file types is detected/loaded
+autocmd FileType apexcode.java call s:setApexShortcuts()
+autocmd FileType apexcode.html call s:setApexShortcuts()
+autocmd FileType apexcode.javascript call s:setApexShortcuts()
+
+
+
+==============================================================================
+FEATURES                                                   *force.com-features*
+
+Build/Save to SFDC 
+- with error reporting
+
+Syntax highlighting
+- supports syntax highlighting of Apex Classes, Triggers, Pages, JS Resources
+
+Refresh current file from SFDC
+
+Refresh whole project from SFDC
+
+Search
+- find word in classes/triggers
+- find word everywhere
+- find visual selection
+
+Basic Visualforce code completion
+- try following in .page file (do not type single quote characters)
+      '<' Ctrl-X,Ctrl-U
+      '<apex:' Ctrl-X,Ctrl-U
+      '<chatter' Ctrl-X,Ctrl-U
+
+==============================================================================
+LIMITATIONS                                             *force.com-limitations*
+
+vim force.com plugin does not support creating force.com project or files within
+project. Use SFDC web interface to create new class/trigger/page... and then issue
+:ApexRefreshProject
+to pull new files donw to local drive
+
+ant-salesforce.jar library does not report error line numbers in Visualforce pages
+making it impossible to go-to actual problem line if compile/save fails due to syntax
+error. This is similar to Force.com IDE for Eclipse.
+
+Current version does not support environment aware code completion
+For example if you write
+
+	String val = 'abc';
+typing 
+	val.
+will not bring the list of String methods as Force.com IDE may do
+
+"Execute Anonymous" and "Run test" features are not implemented. Use your favourite 
+web browser in the meantime.
+
+On MS Windows default configuration spawns separate DOS/CMD window on every call
+to command line utility, ex: ant deploy
+It looks like there is a way to overcome this but I have not tried it
+@see shell.vim - http://peterodding.com/code/vim/shell/
+
+==============================================================================
+RECOMMENDED-PLUGINS                             *force.com-recommended-plugins*
+
+There is a number of great Vim plugins which you may want to consider
+- Fugitive - git support
+- FuzzyFinder - quick file/buffer open
+- NERDTree - project/file-system browsing
+- Pathogen - manage individually installed plugins in ~/.vim/bundle
+- Session - save/restore open files like IDE Project
+- SnipMate - implements some of TextMate's snippets features in Vim
+- Taglist - a source code browser plugin for Vim
+
+
+==============================================================================
+CREDITS                                                     *force.com-credits*
+
+Author: Andrey Gavrikov 
+
+Credit must go out to Bram Moolenaar and all the Vim developers for
+making the world's best editor (IMHO). I also want to thank everyone who
+helped and gave me suggestions. I wouldn't want to leave anyone out so I
+won't list names.
+
+===============================================================================
+vim:textwidth=78:ts=4:ft=help:norl:wrap:
