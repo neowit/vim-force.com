@@ -1,25 +1,8 @@
-*force.com.txt*	Plugin for developing on force.com      
-Last Change: 2012-02-27
+Plugin for developing on force.com      
+Last Change: 2012-03-05
 
 force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 
-|force.com-description|   Description
-|force.com-system-requirements|     Installation/System requirements
-|force.com-config-example|          Minimal config example
-
-|force.com-usage|         Usage
-    |apex-project-setup|  creating new force.com project
-		|apex-with-eclipse|      using alongside Eclipse IDE
-		|apex-plugin-standalone| using without Eclipse
-	|apex-commands|       supported commands
-
-|force.com-settings|      Settings
-	|force.com-shortcuts-example| example of recommended keyboard shortcuts
-
-|force.com-features|      Features
-|force.com-limitations|   Limitations
-|Recommended-Plugins|     other recommended Vim plugins
-|force.com-credits|       Credits 
 
 For Vim version 7.3 or later.
 Requires :set nocompatible
