@@ -1,0 +1,61 @@
+<project name="Salesforce Ant tasks" default="deploySegmentation" basedir="." xmlns:sf="antlib:com.salesforce">
+	<!-- 
+		# ant config script  file for Bash
+		# Maintainer:	Andrey Gavrikov 
+		# Version:		1.0
+		# Part of vim/force.com plugin
+	-->
+	<!-- Create the time stamp for DSTAMP-->
+	<tstamp />
+
+	<property name="properties.path" value="${properties.path}" />
+
+	<!-- record output in the specified file -->
+	<!-- <property name="logOutputFile" value="/tmp/vim-force.com-${DSTAMP}-${TSTAMP}.log" /> -->
+	<!-- <property name="logOutputFile" value="/tmp/vim-force.com.log" /> -->
+	
+	<!-- END OF Modify properties -->
+	
+	<!-- set to true if deployUnpackaged should just test but NOT deploy anything-->
+	<property name="checkOnly" value="false" />
+
+
+	<!-- ///////////////////////////////////////////////////////////////////////////// -->
+	<property environment="env" />
+	<echo message="properties.path='${properties.path}/${dest.org.name}.properties'" />
+
+	<property file="${properties.path}/${dest.org.name}.properties" prefix="dest." />
+	<property name="srcDir" value="${project.Folder}/src" />
+	<property name="package.xml.path" value="${srcDir}/package.xml" />
+
+	<!-- 
+	<echo message="logOutputFile=${logOutputFile}" />
+	<record append="false" loglevel="verbose" name="${logOutputFile}" description="record output in the specified file" />
+	-->
+	<!-- ///////////////////////////////////////////////////////////////////////////// -->
+
+	<!-- Retrieve an unpackaged set of metadata from your org -->
+	<target name="retrieveSource" description="load metadata from the source Org to be used for deployment to the Target org">
+		<echo message="USERNAME=${dest.sf.username}" />
+		<echo message="SERVER=${dest.sf.serverurl}" />
+
+		<!-- Retrieve the contents into another directory -->
+		<sf:retrieve username="${dest.sf.username}" password="${dest.sf.password}" serverurl="${dest.sf.serverurl}" 
+			retrieveTarget="${srcDir}" unpackaged="${package.xml.path}" maxPoll="1000"/>
+	</target>
+
+	<!-- Deploy the unpackaged set of metadata retrieved with retrieveUnpackaged -->
+	<target name="deployUnpackaged"  >
+		<echo message="Destination USERNAME=${dest.sf.username}" />
+		<echo message="Destination SERVER=${dest.sf.serverurl}" />
+		<echo message="Source files folder=${srcDir}" />
+
+		<!--<input message="Press Return key to start deployment from '${srcDir}' into SFDC org '${dest.org.name}'" /> -->
+		<!--NOTE: allowMissingFiles is used to make sure that we can do partial deployment, 
+			 i.e. only changed files as opposite to all declared in package.xml -->
+		<sf:deploy checkOnly="${checkOnly}" username="${dest.sf.username}" password="${dest.sf.password}" 
+			serverurl="${dest.sf.serverurl}" deployRoot="${srcDir}" maxPoll="1000" allowMissingFiles="true" />
+	</target>
+
+
+</project>

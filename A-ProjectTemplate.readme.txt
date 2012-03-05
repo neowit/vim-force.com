@@ -1,0 +1,3 @@
+A-ProjectTemplate contains project template which is useful when Force.com IDE for Eclipse is not installed.
+see 
+:help apex-plugin-standalone 

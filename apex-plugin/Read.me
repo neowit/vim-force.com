@@ -1,0 +1,16 @@
+Refresh SFDC ORG metadata
+
+In order to Refresh SFDC metadata we can use salesforce-ant tool
+
+here is how to use it
+
+1. Make sure target /src/ folder contains valid package.xml file
+
+2. Assume we want to Refresh SFDC metadata for "Org (Sandbox)" which exists at
+/home/andrey/eclipse.workspace/Org (Sandbox)/src
+
+call: build.sh "Org (Sandbox1)" "/media/triecrypt1" "/home/andrey/eclipse.workspace/Org (Sandbox1)" "refresh"
+
+Target project name must correspond to the existing .properties file which contains login/pass
+and reside in /media/truecrypt1/
+ex: "/media/truecrypt1/Org (Sandbox).properties"
