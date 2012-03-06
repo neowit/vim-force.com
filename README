@@ -107,15 +107,18 @@ runtime ftdetect/apexcode.vim
 
 if has("win32")
 		if !exists("g:apex_backup_folder")
+			" full path required here, relative may not work
 			let g:apex_backup_folder="c:\\temp\\apex\\backup"
 		endif
 		if !exists("g:apex_temp_folder")
+			" full path required here, relative may not work
 			let g:apex_temp_folder="c:\\temp\\apex\\gvim-deployment"
 		endif
 		if !exists("g:apex_deployment_error_log")
 			let g:apex_deployment_error_log="gvim-deployment-error.log"
 		endif
 		if !exists("g:apex_properties_folder")
+			" full path required here, relative may not work
 			let g:apex_properties_folder="c:\\temp\\vim-force.com-tests\\secure-properties"
 		endif
 endif	
@@ -311,7 +314,12 @@ ex:
 
                                                     *'g:apex_properties_folder'*	
 Path to folder with *.property files which contain SFDC orgs access details
-It is recommended to store those files in encrypted folder or partition
+It is recommended to store those files in encrypted folder or partition.
+Note, full path is required.
+If path is incorrect then you will get error loking something like this:
+	BUILD FAILED
+	/.../build.xml:57: Failed to login: Failed to send request to https://${dest.sf.serverurl}/services/Soap/u/...
+
 Example below assumes that we are using Truecrypt
 
 ex:
