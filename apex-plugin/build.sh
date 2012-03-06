@@ -63,7 +63,9 @@ if [ $error -eq 1 ]; then
 fi
 
 # use Proxy if necessary
-source /home/andrey/bin/network/init-proxy-variables.sh
+if [ -x ~/bin/network/init-proxy-variables.sh ]; then
+	source ~/bin/network/init-proxy-variables.sh
+fi
 
 if [ "$action" == "deploy" ]; then
 	ant  -buildfile "$buildFile" -Ddest.org.name="$destOrgName" -Dproperties.path="$propertiesPath" -Dproject.Folder="$projectFolder" deployUnpackaged
