@@ -101,7 +101,7 @@ set nocompatible
 filetype plugin on
 syntax on
 
-let &runtimepath=&runtimepath . ',c:\Documents and\ Settings\andrey\vimfiles\force.com'
+let &runtimepath=&runtimepath . ',c:\Documents and\ Settings\user\vimfiles\force.com'
 runtime ftdetect/apexcode.vim
 
 
@@ -133,6 +133,8 @@ B.|apex-plugin-standalone|                  Standalone, without Eclipse
 
 Both methods assume that there is a <project-name>.properties file available
 at the location specified by |'g:apex_properties_folder'|
+See salesforce_migration_guide.pdf (http://wiki.developerforce.com/page/Migration_Tool_Guide) 
+for details of .properties file.
 Before moving next make sure to configure all global variables listed in |force.com-settings|
 
 Project Setup and Structure                                *apex-project-setup*
