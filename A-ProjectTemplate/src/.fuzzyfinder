@@ -1,0 +1,6 @@
+classes/*.cls
+pages/*.page
+triggers/*.trigger
+scontrols/*.scf
+components/*.component
+
