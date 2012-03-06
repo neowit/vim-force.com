@@ -1,2 +1,2 @@
 this is a fake class - just used to initialise Vim Project as Apex
-Delete after first :ApexRefresh
+Delete after first :ApexRefreshProject
