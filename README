@@ -7,6 +7,9 @@ force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 For Vim version 7.3 or later.
 Requires :set nocompatible
 
+NOTE: this README file may be outdated, once installed see relevant section
+of vim doc, e.g. :help force.com
+
 ==============================================================================
 DESCRIPTION                                             *force.com-description*
 
@@ -182,6 +185,10 @@ In this mode Eclipse is not needed
 	- Issue command:  
 	  :ApexRefreshProject
 
+ B.2. Adding Class/Page/Trigger
+	- create relevant apex Class/Page/Trigger via force.com UI (Setup->Develop)
+	- Run command
+	  :ApexRefreshProject
 
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*

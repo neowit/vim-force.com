@@ -199,6 +199,10 @@ In this mode Eclipse is not needed
 	- Issue command:  
 	  :ApexRefreshProject
 
+ B.2. Adding Class/Page/Trigger
+	- create relevant apex Class/Page/Trigger via force.com UI (Setup->Develop)
+	- Run command
+	  :ApexRefreshProject
 
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*
