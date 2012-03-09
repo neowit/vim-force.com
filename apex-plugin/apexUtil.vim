@@ -60,7 +60,7 @@ function! ApexCompare(...)
 		let command = scriptPath.' '.shellescape(leftFilePath).' '.shellescape(rightFilePath)
 	
 		":exe "!".command
-		call apexOs#exe(command)
+		call apexOs#exe(command, 1)
 	else
 		" use built-in diff
 		:exe "vert diffsplit ".substitute(rightFilePath, " ", "\\\\ ", "g")

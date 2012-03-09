@@ -216,11 +216,18 @@ endfunction
 " windows XP requires command which contains spaces to be encloused in quotes
 " twice, ex:
 " ""d:\my path\build.cmd" "param 1" "param 2" param3"
-function! apexOs#exe(command)
-	let result = a:command
+"Args:
+" param 1: command to execute
+" param 2: optional - if =1 then command will be executed in background
+"				ignored on MS Windows
+function! apexOs#exe(...)
+	let result = a:1
 	if s:is_windows
 		let result = '"'.result.'"'
+	elseif a:0 > 1 && a:2
+		let result .= ' &'
 	endif
+
 	:exe "!".result
 endfunction	
 
