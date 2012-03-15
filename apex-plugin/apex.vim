@@ -689,8 +689,11 @@ endfunction
 " ant error return looks like this
 " Error in class
 " Error: classes/EventFromLeadSupport.cls(25,24):unexpected token: createEvents'
-" Error in page (does not have line number)
-" Error: pages/ProfileTemplateEdit.page(ProfileTemplateEdit):Unknown property 'ProfileTemplateController.varMainTitle'
+"
+" Error in page (sometimes it does sometimes it doe not have line number)
+" Error: pages/VimPluginTest.page(VimPluginTest):Unknown property 'ProfileTemplateController.varMainTitle'
+" Error: pages/VimPluginTest.page(VimPluginTest):Unsupported attribute escape
+"		 in <apex:inputField> in VimPluginTest at line 49 column 46
 "
 " @param: srcPath - full path to the folder which contains classes, triggers,
 " pages, etc folders, usually this is path to /src/ folder
@@ -711,12 +714,23 @@ function! s:processQuickfix(srcPath)
 		"get line and column number
 		let lineAndColumn = strpart(text, 0, stridx(text, ")"))
 		let text = strpart(text, len(lineAndColumn)+2)
-		" remove ()
+		"echo 'error text='.text.'#'
+
 		let lineAndColumnPair = split(substitute(lineAndColumn, "[\(\)]", "", "g"), ",")
 		" lineAndColumnPair has only 1 element then we are most likely parsing
 		" VF page error which returns (page-name) instead of (line, column)
+		if len(lineAndColumnPair) <2
+			" check if we are dealing with the Page error which does have
+			" column/line numbers in following format:
+			" ...Unsupported attribute escape in <apex:inputField> in VimPluginTest at line 49 column 46
+			let lineNumIndex = stridx(text, " at line ")
+			if lineNumIndex > 0
+				let coordinateText = strpart(text, lineNumIndex + len(" at line "))
+				" coordinateText = "49 column 46"
+				let lineAndColumnPair = split(coordinateText, " column ")
+			endif	
+		endif	
 
-		"echo text
 		"echo lineAndColumnPair
 		" init new quickfix line
 		let errLine = {}
@@ -770,5 +784,6 @@ function! MyTest ()
 	"call s:parseErrorLog("/tmp/gvim-deployment-errors-FAILED-NON-STANDARD.log", "/home/andrey/eclipse.workspace/SForce/src")
 	"
 	"call s:parseErrorLog("/tmp/gvim-deployment-errors-FAILED-STANDARD.log", "/home/andrey/eclipse.workspace/SForce/src")
-	 echo expand("<sfile>:p")
+	"call s:parseErrorLog("/tmp/gvim-deployment-errors-FAILED-Page-With-Coordinates.log", "/home/andrey/eclipse.workspace/SForce/src")
+	"echo expand("<sfile>:p")
 endfun
