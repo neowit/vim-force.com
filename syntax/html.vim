@@ -15,4 +15,4 @@
 " Language:	ApexCode		
 "
 " higihlight visualforce tags as html tags
-syn match htmlTagName contained "\(apex\|chatter\|flow\|ideas\|knowledge\|messaging\|site\):[a-z]\+[A-Z]*"
+syn match htmlTagName contained "\(apex\|chatter\|flow\|ideas\|knowledge\|messaging\|site\):[a-z]\+[A-Za-z]*"
