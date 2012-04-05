@@ -25,6 +25,7 @@ if !exists("main_syntax")
   let main_syntax = 'apexcode'
 endif
 
+syn case ignore
 syn keyword apexcodeCommentTodo     TODO FIXME XXX TBD contained
 syn match   apexcodeLineComment     "\/\/.*" contains=@Spell,apexcodeCommentTodo
 syn region  apexcodeComment			start="/\*"  end="\*/" contains=@Spell,apexcodeCommentTodo
