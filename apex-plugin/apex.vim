@@ -6,7 +6,7 @@
 "            Permission is hereby granted to use and distribute this code,
 "            with or without modifications, provided that this copyright
 "            notice is copied with it. Like anything else that's free,
-"            taglist.vim is provided *as is* and comes with no warranty of any
+"            this plugin is provided *as is* and comes with no warranty of any
 "            kind, either expressed or implied. In no event will the copyright
 "            holder be liable for any damamges resulting from the use of this
 "            software.
