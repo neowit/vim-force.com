@@ -32,6 +32,8 @@ platform using only web browser and Vim
 
 It is designed for those who do not feel productive in Force.com IDE for Eclipse
 
+http://www.youtube.com/watch?v=x5zKA6V__co
+
 ==============================================================================
                                                 *force.com-system-requirements* 
                                                        *force.com-installation*
@@ -311,6 +313,7 @@ Required MS Windows only
 
 Optional
 |'g:apex_diff_cmd'|                 path to file comparison tool
+|'g:apex_syntax_case_sensitive'|	defines whether Apex syntax highlighting is case sensitive 
 
 |apex-config-example|               .vimrc config example
 
@@ -377,7 +380,7 @@ ex:
 or for win32
 	let g:apex_binary_tee = "d:\\bin\\UnixUtils\\tee.exe"
 
-                                                            *'g:apex_binary_touch'*
+                                                         *'g:apex_binary_touch'*
 Full path to shell command 'touch'
 tee - read from standard input and write to standard output and files
 
@@ -393,7 +396,14 @@ ex:
 
 If undefined then internal vimdiff will be used
 
-                                                        *apex-config-example*
+                                                *'g:apex_syntax_case_sensitive'*
+Use this variable to specify that Apex classes and triggers shall use case sensitive
+syntax highlighting.
+If not specified then Apex default is used - ignore case
+ex:
+	let g:apex_syntax_case_sensitive = 1 " make syntax highlighting case sensitive
+
+                                                           *apex-config-example*
 
 Example of configuration for Unix and MS Windows environments
 
