@@ -580,7 +580,7 @@ function! s:prepareFileDescriptor(projectPath, type, filePath )
 			endif	
 		endfor	
 		" check if user is happy to deploy prepared files
-		let response = input('Deploy [y/n]? ', 'N')
+		let response = input('Deploy [y/N]? ')
 		if 'y' == response || 'Y' == response
 		else
 			"ensure blank line
