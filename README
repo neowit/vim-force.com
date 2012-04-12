@@ -37,7 +37,7 @@ Before force.com plugin can be used following requirements must be met:
    - Oracle JDK
      http://www.oracle.com/technetwork/java/javase/downloads/index.html
 
-   JDK is not strictly required, JRE will siffice.
+   JDK is not strictly required, JRE will suffice.
    With JRE Ant will complain about missing tools.jar but it is safe to ignore this warning
 
 
@@ -325,7 +325,7 @@ ex:
 Path to folder with *.property files which contain SFDC orgs access details
 It is recommended to store those files in encrypted folder or partition.
 Note, full path is required.
-If path is incorrect then you will get error loking something like this:
+If path is incorrect then you will get error looking something like this:
 	BUILD FAILED
 	/.../build.xml:57: Failed to login: Failed to send request to https://${dest.sf.serverurl}/services/Soap/u/...
 
@@ -535,7 +535,7 @@ LIMITATIONS                                             *force.com-limitations*
 vim force.com plugin does not support creating force.com project or files within
 project. Use SFDC web interface to create new class/trigger/page... and then issue
 :ApexRefreshProject
-to pull new files donw to local drive
+to pull new files down to local drive
 
 ant-salesforce.jar library does not report error line numbers in Visualforce pages
 making it impossible to go-to actual problem line if compile/save fails due to syntax
