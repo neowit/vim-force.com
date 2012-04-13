@@ -71,7 +71,7 @@ endfunction
 
 " create Git repo for current Apex project and add files
 function! apexUtil#gitInit()
-	if executable('git')
+	if !executable('git')
 		echomsg 'force.com plugin: Git (http://git-scm.com/) ' .
                 \ 'not found in PATH. apexUtil#gitInit() is not available.'
 		finish
