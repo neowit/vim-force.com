@@ -145,6 +145,8 @@ command! -nargs=0 ApexRefreshProject :call apex#refreshProject()
 command! RefreshSFDCProject :ApexRefreshProject
 command! ApexRefreshFile :call apex#refreshFile(expand("%:p"))
 command! ApexPrintChanged :call apex#printChangedFiles(expand("%:p"))
+" select file type, create it and switch buffer
+command! ApexNewFile :call apexMetaXml#createFileAndSwitch(expand("%:p"))
 
 " before refresh all changed files are backed up, so we can compare refreshed
 " version with its pre-refresh condition

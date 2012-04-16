@@ -81,6 +81,8 @@ if !executable(s:trim(g:apex_binary_tee))
 	finish
 endif	
 
+"set desired API version
+call s:let('g:apex_API_version', '25.0')
 
 """""""""""""""""""""""""""""""""""""""""""""""
 " OS Dependent methods

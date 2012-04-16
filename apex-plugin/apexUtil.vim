@@ -69,6 +69,13 @@ endfunction
 " define command to call for current file
 "command! -nargs=? ApexCompare :call ApexCompare(<args>)
 
+" utility function to display highlighted warning message
+function! apexUtil#warning(text)
+	echohl WarningMsg
+	echomsg a:text
+	echohl None 
+endfun	
+
 " create Git repo for current Apex project and add files
 function! apexUtil#gitInit()
 	if !executable('git')

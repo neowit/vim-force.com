@@ -773,7 +773,7 @@ endfun
 
 
 " =====================================================
-function! MyTest ()
+"function! MyTest ()
 	"call s:prepareApexPackage("/home/andrey/eclipse.workspace/SForce/src/classes/TestCRAccess.cls")
 	"call s:prepareApexPackage("/home/andrey/eclipse.workspace/Reed (CITDev1)/src/triggers/OpportunityBefore.trigger")
 	"call apexOs#createDir("/home/andrey/temp/Vim-Deployment/Project", "src")
@@ -786,4 +786,4 @@ function! MyTest ()
 	"call s:parseErrorLog("/tmp/gvim-deployment-errors-FAILED-STANDARD.log", "/home/andrey/eclipse.workspace/SForce/src")
 	"call s:parseErrorLog("/tmp/gvim-deployment-errors-FAILED-Page-With-Coordinates.log", "/home/andrey/eclipse.workspace/SForce/src")
 	"echo expand("<sfile>:p")
-endfun
+"endfun

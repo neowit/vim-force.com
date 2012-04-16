@@ -223,6 +223,8 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexTListToggle|                   toggle taglist (works if 'taglist' plugin 
                                     is installed)
 
+|ApexNewFile|						create new file
+
                                                                   *ApexCompare*
 Imagine you have 2 sandboxes of the same Org and want to compare current file
 with its counterpart in another sandbox
@@ -287,7 +289,10 @@ i.e. every time when Taglist is called set filetype=apexcode temporarely
 and then revert back to what it was 
 See apexcode.vim s:Apex_TList_Toggle() method for more details
 
-
+																*ApexNewFile*
+Invoke file types menu and create Apex file (class, trigger, etc). 
+Not all files currently supported.
+File will be greated with API version defined by |g:apex_API_version| variable
 
 ==============================================================================
 SETTINGS                                                   *force.com-settings*
@@ -314,6 +319,7 @@ Required MS Windows only
 Optional
 |'g:apex_diff_cmd'|                 path to file comparison tool
 |'g:apex_syntax_case_sensitive'|	defines whether Apex syntax highlighting is case sensitive 
+|'g:apex_API_version'|				force.com API version to use when create new files, ex: 25.0
 
 |apex-config-example|               .vimrc config example
 
