@@ -111,6 +111,9 @@ snippet handler Trigger Handler class methods for all Before actions
 	public void afterUpdate () {
 		//nothing currently
 	}
+	public void afterDelete () {
+		//nothing currently
+	}
 
 	public void afterUnDelete () {
 		//nothing currently
@@ -131,7 +134,7 @@ snippet trigger Before trigger with handler template
 	}
 
 snippet trigger After trigger with handler template
-	trigger ${1:`Filename()`} on ${2:object-name} (before insert, before update, before delete) {
+	trigger ${1:`Filename()`} on ${2:object-name} (after insert, after update, after delete, after undelete) {
 
 		$1Handler handler  = $1Handler.getHandler();
 		if (Trigger.isInsert) {
