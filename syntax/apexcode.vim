@@ -94,6 +94,9 @@ syn match apexcodeAssert			"System\.assert\(Equals\|NotEquals\)"
 syn keyword apexcodeSFDCCollection	Map Set List
 syn keyword apexcodeSFDCId			Id
 syn keyword apexcodeSFDCSObject		SObject
+syn keyword apexcodeStandardInterface	Comparable Iterator Iterable InstallHandler Schedulable UninstallHandler
+syn match apexcodeStandardInterface	"Database\.Batchable\|Auth\.RegistrationHandler\|Messaging\.InboundEmailHandler\|Process\.Plugin\|Site\.UrlRewriter"
+
 syn keyword apexcodeVisualforceClasses	apexcodePages Message PageReference SelectOption StandardController StandardSetController
 " apexcode System methods
 syn match 	apexcodeSystemKeywords	"Database\.\(insert\|update\|delete\|undelete\|upsert\)"
@@ -146,6 +149,7 @@ hi def link apexcodeAssert			Statement
 hi def link apexcodeSFDCCollection	Type
 hi def link apexcodeSFDCId			Type
 hi def link apexcodeSFDCSObject		Type
+hi def link apexcodeStandardInterface Type
 hi def link apexcodeVisualforceClasses Type
 
 hi def link apexcodeSystemKeywords	Statement
