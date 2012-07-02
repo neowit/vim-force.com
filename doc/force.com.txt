@@ -1,5 +1,6 @@
 *force.com.txt*	Plugin for developing on force.com      
-Last Change: 2012-02-27
+Author: Andrey Gavrikov
+License: Same terms as Vim itself (see |license|)
 
 force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 
@@ -603,12 +604,15 @@ There is a number of great Vim plugins which you may want to consider
 ==============================================================================
 CREDITS                                                     *force.com-credits*
 
-Author: Andrey Gavrikov 
-
 Credit must go out to Bram Moolenaar and all the Vim developers for
 making the world's best editor (IMHO). I also want to thank everyone who
 helped and gave me suggestions. I wouldn't want to leave anyone out so I
 won't list names.
 
+License
+-------
+Copyright (c) Andrey Gavrikov.
+Distributed under the same terms as Vim itself.
+See :help license
 ===============================================================================
 vim:textwidth=78:ts=4:ft=help:norl:wrap:
