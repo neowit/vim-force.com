@@ -107,7 +107,7 @@ endfun
 "			fileExtension: "cls",
 "			folderName: "classes"}
 function s:getFilesContentApexClass(fName)
-	let fileContent = ["public with sharing class ". a:fName . "{", "}"]
+	let fileContent = ["public with sharing class ". a:fName . " {", "}"]
 
 	let metaContent = []
 	let metaContent = metaContent + ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>"]
