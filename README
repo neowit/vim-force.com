@@ -199,12 +199,12 @@ In this mode Eclipse is not needed
 	- It is now safe to delete A-Fake-Class.cls from you new project as we only
 	  used it to initialise filetype plugin
 
- B.2. Adding Class/Page/Trigger
-	- create relevant apex Class/Page/Trigger via force.com UI (Setup->Develop)
-	- Run command
-	  :ApexRefreshProject
-
-	Alternatively (as of June 2012) you can use :ApexNewFile command
+ B.2. Adding Class/Page/Trigger:
+	There are two options:
+	B.2.1. Use :ApexNewFile to create new class/page/trigger
+	B.2.2. Create relevant apex Class/Page/Trigger via force.com UI (Setup->Develop)
+		then refresh files from the SFDC using command:
+		:ApexRefreshProject
 
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*
