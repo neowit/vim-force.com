@@ -69,8 +69,20 @@ function! apex#MakeProject(...)
 		echomsg "Nothing to deploy"
 		return 0
 	endif
+
+
 	let preparedTempProjectPath = apexOs#removeTrailingPathSeparator(apexOs#splitPath(projectDescriptor.preparedSrcPath).head)
 	let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
+
+	" check that 'project name.properties' file with login credential exists
+	let projectPropertiesPath = apexOs#joinPath([propertiesFolder, projectDescriptor.project]) . ".properties"
+	if !filereadable(projectPropertiesPath)
+		echohl ErrorMsg
+		echomsg "'" . projectPropertiesPath . "' file used by ANT to retrieve login credentials is not readable"
+		echomsg "Check 'g:apex_properties_folder' variable in your ".expand($MYVIMRC)
+		echohl None 
+		return 1
+	endif
 
 	" copy package XML into the work folder
 	call apexOs#copyFile(apexOs#joinPath([projectDescriptor.projectPath, s:SRC_DIR_NAME, "package.xml"]),  apexOs#joinPath([projectDescriptor.preparedSrcPath, 'package.xml']))
@@ -78,9 +90,14 @@ function! apex#MakeProject(...)
 
 	let ANT_ERROR_LOG = apexOs#joinPath([apexOs#getTempFolder(), g:apex_deployment_error_log])
 
-	" Command line parameters
-	" 1 - dest org name, ex: 'reed (segment)'
-	" 2 - target /src/ dir, ex: /tmp/gvim-deployment/SForce/src
+	" # Command line parameters
+	" # 1 - dest org name, ex: "org (sandbox1)" 
+	" #     used to obtain access details and as target folder name (if alternateOrgFolder is not specified)
+	" # 2 - path to folder with *.property files which contain SFDC orgs
+	" access
+	" # 3 - path to SFDC project folder
+	" # 4 - Action: "deploy" or "refresh", empty means "deploy"
+	"
 
 	let makeSript = apexOs#getDeployShellScriptPath(s:PLUGIN_FOLDER)
 	" http://www.linuxquestions.org/questions/linux-software-2/bash-how-to-redirect-output-to-file-and-still-have-it-on-screen-412611/
@@ -412,8 +429,8 @@ endfunction
 function! s:prepareApexPackage(filePath, mode)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
-	echo "path=" . projectPair.path
-	echo "name=" . projectPair.name
+	echo "project.path='" . projectPair.path . "'"
+	echo "project.name='" . projectPair.name . "'"
 
 
 	let type = 'changed'
