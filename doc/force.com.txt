@@ -141,9 +141,9 @@ if has("win32")
 			" full path required here, relative may not work
 			let g:apex_properties_folder="c:\\temp\\vim-force.com-tests\\secure-properties"
 		endif
+		let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
+		let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
 endif	
-let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
-let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
 """""""""""""""""""""" end config example """"""""""""""""""""""""""""""""""""
 
 
@@ -319,6 +319,7 @@ Required MS Windows only
 
 Optional
 |'g:apex_diff_cmd'|                 path to file comparison tool
+|'g:apex_ctags_cmd'|                path to exuberant ctags 
 |'g:apex_syntax_case_sensitive'|	defines whether Apex syntax highlighting is case sensitive 
 |'g:apex_API_version'|				force.com API version to use when create new files, ex: 25.0
 
@@ -402,6 +403,18 @@ ex:
 	let g:apex_diff_cmd="/usr/bin/meld"
 
 If undefined then internal vimdiff will be used
+
+                                                             *'g:apex_ctags_cmd'*
+/path/to/exuberant/ctags/binary
+ex:
+	let g:apex_ctags_cmd="/usr/local/bin/ctags"
+
+If undefined then first available ctags binary will be used for tag generation
+
+if ctags used to generate tag files then it is useful to add to your ~/.ctags file
+following line:
+--langmap=java:+.cls.trigger
+this way we tell ctags to process Apex classes and triggers as Java files
 
                                                 *'g:apex_syntax_case_sensitive'*
 Use this variable to specify that Apex classes and triggers shall use case sensitive
