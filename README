@@ -117,24 +117,24 @@ runtime ftdetect/apexcode.vim
 
 
 if has("win32")
-		if !exists("g:apex_backup_folder")
-			" full path required here, relative may not work
-			let g:apex_backup_folder="c:\\temp\\apex\\backup"
-		endif
-		if !exists("g:apex_temp_folder")
-			" full path required here, relative may not work
-			let g:apex_temp_folder="c:\\temp\\apex\\gvim-deployment"
-		endif
-		if !exists("g:apex_deployment_error_log")
-			let g:apex_deployment_error_log="gvim-deployment-error.log"
-		endif
-		if !exists("g:apex_properties_folder")
-			" full path required here, relative may not work
-			let g:apex_properties_folder="c:\\temp\\vim-force.com-tests\\secure-properties"
-		endif
+	if !exists("g:apex_backup_folder")
+		" full path required here, relative may not work
+		let g:apex_backup_folder="c:\\temp\\apex\\backup"
+	endif
+	if !exists("g:apex_temp_folder")
+		" full path required here, relative may not work
+		let g:apex_temp_folder="c:\\temp\\apex\\gvim-deployment"
+	endif
+	if !exists("g:apex_deployment_error_log")
+		let g:apex_deployment_error_log="gvim-deployment-error.log"
+	endif
+	if !exists("g:apex_properties_folder")
+		" full path required here, relative may not work
+		let g:apex_properties_folder="c:\\temp\\vim-force.com-tests\\secure-properties"
+	endif
+	let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
+	let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
 endif	
-let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
-let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
 """""""""""""""""""""" end config example """"""""""""""""""""""""""""""""""""
 
 
