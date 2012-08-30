@@ -215,6 +215,7 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexDeploy|                        deploy project to SFDC
 |ApexDeployConfirm|                 deploy with confirmation for each file
 |ApexDeployOpen|                    deploy all open files
+|ApexDeployAll|						deploy all files in current project *EXPERIMENTAL*
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
 |ApexPrintChanged|                  display all modified files
@@ -258,8 +259,18 @@ Plugin also defines keyboard shortcut F11 which calls :ApexDeploy and works
 in 'normal' and 'insert' modes
 
                                                             *ApexDeployConfirm*
-As opposite to |ApexDeploy| with |ApexDeployConfirm| system will ask for confirmation
+As opposed to |ApexDeploy| with |ApexDeployConfirm| system will ask for confirmation
 to deploy every modified file to SFDC
+
+															*ApexDeployAll*
+Deploy all files in current project.  This feature works reasonably well with
+code files, custom labels, page layouts and many other metadata types but
+suffers from the same limitations as salesforce library for Ant. 
+For example - it will not create new Profiles. If profile already exist then it
+will complain that it can not rename it, even if you are not trying to rename.
+If there are Objects and Workflows in current project then SFDC may complain
+that Objects have to be created before workflows, even if all objects already
+exist in SFDC.
 
                                                             *ApexDeployOpen*
 Deploy/Save to SFDC all files open in current vim instance

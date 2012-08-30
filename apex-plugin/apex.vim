@@ -8,7 +8,7 @@
 "            notice is copied with it. Like anything else that's free,
 "            this plugin is provided *as is* and comes with no warranty of any
 "            kind, either expressed or implied. In no event will the copyright
-"            holder be liable for any damamges resulting from the use of this
+"            holder be liable for any damages resulting from the use of this
 "            software.
 " apex.vim - main methods dealing with Project file synchronisation with SFDC
 
@@ -44,11 +44,12 @@ let s:PLUGIN_FOLDER = expand("<sfile>:h")
 "
 " param 1: (optional) path to file which belongs to apex project which needs
 " to be deployed
-" param 2: (optional) 'open|confirm|changed' - 
+" param 2: (optional) 'open|confirm|changed|all' - 
 "			'open' - deploy only files from currently open Tabs or Buffers (if
 "			less than 2 tabs open)
 "			'confirm' - all changed files with confirmation for every file
 "			'changed' - all changed files
+"			'all' - all files under ./src folder
 function! apex#MakeProject(...)
 	let filePath = expand("%:p")
 	let mode = 'modified'
@@ -56,26 +57,47 @@ function! apex#MakeProject(...)
 		let filePath = a:1
 	endif
 
-	if a:0 >1 && index(['open', 'modified', 'confirm'], a:2) >= 0
+	if a:0 >1 && index(['open', 'modified', 'confirm', 'all'], a:2) >= 0
 		let mode = a:2
 	endif
-	" prepare pack
-	"			{project: "project name", 
-	"			 preparedSrcPath: "/path/to/prepared/src", 
-	"			 projectPath: "/path/to/original/Project/",
-	"			 timeMap: {"classes/MyClass.cls-meta.xml": src-time}}
-	let projectDescriptor = s:prepareApexPackage(filePath, mode)
-	if len(projectDescriptor) <=0 
-		echomsg "Nothing to deploy"
-		return 0
-	endif
 
-
-	let preparedTempProjectPath = apexOs#removeTrailingPathSeparator(apexOs#splitPath(projectDescriptor.preparedSrcPath).head)
 	let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
+	let projectName = ''
+	let projectPath = ''
 
+	if 'all' != mode
+		" prepare pack
+		"			{project: "project name", 
+		"			 preparedSrcPath: "/path/to/prepared/src", 
+		"			 projectPath: "/path/to/original/Project/",
+		"			 timeMap: {"classes/MyClass.cls-meta.xml": src-time}}
+		let projectDescriptor = s:prepareApexPackage(filePath, mode)
+		if len(projectDescriptor) <=0 
+			echomsg "Nothing to deploy"
+			return 0
+		endif
+
+
+		let preparedTempProjectPath = apexOs#removeTrailingPathSeparator(apexOs#splitPath(projectDescriptor.preparedSrcPath).head)
+		let projectName = projectDescriptor.project
+		let projectPath = projectDescriptor.projectPath
+
+
+		" copy package XML into the work folder
+		call apexOs#copyFile(apexOs#joinPath([projectPath, s:SRC_DIR_NAME, "package.xml"]),  apexOs#joinPath([projectDescriptor.preparedSrcPath, 'package.xml']))
+
+	else
+		" deploy project in its entirety regardless of 'modified' files status
+		let projectPair = apex#getSFDCProjectPathAndName(filePath)
+		let projectPath = projectPair.path
+		let projectName = projectPair.name
+		"echo "project.path='" . projectPair.path . "'"
+		"echo "project.name='" . projectPair.name . "'"
+		let preparedTempProjectPath = projectPath
+	endif
+	
 	" check that 'project name.properties' file with login credential exists
-	let projectPropertiesPath = apexOs#joinPath([propertiesFolder, projectDescriptor.project]) . ".properties"
+	let projectPropertiesPath = apexOs#joinPath([propertiesFolder, projectName]) . ".properties"
 	if !filereadable(projectPropertiesPath)
 		echohl ErrorMsg
 		echomsg "'" . projectPropertiesPath . "' file used by ANT to retrieve login credentials is not readable"
@@ -83,10 +105,6 @@ function! apex#MakeProject(...)
 		echohl None 
 		return 1
 	endif
-
-	" copy package XML into the work folder
-	call apexOs#copyFile(apexOs#joinPath([projectDescriptor.projectPath, s:SRC_DIR_NAME, "package.xml"]),  apexOs#joinPath([projectDescriptor.preparedSrcPath, 'package.xml']))
-
 
 	let ANT_ERROR_LOG = apexOs#joinPath([apexOs#getTempFolder(), g:apex_deployment_error_log])
 
@@ -103,13 +121,13 @@ function! apex#MakeProject(...)
 	" http://www.linuxquestions.org/questions/linux-software-2/bash-how-to-redirect-output-to-file-and-still-have-it-on-screen-412611/
 	" First copy stderr to stdout, then use tee to copy stdout to a file:
 	" script.sh 2>&1 |tee out.log
-	let antCommand = makeSript ."\ ".shellescape(projectDescriptor.project)."\ ".shellescape(propertiesFolder)."\ ".shellescape(preparedTempProjectPath) ." deploy 2>&1 |".g:apex_binary_tee." ".shellescape(ANT_ERROR_LOG)
+	let antCommand = makeSript ."\ ".shellescape(projectName)."\ ".shellescape(propertiesFolder)."\ ".shellescape(preparedTempProjectPath) ." deploy 2>&1 |".g:apex_binary_tee." ".shellescape(ANT_ERROR_LOG)
 	"echo "antCommand=".antCommand
 	"call input("antCommand=")
     call apexOs#exe(antCommand)
 	" check if BUILD FAILED
-	let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectDescriptor.projectPath, s:SRC_DIR_NAME]))
-	if result == 0
+	let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
+	if result == 0 && 'all' != mode
 		" no errors found, mark files as deployed
 		for metaFilePath in keys(projectDescriptor.timeMap)
 			call apexOs#setftime(metaFilePath, projectDescriptor.timeMap[metaFilePath])
@@ -471,18 +489,21 @@ endfun
 
 " prepares description (list and time) of files to be packed into deployment
 " package
-" @param: mode - 'changed' or 'open' or 'confirm' or 'onefile'
+"
+" @param: projectPath - "/path/to/current/Project/"
+" @param: type - 'open|confirm|changed'
 "	if 'changed' then prepare *only* changed files for deployment/update into SFDC 
-"	file is considered 'changed' if its last modified date does not match its
-"	-meta.xml counterpart
-"   1. Find 
+"   Find 
 "		*.trigger, 
 "		*.cls, 
 "		*.page, 
 "		*.scf, 
 "		*.resource 
 "		*.component
-"		files where <full-file-name>-meta.xml is older than actual source file
+"	files where <full-file-name>-meta.xml is older than actual source file
+"	File is considered 'changed' if its last modified date does not match its
+"	'-meta.xml' counterpart
+"
 " @param: filePath - path to a single file, used only with mode=='onefile'
 " @return: {'filesByFolder': {'folder-name' : [files list]}, 
 "			'timeMap': {"classes/MyClass.cls-meta.xml": src-time} }
