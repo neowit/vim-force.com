@@ -10,9 +10,9 @@ force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 
 |force.com-usage|         Usage
     |apex-project-setup|  creating new force.com project
-		|apex-with-eclipse|      using alongside Eclipse IDE
-		|apex-plugin-standalone| using without Eclipse
-	|apex-commands|       supported commands
+        |apex-with-eclipse|      using alongside Eclipse IDE
+        |apex-plugin-standalone| using without Eclipse
+    |apex-commands|       supported commands
 
 |force.com-settings|      Settings
 	|force.com-shortcuts-example| example of recommended keyboard shortcuts
@@ -215,7 +215,7 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexDeploy|                        deploy project to SFDC
 |ApexDeployConfirm|                 deploy with confirmation for each file
 |ApexDeployOpen|                    deploy all open files
-|ApexDeployAll|						deploy all files in current project *EXPERIMENTAL*
+|ApexDeployAll|                     deploy all files in current project EXPERIMENTAL
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
 |ApexPrintChanged|                  display all modified files
@@ -225,7 +225,7 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexTListToggle|                   toggle taglist (works if 'taglist' plugin 
                                     is installed)
 
-|ApexNewFile|						create new file
+|ApexNewFile|                       create new file
 
                                                                   *ApexCompare*
 Imagine you have 2 sandboxes of the same Org and want to compare current file
@@ -262,7 +262,10 @@ in 'normal' and 'insert' modes
 As opposed to |ApexDeploy| with |ApexDeployConfirm| system will ask for confirmation
 to deploy every modified file to SFDC
 
-															*ApexDeployAll*
+                                                            *ApexDeployOpen*
+Deploy/Save to SFDC all files open in current vim instance
+
+                                                            *ApexDeployAll*
 Deploy all files in current project.  This feature works reasonably well with
 code files, custom labels, page layouts and many other metadata types but
 suffers from the same limitations as salesforce library for Ant. 
@@ -271,9 +274,6 @@ will complain that it can not rename it, even if you are not trying to rename.
 If there are Objects and Workflows in current project then SFDC may complain
 that Objects have to be created before workflows, even if all objects already
 exist in SFDC.
-
-                                                            *ApexDeployOpen*
-Deploy/Save to SFDC all files open in current vim instance
 
                                                             *ApexGitInit*
 If git is available then :ApexGitInit can be used to initialise new git
@@ -301,7 +301,7 @@ i.e. every time when Taglist is called set filetype=apexcode temporarely
 and then revert back to what it was 
 See apexcode.vim s:Apex_TList_Toggle() method for more details
 
-																*ApexNewFile*
+                                                            *ApexNewFile*
 Invoke file types menu and create Apex file (class, trigger, etc). 
 Not all files currently supported.
 File will be greated with API version defined by |g:apex_API_version| variable
