@@ -87,6 +87,29 @@ call s:let('g:apex_API_version', '25.0')
 """""""""""""""""""""""""""""""""""""""""""""""
 " OS Dependent methods
 """""""""""""""""""""""""""""""""""""""""""""""
+function! apexOs#browsedir(prompt, startDir)
+	let fPath = getcwd()
+	let prompt = 'Select Folder'
+	if len(a:prompt) >0
+		let prompt = a:prompt
+	endif
+	if len(a:startDir) >0
+		let fPath = a:startDir
+	endif
+	if has("macunix")
+		" in current version of MacVim buil-in function browsedir() produces
+		" file selection dialogue instead of folder selection, so have to use osascript instead
+		let strCommand ='osascript  -e "tell application \"Finder\"" -e "activate" -e "set fpath to POSIX path of (choose folder default location \"'.fPath.'\" with prompt \"'.prompt.'\")" -e "return fpath" -e "end tell"'
+		let fPath=system(strCommand)
+		"clean path from new line characters returned by osascript
+		let fPath = substitute(fPath, "\n", "", "")
+	else
+		" standard built-in method
+		let fPath = browsedir(prompt, fPath)
+	endif	
+	return fPath
+endfunction	
+
 function! apexOs#getTempFolder()
 	return g:apex_temp_folder
 endfunction	
@@ -215,7 +238,7 @@ function! apexOs#glob(expr)
 endfunction
 
 
-" windows XP requires command which contains spaces to be encloused in quotes
+" windows XP requires command which contains spaces to be enclosed in quotes
 " twice, ex:
 " ""d:\my path\build.cmd" "param 1" "param 2" param3"
 "Args:
