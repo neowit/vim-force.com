@@ -10,15 +10,11 @@
 "            kind, either expressed or implied. In no event will the copyright
 "            holder be liable for any damages resulting from the use of this
 "            software.
-" various utility methods used by different parts of force.com plugin 
+"
+" Various utility methods used by different parts of force.com plugin 
 " Part of vim/force.com plugin
 "
 "
-" helper to compare current file with its counterpart in another project
-" User does not have to specify full path to another file because
-" we make major assumption that projects have equal dirrectory structure
-" The only thing which needs to be specified/selected is top/root of another
-" project
 if exists("g:loaded_apexUtil") || &compatible
   finish
 endif
@@ -134,7 +130,8 @@ function! apexUtil#compareWithPreRefreshVersion (apexBackupFolder)
 	let projectPath = projectPair.path
 	let projectName = projectPair.name
 	let backupRoot = apexOs#joinPath([a:apexBackupFolder, projectName])
-	let rightProjectPath = browsedir("Select folder fo Backup to compare with", backupRoot)
+	"let rightProjectPath = browsedir("Select folder fo Backup to compare with", backupRoot)
+	let rightProjectPath = apexOs#browsedir("Select folder from Backup to compare with", backupRoot)
 
 	if len(rightProjectPath) <1
 		"cancelled
@@ -160,7 +157,8 @@ function! apexUtil#selectCounterpartFromAnotherProject(filepath)
 	"echo "projectPair.path=".projectPair.path
 
 	let rootDir = apexOs#splitPath(projectPair.path).head
-	let rightProjectPath = browsedir("Select Root folder of the Project to compare with", rootDir)
+	"let rightProjectPath = browsedir("Select Root folder of the Project to compare with", rootDir)
+	let rightProjectPath = apexOs#browsedir('Please select project to compare with:', rootDir)
 	"echo "selected: ".rightProjectPath
 
 	if len(rightProjectPath) <1 
