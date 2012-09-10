@@ -33,10 +33,6 @@ let s:FILE_TIME_DIFF_TOLERANCE_SEC = 1 " if .cls and .cls-meta.xml file time dif
 let s:APEX_EXTENSIONS_WITH_META_XML = ['cls', 'trigger', 'page', 'scf', 'resource', 'component']
 let s:APEX_EXTENSIONS = s:APEX_EXTENSIONS_WITH_META_XML + ['labels', 'object']
 
-"get script folder
-"This has to be outside of a function or anything, otherwise it does not return
-"proper path
-let s:PLUGIN_FOLDER = expand("<sfile>:h")
 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " Apex Code Compilation
@@ -96,45 +92,20 @@ function! apex#MakeProject(...)
 		let preparedTempProjectPath = projectPath
 	endif
 	
-	" check that 'project name.properties' file with login credential exists
-	let projectPropertiesPath = apexOs#joinPath([propertiesFolder, projectName]) . ".properties"
-	if !filereadable(projectPropertiesPath)
-		echohl ErrorMsg
-		echomsg "'" . projectPropertiesPath . "' file used by ANT to retrieve login credentials is not readable"
-		echomsg "Check 'g:apex_properties_folder' variable in your ".expand($MYVIMRC)
-		echohl None 
-		return 1
+
+	let ANT_ERROR_LOG = apexAnt#deploy(projectName, projectPath)
+	if len(ANT_ERROR_LOG) > 0
+		" check if BUILD FAILED
+		let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
+		if result == 0 && 'all' != mode
+			" no errors found, mark files as deployed
+			for metaFilePath in keys(projectDescriptor.timeMap)
+				call apexOs#setftime(metaFilePath, projectDescriptor.timeMap[metaFilePath])
+				" show what files we have just deployed
+				"echo metaFilePath
+			endfor	
+		endif
 	endif
-
-	let ANT_ERROR_LOG = apexOs#joinPath([apexOs#getTempFolder(), g:apex_deployment_error_log])
-
-	" # Command line parameters
-	" # 1 - dest org name, ex: "org (sandbox1)" 
-	" #     used to obtain access details and as target folder name (if alternateOrgFolder is not specified)
-	" # 2 - path to folder with *.property files which contain SFDC orgs
-	" access
-	" # 3 - path to SFDC project folder
-	" # 4 - Action: "deploy" or "refresh", empty means "deploy"
-	"
-
-	let makeSript = apexOs#getDeployShellScriptPath(s:PLUGIN_FOLDER)
-	" http://www.linuxquestions.org/questions/linux-software-2/bash-how-to-redirect-output-to-file-and-still-have-it-on-screen-412611/
-	" First copy stderr to stdout, then use tee to copy stdout to a file:
-	" script.sh 2>&1 |tee out.log
-	let antCommand = makeSript ."\ ".shellescape(projectName)."\ ".shellescape(propertiesFolder)."\ ".shellescape(preparedTempProjectPath) ." deploy 2>&1 |".g:apex_binary_tee." ".shellescape(ANT_ERROR_LOG)
-	"echo "antCommand=".antCommand
-	"call input("antCommand=")
-    call apexOs#exe(antCommand)
-	" check if BUILD FAILED
-	let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
-	if result == 0 && 'all' != mode
-		" no errors found, mark files as deployed
-		for metaFilePath in keys(projectDescriptor.timeMap)
-			call apexOs#setftime(metaFilePath, projectDescriptor.timeMap[metaFilePath])
-			" show what files we have just deployed
-			"echo metaFilePath
-		endfor	
-	endif	
 
 	return result
 endfun
@@ -215,19 +186,13 @@ function! apex#refreshProject()
 		endif	
 	endif	
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
-	let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
+	"let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
 
     echo "using '".projectPair.name.".properties'"." for project '".projectPair.path."'"
 	" backup files
 	call s:backupOpenFiles(projectPair.path, projectPair.name)
-
-    let scriptPath = apexOs#getRefreshShellScriptPath(s:PLUGIN_FOLDER)
-
-    let command = scriptPath ." ". shellescape(projectPair.name)."\ ".shellescape(propertiesFolder)." ". shellescape(apexOs#removeTrailingPathSeparator(projectPair.path))." refresh"
-
-    ":exe "!".command
-    call apexOs#exe(command)
-"    :echo command    
+	" execute ant job
+	let ANT_ERROR_LOG = apexAnt#refresh(projectPair.name, projectPair.path)
 endfun
 
 " refresh a single file from SFDC
@@ -256,11 +221,9 @@ function! apex#refreshFile(filePath)
 	" copy package XML into the work folder
 	call apexOs#copyFile(apexOs#joinPath([projectDescriptor.projectPath, s:SRC_DIR_NAME, "package.xml"]), apexOs#joinPath([projectDescriptor.preparedSrcPath, 'package.xml']))
 
-    let scriptPath = apexOs#getRefreshShellScriptPath(s:PLUGIN_FOLDER)
-
-    let command = scriptPath ." ". shellescape(projectDescriptor.project)."\ ".shellescape(propertiesFolder) ." ". shellescape(apexOs#removeTrailingPathSeparator(preparedTempProjectPath))." refresh"
-
-    call apexOs#exe(command)
+	
+	" execute ant job
+	let ANT_ERROR_LOG = apexAnt#refresh(projectDescriptor.project, preparedTempProjectPath)
 
 	" assuming no error hapenned copy refreshed file back to Project
 	" timeMap: {"classes/MyClass.cls-meta.xml": src-time}
