@@ -184,15 +184,16 @@ endfun
 
 " param: path to this (apex.vim) script
 " return full path of the script to run for SFDC org refresh
-function! apexOs#getRefreshShellScriptPath(apexPluginFolderPath)
-	if has("unix")
-		return shellescape(apexUtil#joinPath([a:apexPluginFolderPath, "build.sh"]))
-	elseif s:is_windows 
-		return shellescape(apexUtil#joinPath([a:apexPluginFolderPath, "build.cmd"]))
-	else
-		echoerr "not implemented"
-	endif	
-endfun	
+"function! apexOs#getRefreshShellScriptPath(apexPluginFolderPath)
+"	if has("unix")
+"		return shellescape(apexUtil#joinPath([a:apexPluginFolderPath, "build.sh"]))
+"	elseif s:is_windows 
+"		return shellescape(apexUtil#joinPath([a:apexPluginFolderPath, "build.cmd"]))
+"	else
+"		echoerr "not implemented"
+"	endif	
+"endfun	
+
 " param: path to this (apex.vim) script
 " return full path of the script to run for SFDC org deploy
 function! apexOs#getDeployShellScriptPath(apexPluginFolderPath)
