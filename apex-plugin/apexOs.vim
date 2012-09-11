@@ -148,16 +148,28 @@ function! apexOs#createDir(path)
 	endif
 endfunction
 
+" standard fnameescape() function does not escape all necessary characters,
+" e.g. ( and ) have to be escaped on OSX but they do not get escaped with
+" standard fnameescape() function, so have to use custom function
+" TODO - test on win32
+function! apexOs#fnameescape(fname)
+	if has("macunix")
+		return escape(a:fname, " \t\n*?[{`$\\%#'\"|!<()")
+	elseif s:is_windows
+		return GetWin32ShortName(a:fname)
+	endif
+	return fnameescape(a:fname)
+endfunction
 " 
 " Os dependent file copy
 function! apexOs#copyFile(srcPath, destPath)
-	let sourcePath = shellescape(a:srcPath)
-	let destinationPath = shellescape(a:destPath)
+	let sourcePath = apexOs#fnameescape(a:srcPath)
+	let destinationPath = apexOs#fnameescape(a:destPath)
 	if has("unix")
-		"echo "copy from:" . sourcePath . " to ".destinationPath
+		"echo "cp " . sourcePath . " " . destinationPath
 		silent exe "!cp " . sourcePath . " " . destinationPath
 	elseif s:is_windows
-		silent exe "!copy " . GetWin32ShortName(sourcePath) . " " . GetWin32ShortName(destinationPath)
+		silent exe "!copy " . sourcePath . " " . destinationPath
 	else
 		echoerr "Not implemented"
 	endif
