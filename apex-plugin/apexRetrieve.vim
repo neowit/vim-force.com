@@ -21,19 +21,18 @@ endif
 "let g:loaded_apex_retrieve = 1
 
 let s:header = [
-  \ " || vim-force.com plugin",
-  \ " || mark/select types to retrieve, then give command :ApexRetrieve" ,
-  \ " || t=toggle Select/Deselect, e=expand current",
-  \ " || :Expand = expand all selected",
-  \ " || :Retrieve = retrieve selected types into the project folder",
-  \ " ============================================================================="
+  \ "|| vim-force.com plugin",
+  \ "|| Select types to retrieve, then issue command :Retrieve" ,
+  \ "|| t=toggle Select/Deselect",
+  \ "|| :Retrieve = retrieve selected types into the project folder",
+  \ "============================================================================="
   \ ]
 let s:headerLineCount = len(s:header)  
 
 let s:MARK_SELECTED = "*"
 let s:HIERARCHY_SHIFT = "--"
 
-let s:ALL_METADATA_LIST_FILE = "all-meta-types.txt"
+let s:ALL_METADATA_LIST_FILE = "describeMetadata-result.txt"
 let s:CACHE_FOLDER_NAME = ".vim-force.com"
 
 let b:PROJECT_NAME = ""
@@ -47,29 +46,38 @@ let s:CACHED_META_TYPES = {}
 " open existing or load new file with metadata types
 " retrieved list of supported metadata types is stored
 " in ./vim-force.com folder under project root, next to ./src/
-function! apexRetrieve#open(projectName, projectPath)
+"
+" param: filePath - path to any source file in force.com project structure
+function! apexRetrieve#open(filePath)
+	
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectName = projectPair.name
+	let projectPath = projectPair.path
 
 	" check if buffer with file types already exist
 	if exists("g:APEX_META_TYPES_BUF_NUM") && bufloaded(g:APEX_META_TYPES_BUF_NUM)
 		execute 'b '.g:APEX_META_TYPES_BUF_NUM
 	else "load types list and create new buffer
-		let metaTypes = s:getMetaTypesList(a:projectName, a:projectPath, 0)
+		let metaTypes = s:getMetaTypesList(projectName, projectPath, 0)
 		if len(metaTypes) < 1
 			"file does not exist, and load was abandoned
 			return ""
 		endif
 
-		new
+		enew
 		setlocal buftype=nofile
 		setlocal bufhidden=hide " when user switches to another buffer, just hide meta buffer but do not delete
-		setlocal nowrite
+		"TODO figure out why (nowrite) setlocal settings also apply to buffer from
+		"which ApexRetrieve was called
+		"setlocal nowrite
 		setlocal modifiable
 		setlocal noswapfile
+		setlocal nobuflisted
 
 		"initialise variables
-		let b:PROJECT_NAME = a:projectName
-		let b:PROJECT_PATH = a:projectPath
-		let b:SRC_PATH = apexOs#joinPath([a:projectPath, "src"])
+		let b:PROJECT_NAME = projectName
+		let b:PROJECT_PATH = projectPath
+		let b:SRC_PATH = apexOs#joinPath([projectPath, "src"])
 		let g:APEX_META_TYPES_BUF_NUM = bufnr("%")
 
 		" load header and types list
@@ -86,9 +94,9 @@ function! apexRetrieve#open(projectName, projectPath)
 
 		" Define key mapping for current buffer
 		exec 'nnoremap <buffer> <silent> t :call <SNR>'.s:sid.'_ToggleSelected()<CR>'
-		exec 'nnoremap <buffer> <silent> e :call <SNR>'.s:sid.'_ExpandCurrent()<CR>'
+		"exec 'nnoremap <buffer> <silent> e :call <SNR>'.s:sid.'_ExpandCurrent()<CR>'
 		" Define commands for current buffer
-		exec 'command! -buffer -bang -nargs=0 Expand :call <SNR>'.s:sid.'_ExpandSelected()'
+		"exec 'command! -buffer -bang -nargs=0 Expand :call <SNR>'.s:sid.'_ExpandSelected()'
 		exec 'command! -buffer -bang -nargs=0 Retrieve :call <SNR>'.s:sid.'_RetrieveSelected()'
 
 	endif
@@ -172,43 +180,66 @@ function! <SID>RetrieveSelected()
 		"echo sourceFiles
 		" copy files from loaded folder into project/src/dir-name folder checking
 		" that we do not overwrite anything without user's permission
-		let allConfirmed = 0
-		for fPath in sourceFiles
-			let fName = apexOs#splitPath(fPath).tail
-			let targetFilePath = apexOs#joinPath([targetFolder, fName])
-			"echo "check ".targetFilePath
-			if filereadable(targetFilePath)
-				" compare sizes
-				let sourceSize = getfsize(fPath)
-				let targetSize = getfsize(targetFilePath)
-				if !allConfirmed && sourceSize != targetSize
-					while 1
-						let response = input('File '.dirName.'/'.fName.' already exists. New file size='.sourceSize. ', Existing file size=' .targetSize. '. Overwrite (Y)es / (N)o / all / (A)bort ? ')
-						if index(['a', 'A', 'y', 'Y', 'n', 'N', 'all'], response) >= 0
-							break " good answer, can continue
+		
+		if len(sourceFiles) < 1
+			call apexUtil#warning(l:type . " has no members. SKIP.")
+		else	
+			" check that target folder exists
+			if !isdirectory(targetFolder)
+				call apexOs#createDir(targetFolder)
+			endif
+
+			let allConfirmed = 0
+			for fPath in sourceFiles
+				let fName = apexOs#splitPath(fPath).tail
+				let targetFilePath = apexOs#joinPath([targetFolder, fName])
+				"echo "check ".targetFilePath
+				if filereadable(targetFilePath)
+					" compare sizes
+					let sourceSize = getfsize(fPath)
+					let targetSize = getfsize(targetFilePath)
+					if !allConfirmed && sourceSize != targetSize
+						while 1
+							echo " "
+							call apexUtil#warning('File '.dirName.'/'.fName.' already exists.')
+							echo 'New file size=' . sourceSize . ', Existing file size=' . targetSize
+							let response = input('Overwrite (Y)es / (N)o / all / (A)bort / (C)ompare ? ')
+							if index(['a', 'A', 'y', 'Y', 'n', 'N', 'all'], response) >= 0
+								break " good answer, can continue with the main logic
+							else
+								if 'c' ==? response
+									"run file comparison tool
+									call ApexCompare(fPath, targetFilePath)
+								else
+									echo "\n"
+									call apexUtil#warning("Permitted answers are: Y/N/A/all")
+								endif
+							endif	
+						endwhile
+						if 'a' ==? response
+							"abort
+							break
+						elseif 'y' ==? response
+							" proceed with overwrite
+						elseif 'n' ==? response
+							continue
+						elseif 'all' ==? response
+							" proceed with overwrite of all files
+							let allConfirmed = 1
 						else
-							echo "\n"
-							call apexUtil#warning("Permitted answers are: Y/N/A/all")
+							call apexUtil#warning("Something unexpected has happened. Aborting...")
+							return
 						endif	
-					endwhile
-					if 'a' ==? response
-						"abort
-						break
-					elseif 'y' ==? response
-						" proceed with overwrite
-					elseif 'n' ==? response
-						continue
-					elseif 'all' ==? response
-						" proceed with overwrite of all files
-						let allConfirmed = 1
-					else
-						call apexUtil#warning("Something unexpected has happened. Aborting...")
-						return
-					endif	
+					endif
+				endif	
+				call apexOs#copyFile(fPath, targetFilePath)
+				" check if copy succeeded
+				if !filereadable(targetFilePath)
+					echoerr "Something went wrong, failed to write file ".targetFilePath.". Process aborted."
 				endif
-			endif	
-			call apexOs#copyFile(fPath, targetFilePath)
-		endfor
+
+			endfor
+		endif "len(sourceFiles) < 1
 	endfor
 endfunction
 
@@ -229,7 +260,7 @@ function! s:setCurrentLine(line)
 endfunction
 
 function! s:getSelectedTypes()
-	let lines = getline(1, line("$"))
+	let lines = getline(s:headerLineCount +1, line("$"))
 	let selectedLines = []
 	"let l:count = 0
 
