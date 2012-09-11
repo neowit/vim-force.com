@@ -39,6 +39,12 @@ endfunction
 function! apexAnt#listMetadata(projectName, projectFolder, outputFilePath, metadataType)
 	return apexAnt#execute("listMetadata", a:projectName, a:projectFolder, a:outputFilePath, a:metadataType)
 endfunction
+" bulk retrieve all metadata components of a given type
+function! apexAnt#bulkRetrieve(projectName, projectFolder, metadataType)
+	let outputDir = apexOs#createTempDir()
+	call apexAnt#execute("bulkRetrieve", a:projectName, a:projectFolder, outputDir, a:metadataType)
+	return outputDir
+endfunction
 
 " param: command - deploy|refresh|describe
 " 
@@ -91,6 +97,19 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		let outputFilePath = a:1
 		let metadataType = a:2
 		let antCommand = antCommand . " -Dresult.file.path=" . shellescape(outputFilePath). " -DmetadataType=" . shellescape(metadataType) . " listMetadata"
+	elseif "bulkRetrieve" == a:command
+		" get detail information about metadata components of a given type
+		if a:0 < 1 || len(a:1) < 1
+			echoerr "missing output folder path parameter"
+			return ""
+		endif
+		if a:0 < 2 || len(a:2) < 1
+			echoerr "missing metadata type parameter"
+			return ""
+		endif
+		let outputFolderPath = a:1
+		let metadataType = a:2
+		let antCommand = antCommand . " -DretrieveOutputDir=" . shellescape(outputFolderPath). " -DmetadataType=" . shellescape(metadataType) . " bulkRetrieve"
 	else
 		echoerr "Unsupported command".a:command
 	endif

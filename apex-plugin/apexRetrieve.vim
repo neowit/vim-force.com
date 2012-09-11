@@ -43,6 +43,244 @@ let b:PROJECT_PATH = ""
 let s:CACHED_META_TYPES = {} 
 
 
+
+function! apexRetrieve#getCachedMetMap()
+	if len(s:CACHED_META_TYPES) < 1
+		" need to initialise the map
+	
+	endif
+	return s:CACHED_META_TYPES
+endfunction
+
+
+" open existing or load new file with metadata types
+" retrieved list of supported metadata types is stored
+" in ./vim-force.com folder under project root, next to ./src/
+function! apexRetrieve#open(projectName, projectPath)
+
+	" check if buffer with file types already exist
+	if exists("g:APEX_META_TYPES_BUF_NUM") && bufloaded(g:APEX_META_TYPES_BUF_NUM)
+		execute 'b '.g:APEX_META_TYPES_BUF_NUM
+	else "load types list and create new buffer
+		let metaTypes = s:getMetaTypesList(a:projectName, a:projectPath, 0)
+		if len(metaTypes) < 1
+			"file does not exist, and load was abandoned
+			return ""
+		endif
+
+		new
+		setlocal buftype=nofile
+		setlocal bufhidden=hide " when user switches to another buffer, just hide meta buffer but do not delete
+		setlocal nowrite
+		setlocal modifiable
+		setlocal noswapfile
+
+		"initialise variables
+		let b:PROJECT_NAME = a:projectName
+		let b:PROJECT_PATH = a:projectPath
+		let g:APEX_META_TYPES_BUF_NUM = bufnr("%")
+
+		" load header and types list
+		let i = 0
+		while i < s:headerLineCount
+			call setline(i+1, s:header[i])
+			let i += 1
+		endwhile
+
+		for type in metaTypes
+			call setline(i+1, type)
+			let i += 1
+		endfor
+
+		" Define key mapping for current buffer
+		exec 'nnoremap <buffer> <silent> t :call <SNR>'.s:sid.'_ToggleSelected()<CR>'
+		exec 'nnoremap <buffer> <silent> e :call <SNR>'.s:sid.'_ExpandCurrent()<CR>'
+		" Define commands for current buffer
+		exec 'command! -buffer -bang -nargs=0 Expand :call <SNR>'.s:sid.'_ExpandSelected()'
+		exec 'command! -buffer -bang -nargs=0 Retrieve :call <SNR>'.s:sid.'_RetrieveSelected()'
+
+	endif
+
+endfunction
+
+" mark entry as Selected/Deselected
+function! <SID>ToggleSelected()
+  " Toggle type selection
+	" let lineNum = line('.')
+	" let lineStr = getline(lineNum)
+	let lineStr = s:getCurrentLine()
+	if s:isSelected(lineStr)
+		"remove mark
+		let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
+	else
+		"add mark
+		let lineStr = s:MARK_SELECTED . lineStr
+	endif
+	call s:setCurrentLine(lineStr)
+endfunction
+
+" retrieve children of selected component
+" get detail information about metadata components of selected type
+function! <SID>ExpandCurrent()
+	echo "load children of current line"
+
+	let lineNum = line('.')
+	let lineStr = s:getCurrentLine()
+	"remove mark if exist
+	let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
+	let typeName = apexUtil#trim(lineStr)
+
+	" load children of given metadata type
+	let tmpfile = tempname()
+	call apexAnt#listMetadata(b:PROJECT_NAME, b:PROJECT_PATH, tmpfile, lineStr)
+	if !filereadable(tmpfile)
+		call apexUtil#warning( "No subtypes of ".lineStr." found.")
+		return
+	endif	
+	" parse returned file into manageable format
+	let typesMap = s:parseListMetadataResult(typeName, tmpfile)
+	if len(typesMap) > 0
+		let typesList = sort(keys(typesMap))
+		let shiftedList = []
+		" append types below current
+		for curType in typesList
+			call add(shiftedList, s:HIERARCHY_SHIFT . curType)
+		endfor
+		call append(lineNum, shiftedList)
+	endif
+endfunction
+
+function! <SID>ExpandSelected()
+	echo "Expand children of all selected items"
+	let selectedLines = s:getSelectedTypes()
+	if len(selectedLines) >0
+		"insert child types of selected lines into buffer
+	endif
+endfunction
+
+" retrieve components of all selected metadata types
+function! <SID>RetrieveSelected()
+	echo "Retrieve all selected items"
+	let selectedTypes = s:getSelectedTypes()
+	for l:type in selectedTypes
+
+		let outputDir = apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, l:type)
+		echo "outputDir=".outputDir
+		" TODO now we need to sort out current type before downloading the next one
+		" because target temp folder will be overwritten
+	endfor
+endfunction
+
+function! s:isSelected(lineStr)
+	let markIndex = stridx(a:lineStr, s:MARK_SELECTED)
+	return markIndex >= 0
+endfunction
+
+function! s:getCurrentLine()
+	let lineNum = line('.')
+	let lineStr = getline(lineNum)
+	return lineStr
+endfunction
+
+function! s:setCurrentLine(line)
+	let lineNum = line('.')
+	let lineStr = setline(lineNum, a:line)
+endfunction
+
+function! s:getSelectedTypes()
+	let lines = getline(1, line("$"))
+	let selectedLines = []
+	"let l:count = 0
+
+	for line in lines
+		"echo "line=".line
+		if s:isSelected(line)
+			let line = substitute(line, s:MARK_SELECTED, "", "")
+			"echo "selected line=".line
+			let selectedLines = add(selectedLines, line)
+		endif
+		"let l:count = l:count +1
+	endfor
+	return selectedLines
+endfunction
+
+function! s:SID()
+  " Return the SID number for a file
+  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+endfun
+let s:sid = s:SID()
+
+"
+"return: map of types which looks like this
+" assuming metadataType = CustomObject
+" {
+" 'Activity': {FileName: 'objects/Activity.object', 'Manageable State': 'null'},
+" 'Group_subsidiary__c': {FileName: ' objects/Group_subsidiary__c.object', 'Manageable State': 'unmanaged'},
+" ...
+" }
+"
+function! s:parseListMetadataResult(metadataType, fname)
+	let l:metaMap = {}
+	let typeDef = s:CACHED_META_TYPES[a:metadataType]
+	if len(typeDef) < 1
+		echoerr "list of supported metadata types has not been loaded."
+		return {}
+	endif
+
+	let dirName = typeDef["DirName"]
+	let suffix = typeDef["Suffix"]
+
+	"result of 'listMetadata' looks like this
+	"
+	"************************************************************
+	"FileName: objects/Activity.object
+	"FullName/Id: Activity/
+	"Manageable State: null
+	"Namespace Prefix: 
+	"Created By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
+	"Last Modified By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
+	"************************************************************
+	"************************************************************
+	"FileName: objects/Group_subsidiary__c.object
+	"FullName/Id: Group_subsidiary__c/01I600000005JyoEAE
+	"Manageable State: unmanaged
+	"Namespace Prefix: null
+	"Created By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
+	"Last Modified By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
+	"************************************************************
+	
+	for line in readfile(a:fname, '', 10000) " assuming metadata types file will never contain more than 10K lines
+		"echo "line=".line
+		let items = split(line, ':')
+		if len(items) < 2
+			continue
+		endif
+
+		let key = apexUtil#trim(items[0])
+		let value = apexUtil#trim(items[1])
+
+		if "FileName" == key
+			" initialise new type
+			" remove dir name
+			let name = substitute(value, "^".dirName."/", "", "") " start from the beginning
+			" remove file extension name
+			let name = substitute(name, ".".suffix."$", "", "") " substitute only tail
+			let currentTypeName = name
+			let currentElement = {}
+			let l:metaMap[currentTypeName] = currentElement
+			let currentElement[key] = value
+			"call extend(currentElement, {key:value})
+		elseif len(value) > 0
+			let currentElement = l:metaMap[currentTypeName]
+			let currentElement[key] = value
+		endif	
+	endfor
+
+	"echo "l:metaMap=\n"
+	"echo l:metaMap
+	return l:metaMap
+endfunction
+
 " return existing or create new and return path to
 " plugin cache directory
 function! s:getCacheFolderPath(projectPath)
@@ -53,14 +291,6 @@ function! s:getCacheFolderPath(projectPath)
 		call apexOs#createDir(metaTypesFolderPath)
 	endif
 	return metaTypesFolderPath
-endfunction
-
-function! apexRetrieve#getCachedMetMap()
-	if len(s:CACHED_META_TYPES) < 1
-		" need to initialise the map
-	
-	endif
-	return s:CACHED_META_TYPES
 endfunction
 
 function! s:getMetaTypesCache(allMetaTypesFilePath)
@@ -163,224 +393,11 @@ function! s:getMetaTypesList(projectName, projectPath, forceLoad)
 	"call writefile(types, metaTypesFilePath)
 	return types
 endfunction
-
-" open existing or load new file with metadata types
-" retrieved list of supported metadata types is stored
-" in ./vim-force.com folder under project root, next to ./src/
-function! apexRetrieve#open(projectName, projectPath)
-
-	" check if buffer with file types already exist
-	if exists("g:APEX_META_TYPES_BUF_NUM") && bufloaded(g:APEX_META_TYPES_BUF_NUM)
-		execute 'b '.g:APEX_META_TYPES_BUF_NUM
-	else "load types list and create new buffer
-		let metaTypes = s:getMetaTypesList(a:projectName, a:projectPath, 0)
-		if len(metaTypes) < 1
-			"file does not exist, and load was abandoned
-			return ""
-		endif
-
-		new
-		setlocal buftype=nofile
-		setlocal bufhidden=hide " when user switches to another buffer, just hide meta buffer but do not delete
-		setlocal nowrite
-		setlocal modifiable
-		setlocal noswapfile
-
-		"initialise variables
-		let b:PROJECT_NAME = a:projectName
-		let b:PROJECT_PATH = a:projectPath
-		let g:APEX_META_TYPES_BUF_NUM = bufnr("%")
-
-		" load header and types list
-		let i = 0
-		while i < s:headerLineCount
-			call setline(i+1, s:header[i])
-			let i += 1
-		endwhile
-
-		for type in metaTypes
-			call setline(i+1, type)
-			let i += 1
-		endfor
-
-		" Define key mapping for current buffer
-		exec 'nnoremap <buffer> <silent> t :call <SNR>'.s:sid.'_ToggleSelected()<CR>'
-		exec 'nnoremap <buffer> <silent> e :call <SNR>'.s:sid.'_ExpandCurrent()<CR>'
-		" Define commands for current buffer
-		exec 'command! -buffer -bang -nargs=0 Expand :call <SNR>'.s:sid.'_ExpandSelected()'
-		exec 'command! -buffer -bang -nargs=0 Retrieve :call <SNR>'.s:sid.'_RetrieveSelected()'
-
-	endif
-
-endfunction
-
-" mark entry as Selected/Deselected
-function! <SID>ToggleSelected()
-  " Toggle type selection
-	" let lineNum = line('.')
-	" let lineStr = getline(lineNum)
-	let lineStr = s:getCurrentLine()
-	if s:isSelected(lineStr)
-		"remove mark
-		let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
-	else
-		"add mark
-		let lineStr = s:MARK_SELECTED . lineStr
-	endif
-	call s:setCurrentLine(lineStr)
-endfunction
-
-" retrieve children of selected component
-" get detail information about metadata components of selected type
-function! <SID>ExpandCurrent()
-	echo "load children of current line"
-
-	let lineNum = line('.')
-	let lineStr = s:getCurrentLine()
-	"remove mark if exist
-	let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
-	let typeName = apexUtil#trim(lineStr)
-
-	" load children of given metadata type
-	let tmpfile = tempname()
-	call apexAnt#listMetadata(b:PROJECT_NAME, b:PROJECT_PATH, tmpfile, lineStr)
-	if !filereadable(tmpfile)
-		call apexUtil#warning( "No subtypes of ".lineStr." found.")
-		return
-	endif	
-	" parse returned file into manageable format
-	let typesMap = s:parseListMetadataResult(typeName, tmpfile)
-	if len(typesMap) > 0
-		let typesList = sort(keys(typesMap))
-		let shiftedList = []
-		" append types below current
-		for curType in typesList
-			call add(shiftedList, s:HIERARCHY_SHIFT . curType)
-		endfor
-		call append(lineNum, shiftedList)
-	endif
-endfunction
-
-function! <SID>ExpandSelected()
-	echo "Expand children of all selected items"
-	let lines = getline(1, line("$"))
-	let selectedLines = []
-	"let l:count = 0
-
-	for line in lines
-		"echo "line=".line
-		if s:isSelected(line)
-			let line = substitute(line, s:MARK_SELECTED, "", "")
-			echo "selected line=".line
-			let selectedLines = add(selectedLines, line)
-		endif
-		"let l:count = l:count +1
-	endfor
-	if len(selectedLines) >0
-		"insert child types of selected lines into buffer
-	endif
-endfunction
-
-function! <SID>RetrieveSelected()
-	echo "Retrieve all selected items"
-endfunction
-
-function! s:isSelected(lineStr)
-	let markIndex = stridx(a:lineStr, s:MARK_SELECTED)
-	return markIndex >= 0
-endfunction
-
-function! s:getCurrentLine()
-	let lineNum = line('.')
-	let lineStr = getline(lineNum)
-	return lineStr
-endfunction
-
-function! s:setCurrentLine(line)
-	let lineNum = line('.')
-	let lineStr = setline(lineNum, a:line)
-endfunction
-
-function! s:SID()
-  " Return the SID number for a file
-  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
-endfun
-let s:sid = s:SID()
-
-"
-"return: map of types which looks like this
-" assuming metadataType = CustomObject
-" {
-" 'Activity': {FileName: 'objects/Activity.object', 'Manageable State': 'null'},
-" 'Group_subsidiary__c': {FileName: ' objects/Group_subsidiary__c.object', 'Manageable State': 'unmanaged'},
-" ...
-" }
-"
-function! s:parseListMetadataResult(metadataType, fname)
-	let l:metaMap = {}
-	let typeDef = s:CACHED_META_TYPES[a:metadataType]
-	if len(typeDef) < 1
-		echoerr "list of supported metadata types has not been loaded."
-		return {}
-	endif
-
-	let dirName = typeDef["DirName"]
-	let suffix = typeDef["Suffix"]
-
-	"result of 'listMetadata' looks like this
-	"
-	"************************************************************
-	"FileName: objects/Activity.object
-	"FullName/Id: Activity/
-	"Manageable State: null
-	"Namespace Prefix: 
-	"Created By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
-	"Last Modified By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
-	"************************************************************
-	"************************************************************
-	"FileName: objects/Group_subsidiary__c.object
-	"FullName/Id: Group_subsidiary__c/01I600000005JyoEAE
-	"Manageable State: unmanaged
-	"Namespace Prefix: null
-	"Created By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
-	"Last Modified By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
-	"************************************************************
-	
-	for line in readfile(a:fname, '', 10000) " assuming metadata types file will never contain more than 10K lines
-		"echo "line=".line
-		let items = split(line, ':')
-		if len(items) < 2
-			continue
-		endif
-
-		let key = apexUtil#trim(items[0])
-		let value = apexUtil#trim(items[1])
-
-		if "FileName" == key
-			" initialise new type
-			" remove dir name
-			let name = substitute(value, "^".dirName."/", "", "") " start from the beginning
-			" remove file extension name
-			let name = substitute(name, ".".suffix."$", "", "") " substitute only tail
-			let currentTypeName = name
-			let currentElement = {}
-			let l:metaMap[currentTypeName] = currentElement
-			let currentElement[key] = value
-			"call extend(currentElement, {key:value})
-		elseif len(value) > 0
-			let currentElement = l:metaMap[currentTypeName]
-			let currentElement[key] = value
-		endif	
-	endfor
-
-	"echo "l:metaMap=\n"
-	"echo l:metaMap
-	return l:metaMap
-endfunction
-
 "function! TestParseListMetadataResult(metadataType, fname)
 "	call s:parseListMetadataResult(a:metadataType, a:fname)
 "endfunction
+
+" call apexRetrieve#open("SForce", "/Users/andrey/eclipse.workspace/Sforce - SFDC Experiments/SForce")
 
 function! TestRetrieve()
 
