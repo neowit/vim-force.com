@@ -42,6 +42,9 @@ let b:SRC_PATH = ""
 "	{CustomObject: {XMLName:'CustomObject', DirName:'Objects', Suffix:'object', HasMetaFile:'false', InFolder:'false', ChildObjects:[CustomField, BusinessProcess,...]}}
 let s:CACHED_META_TYPES = {} 
 
+let s:BUFFER_NAME = 'vim-force.com Metadata Retrieve'
+
+let s:SRC_DIR_NAME='src' " TODO name of src folder is also defined in apex.vim, consider merging
 
 " open existing or load new file with metadata types
 " retrieved list of supported metadata types is stored
@@ -65,11 +68,9 @@ function! apexRetrieve#open(filePath)
 		endif
 
 		enew
+		
 		setlocal buftype=nofile
 		setlocal bufhidden=hide " when user switches to another buffer, just hide meta buffer but do not delete
-		"TODO figure out why (nowrite) setlocal settings also apply to buffer from
-		"which ApexRetrieve was called
-		"setlocal nowrite
 		setlocal modifiable
 		setlocal noswapfile
 		setlocal nobuflisted
@@ -91,6 +92,11 @@ function! apexRetrieve#open(filePath)
 			call setline(i+1, type)
 			let i += 1
 		endfor
+
+		" Set the buffer name if not already set
+		if bufname('%') != s:BUFFER_NAME
+			exec 'file ' . fnameescape(s:BUFFER_NAME)
+		endif
 
 		" Define key mapping for current buffer
 		exec 'nnoremap <buffer> <silent> t :call <SNR>'.s:sid.'_ToggleSelected()<CR>'
@@ -131,14 +137,7 @@ function! <SID>ExpandCurrent()
 	let typeName = apexUtil#trim(lineStr)
 
 	" load children of given metadata type
-	let tmpfile = tempname()
-	call apexAnt#listMetadata(b:PROJECT_NAME, b:PROJECT_PATH, tmpfile, lineStr)
-	if !filereadable(tmpfile)
-		call apexUtil#warning( "No subtypes of ".lineStr." found.")
-		return
-	endif	
-	" parse returned file into manageable format
-	let typesMap = s:parseListMetadataResult(typeName, tmpfile)
+	let typesMap = s:loadChildrenOfType(typeName)
 	if len(typesMap) > 0
 		let typesList = sort(keys(typesMap))
 		let shiftedList = []
@@ -158,13 +157,55 @@ function! <SID>ExpandSelected()
 	endif
 endfunction
 
+" for most types this method just calls apexAnt#bulkRetrieve
+" but some (like Profile and PermissionSet) require special treatment
+"
+" return: temp folder path which contains subfolder with retrieved components
+" ex: /tmp/temp
+function! s:bulkRetrieve(typeName)
+	let typeName = a:typeName
+	if index(["Profile", "PermissionSet"], typeName) < 0
+		return apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, l:type)
+	else
+		if "Profile" ==? typeName || "PermissionSet" ==? typeName
+			" The contents of a profile retrieved depends on the contents of the
+			" organization. For example, profiles will only include field-level
+			" security for fields included in custom objects returned at the same
+			" time as the profiles.
+			" we have to retrieve all object types and generate package.xml
+			" load children of given metadata type
+			let typesMap = s:loadChildrenOfType("CustomObject")
+			if len(typesMap) <=0
+				call apexUtil#warning("Somethign went wrong. There are no objects available. Abort.")
+				return ""
+			endif
+			" generate package.xml which contains Custom Objects and Profiles
+			let package = apexMetaXml#packageXmlNew()
+			let types = keys(typesMap)
+			call add(types, "*") " add <members>*</members> option
+			let package = apexMetaXml#packageXmlAdd(package, "CustomObject", types)
+			let package = apexMetaXml#packageXmlAdd(package, typeName, ['*'])
+			let tempDir = apexOs#createTempDir()
+			let srcDir = apexOs#joinPath([tempDir, s:SRC_DIR_NAME])
+			call apexOs#createDir(srcDir)
+			let packageXmlPath = apexMetaXml#packageWrite(package, srcDir)
+
+			" call Retrieve Ant task
+			call apexAnt#refresh(b:PROJECT_NAME, tempDir)
+			"now we expect some folders created under srcDir
+			return srcDir
+		endif	
+	endif
+endfunction
+
 " retrieve components of all selected metadata types
 function! <SID>RetrieveSelected()
 	echo "Retrieve all selected items"
 	let selectedTypes = s:getSelectedTypes()
 	for l:type in selectedTypes
 
-		let outputDir = apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, l:type)
+		"let outputDir = apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, l:type)
+		let outputDir = s:bulkRetrieve(l:type)
 		"echo "outputDir=".outputDir
 		" now we need to sort out current type before downloading the next one
 		" because target temp folder will be overwritten
@@ -352,6 +393,22 @@ function! s:parseListMetadataResult(metadataType, fname)
 	"echo "l:metaMap=\n"
 	"echo l:metaMap
 	return l:metaMap
+endfunction
+
+" load children of given meta-type
+" e.g. if type is "CustomObject" then all standard and custom object API 
+" names will be returned 
+" return: types map, see s:parseListMetadataResult() for details
+function! s:loadChildrenOfType(typeName)
+	let l:tmpfile = tempname()
+	call apexAnt#listMetadata(b:PROJECT_NAME, b:PROJECT_PATH, l:tmpfile, a:typeName)
+	if !filereadable(l:tmpfile)
+		call apexUtil#warning( "No subtypes of ".lineStr." found.")
+		return
+	endif	
+	" parse returned file into manageable format
+	let typesMap = s:parseListMetadataResult(a:typeName, l:tmpfile)
+	return typesMap
 endfunction
 
 " return existing or create new and return path to

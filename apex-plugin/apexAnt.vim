@@ -39,7 +39,9 @@ endfunction
 function! apexAnt#listMetadata(projectName, projectFolder, outputFilePath, metadataType)
 	return apexAnt#execute("listMetadata", a:projectName, a:projectFolder, a:outputFilePath, a:metadataType)
 endfunction
+
 " bulk retrieve all metadata components of a given type
+" return: temp folder path which contains subfolder with retrieved components
 function! apexAnt#bulkRetrieve(projectName, projectFolder, metadataType)
 	let outputDir = apexOs#createTempDir()
 	call apexAnt#execute("bulkRetrieve", a:projectName, a:projectFolder, outputDir, a:metadataType)
