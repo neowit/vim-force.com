@@ -27,6 +27,7 @@
 	<property file="${properties.path}/${dest.org.name}.properties" prefix="dest." />
 	<property name="srcDir" value="${project.Folder}/src" />
 	<property name="package.xml.path" value="${srcDir}/package.xml" />
+	<property name="result.file.path" value="${srcDir}/out.txt" />
 
 	<!-- 
 	<echo message="logOutputFile=${logOutputFile}" />
@@ -57,5 +58,25 @@
 			serverurl="${dest.sf.serverurl}" deployRoot="${srcDir}" maxPoll="1000" allowMissingFiles="true" />
 	</target>
 
+	<!-- The describeMetadata task is used to get detail information of the metadata types currently being supported. -->
+	<target name="describeMetadata" description="get detail information of the metadata types currently being supported">
+		<echo message="USERNAME=${dest.sf.username}" />
+		<echo message="SERVER=${dest.sf.serverurl}" />
+
+		<!-- Retrieve the contents into another directory -->
+		<sf:describeMetadata username="${dest.sf.username}" password="${dest.sf.password}" serverurl="${dest.sf.serverurl}" 
+			resultFilePath="${result.file.path}" />
+	</target>
+
+	<!-- The listMetadata task is used to get detail information about metadata components of a particular type. -->
+	<target name="listMetadata" description="get detail information of the metadata types currently being supported">
+		<echo message="USERNAME=${dest.sf.username}" />
+		<echo message="SERVER=${dest.sf.serverurl}" />
+
+		<!-- Retrieve the contents into another directory -->
+		<sf:listMetadata username="${dest.sf.username}" password="${dest.sf.password}" serverurl="${dest.sf.serverurl}"
+			metadataType="${metadataType}"
+			resultFilePath="${result.file.path}" />
+	</target>
 
 </project>

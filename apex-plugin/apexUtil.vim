@@ -185,3 +185,7 @@ endfunction
 function! apexUtil#joinPath(filePathList)
 	return  apexOs#joinPath(a:filePathList)
 endfunction	
+
+function! apexUtil#trim(str)
+    return substitute(a:str, '^\s*\(.\{-}\)\s*$', '\1', '')
+endfunction

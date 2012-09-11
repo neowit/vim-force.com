@@ -71,7 +71,7 @@ endfun
 
 
 " display menu with file types
-" @return: {fileType: "Selected File Type", fileName: "User defined Fiel name"}
+" @return: {fileType: "Selected File Type", fileName: "User defined File name"}
 "		ex: {fileType: "ApexClass", fileName: "MyControllerTest"}
 "
 function s:fileTypeMenu(filePath)
