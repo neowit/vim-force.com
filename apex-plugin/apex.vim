@@ -1,6 +1,6 @@
 " File: apex.vim
 " Author: Andrey Gavrikov 
-" Version: 1.0
+" Version: 1.1
 " Last Modified: 2012-03-05
 " Copyright: Copyright (C) 2010-2012 Andrey Gavrikov
 "            Permission is hereby granted to use and distribute this code,
@@ -186,7 +186,6 @@ function! apex#refreshProject()
 		endif	
 	endif	
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
-	"let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
 
     echo "using '".projectPair.name.".properties'"." for project '".projectPair.path."'"
 	" backup files
@@ -220,9 +219,8 @@ function! apex#refreshFile(filePath)
 
 	" copy package XML into the work folder
 	call apexOs#copyFile(apexOs#joinPath([projectDescriptor.projectPath, s:SRC_DIR_NAME, "package.xml"]), apexOs#joinPath([projectDescriptor.preparedSrcPath, 'package.xml']))
-
 	
-	" execute ant job
+	" execute ant job for temp project location
 	let ANT_ERROR_LOG = apexAnt#refresh(projectDescriptor.project, preparedTempProjectPath)
 
 	" assuming no error hapenned copy refreshed file back to Project
@@ -652,9 +650,6 @@ function! s:parseErrorLog(logFilePath, srcPath)
 	try
 		exe "noautocmd 1vimgrep /BUILD SUCCESSFUL/j ".fileName
 		echomsg "No errors found" 
-		"clear quickfix
-		" call setqflist([])
-		" call CloseEmptyQuickfixes()
 		return 0
 	catch  /^Vim\%((\a\+)\)\=:E480/
 		" will process below, nested try/catch work strange
@@ -691,7 +686,7 @@ endfunction
 " Error in class
 " Error: classes/EventFromLeadSupport.cls(25,24):unexpected token: createEvents'
 "
-" Error in page (sometimes it does sometimes it doe not have line number)
+" Error in page (not always contains line number)
 " Error: pages/VimPluginTest.page(VimPluginTest):Unknown property 'ProfileTemplateController.varMainTitle'
 " Error: pages/VimPluginTest.page(VimPluginTest):Unsupported attribute escape
 "		 in <apex:inputField> in VimPluginTest at line 49 column 46
