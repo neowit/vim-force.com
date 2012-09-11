@@ -38,19 +38,10 @@ let s:CACHE_FOLDER_NAME = ".vim-force.com"
 
 let b:PROJECT_NAME = ""
 let b:PROJECT_PATH = ""
+let b:SRC_PATH = ""
 " loaded s:CACHED_META_TYPES looks like this:
 "	{CustomObject: {XMLName:'CustomObject', DirName:'Objects', Suffix:'object', HasMetaFile:'false', InFolder:'false', ChildObjects:[CustomField, BusinessProcess,...]}}
 let s:CACHED_META_TYPES = {} 
-
-
-
-function! apexRetrieve#getCachedMetMap()
-	if len(s:CACHED_META_TYPES) < 1
-		" need to initialise the map
-	
-	endif
-	return s:CACHED_META_TYPES
-endfunction
 
 
 " open existing or load new file with metadata types
@@ -78,6 +69,7 @@ function! apexRetrieve#open(projectName, projectPath)
 		"initialise variables
 		let b:PROJECT_NAME = a:projectName
 		let b:PROJECT_PATH = a:projectPath
+		let b:SRC_PATH = apexOs#joinPath([a:projectPath, "src"])
 		let g:APEX_META_TYPES_BUF_NUM = bufnr("%")
 
 		" load header and types list
@@ -165,9 +157,58 @@ function! <SID>RetrieveSelected()
 	for l:type in selectedTypes
 
 		let outputDir = apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, l:type)
-		echo "outputDir=".outputDir
-		" TODO now we need to sort out current type before downloading the next one
+		"echo "outputDir=".outputDir
+		" now we need to sort out current type before downloading the next one
 		" because target temp folder will be overwritten
+		let typeDef = s:CACHED_META_TYPES[l:type]
+		let dirName = typeDef["DirName"]
+		let sourceFolder = apexOs#joinPath([outputDir, dirName])
+		let targetFolder = apexOs#joinPath([b:SRC_PATH, dirName])
+
+		let sourceFiles = apexOs#glob(sourceFolder . "/*")
+		let targetFiles = apexOs#glob(targetFolder . "/*")
+		
+		"echo "sourceFiles=\n"
+		"echo sourceFiles
+		" copy files from loaded folder into project/src/dir-name folder checking
+		" that we do not overwrite anything without user's permission
+		let allConfirmed = 0
+		for fPath in sourceFiles
+			let fName = apexOs#splitPath(fPath).tail
+			let targetFilePath = apexOs#joinPath([targetFolder, fName])
+			"echo "check ".targetFilePath
+			if filereadable(targetFilePath)
+				" compare sizes
+				let sourceSize = getfsize(fPath)
+				let targetSize = getfsize(targetFilePath)
+				if !allConfirmed && sourceSize != targetSize
+					while 1
+						let response = input('File '.dirName.'/'.fName.' already exists. New file size='.sourceSize. ', Existing file size=' .targetSize. '. Overwrite (Y)es / (N)o / all / (A)bort ? ')
+						if index(['a', 'A', 'y', 'Y', 'n', 'N', 'all'], response) >= 0
+							break " good answer, can continue
+						else
+							echo "\n"
+							call apexUtil#warning("Permitted answers are: Y/N/A/all")
+						endif	
+					endwhile
+					if 'a' ==? response
+						"abort
+						break
+					elseif 'y' ==? response
+						" proceed with overwrite
+					elseif 'n' ==? response
+						continue
+					elseif 'all' ==? response
+						" proceed with overwrite of all files
+						let allConfirmed = 1
+					else
+						call apexUtil#warning("Something unexpected has happened. Aborting...")
+						return
+					endif	
+				endif
+			endif	
+			call apexOs#copyFile(fPath, targetFilePath)
+		endfor
 	endfor
 endfunction
 

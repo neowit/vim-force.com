@@ -85,7 +85,6 @@
 		<echo message="USERNAME=${dest.sf.username}" />
 		<echo message="SERVER=${dest.sf.serverurl}" />
     	
-    	<mkdir dir="${backupResultDir}"/>
         <!-- Retrieve the contents -->
         <sf:bulkRetrieve username="${dest.sf.username}" password="${dest.sf.password}" serverurl="${dest.sf.serverurl}" 
             retrieveTarget="${retrieveOutputDir}" unzip="true" maxPoll="100" metadataType="${metadataType}" />
