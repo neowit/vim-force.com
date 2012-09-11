@@ -63,12 +63,70 @@ function apexMetaXml#createFileAndSwitch(filePath)
 			silent exe "edit ".fnameescape(newFilePath)
 		endif	
 	endif
-
-
-
 endfun
 
+" package.xml is a map which looks like this
+" {
+"	type-name1:[member1, member2, ...], 
+"	type-name2:[*, member1, member2,...],
+" ...}
+function apexMetaXml#packageXmlNew()
+	return {}
+endfunction	
 
+
+" add new members to package 
+" ex: call packageXmlAdd(package, 'CustomObject', ['Account', 'My_Object__c', '*'])
+function! apexMetaXml#packageXmlAdd(package, type, members)
+	let package = a:package
+	let members = []
+	if has_key(package, a:type)
+		let members = package[a:type]
+	else
+		let members = []
+	endif
+
+	" add all members making sure they are not already included
+	for member in a:members
+		if len(members) >0 && index(members, member) >0
+			"already exist
+			continue
+		endif
+		call add(members, member)
+	endfor
+	let package[a:type] = members
+	return package
+endfunction	
+
+" write well formed package.xml using 'package' map previously created with
+" apexMetaXml#packageXmlNew and apexMetaXml#packageXmlAdd methods
+"
+" return: /full/path/to/package.xml
+function! apexMetaXml#packageWrite(package, srcFolderPath)
+	let package = a:package
+	if len(package) < 1
+		return ""
+	endif
+	let lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+				\ '<Package xmlns="http://soap.sforce.com/2006/04/metadata">'
+				\]
+	for key in keys(package)
+		let members = package[key]
+		call add(lines, "<types>")
+		for member in members
+			call add(lines, "<members>" . member . "</members>")
+		endfor
+		call add(lines, "<name>" . key . "</name>")
+		call add(lines, "</types>")
+	endfor
+
+	call add(lines, "<version>".g:apex_API_version."</version>")
+	call add(lines, "</Package>")
+
+	let fname = apexOs#joinPath([a:srcFolderPath, "package.xml"])
+	call writefile(lines, fname)
+	return fname
+endfunction
 
 " display menu with file types
 " @return: {fileType: "Selected File Type", fileName: "User defined File name"}
