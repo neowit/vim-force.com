@@ -30,9 +30,20 @@ function! apexAnt#refresh(projectName, projectFolder)
 	return apexAnt#execute("refresh", a:projectName, a:projectFolder)
 endfunction
 
+" list all supported metadata types
+function! apexAnt#loadMetadataList(projectName, projectFolder, outputFilePath)
+	return apexAnt#execute("describeMetadata", a:projectName, a:projectFolder, a:outputFilePath)
+endfunction
+
+" get detail information about metadata components of a given type
+function! apexAnt#listMetadata(projectName, projectFolder, outputFilePath, metadataType)
+	return apexAnt#execute("listMetadata", a:projectName, a:projectFolder, a:outputFilePath, a:metadataType)
+endfunction
+
 " param: command - deploy|refresh|describe
+" 
 " return: path to error log or empty string if ant could not be executed
-function! apexAnt#execute(command, projectName, projectFolder)
+function! apexAnt#execute(command, projectName, projectFolder, ...)
 	let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
 	let orgName = a:projectName
 	" check that 'project name.properties' file with login credential exists
@@ -51,14 +62,35 @@ function! apexAnt#execute(command, projectName, projectFolder)
 	"	-Dproperties.path="$propertiesPath" -Dproject.Folder="$projectFolder"
 	"	deployUnpackaged
 	"
-	let antCommand = ""
+	let antCommand = s:ANT_CMD . " -buildfile " . fnameescape(buildFile). " -Ddest.org.name=" . shellescape(orgName) . " -Dproperties.path=" . fnameescape(propertiesFolder) 
 	if "deploy" == a:command || "refresh" == a:command
-		let antCommand = s:ANT_CMD . " -buildfile " . fnameescape(buildFile). " -Ddest.org.name=" . shellescape(orgName) . " -Dproperties.path=" . fnameescape(propertiesFolder) . " -Dproject.Folder=" . fnameescape(a:projectFolder)
 		if "deploy" == a:command
-			let antCommand = antCommand . " deployUnpackaged"
+			let antCommand = antCommand . " -Dproject.Folder=" . fnameescape(a:projectFolder) . " deployUnpackaged"
 		elseif "refresh" == a:command
-			let antCommand = antCommand . " retrieveSource"
+			let antCommand = antCommand . " -Dproject.Folder=" . fnameescape(a:projectFolder) . " retrieveSource"
 		endif
+	elseif "describeMetadata" == a:command
+		" get detail information of the metadata types currently being
+		" supported
+		if a:0 < 1 || len(a:1) < 1
+			echoerr "missing output file path parameter"
+			return ""
+		endif
+		let outputFilePath = a:1
+		let antCommand = antCommand . " -Dresult.file.path=" . fnameescape(outputFilePath) . " describeMetadata"
+	elseif "listMetadata" == a:command
+		" get detail information about metadata components of a given type
+		if a:0 < 1 || len(a:1) < 1
+			echoerr "missing output file path parameter"
+			return ""
+		endif
+		if a:0 < 2 || len(a:2) < 1
+			echoerr "missing metadata type parameter"
+			return ""
+		endif
+		let outputFilePath = a:1
+		let metadataType = a:2
+		let antCommand = antCommand . " -Dresult.file.path=" . fnameescape(outputFilePath). " -DmetadataType=" . shellescape(metadataType) . " listMetadata"
 	else
 		echoerr "Unsupported command".a:command
 	endif
@@ -67,3 +99,5 @@ function! apexAnt#execute(command, projectName, projectFolder)
     call apexOs#exe(antCommand)
 	return ANT_ERROR_LOG
 endfunction
+
+
