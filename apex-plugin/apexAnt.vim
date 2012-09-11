@@ -62,12 +62,12 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	"	-Dproperties.path="$propertiesPath" -Dproject.Folder="$projectFolder"
 	"	deployUnpackaged
 	"
-	let antCommand = s:ANT_CMD . " -buildfile " . fnameescape(buildFile). " -Ddest.org.name=" . shellescape(orgName) . " -Dproperties.path=" . fnameescape(propertiesFolder) 
+	let antCommand = s:ANT_CMD . " -buildfile " . shellescape(buildFile). " -Ddest.org.name=" . shellescape(orgName) . " -Dproperties.path=" . shellescape(propertiesFolder) 
 	if "deploy" == a:command || "refresh" == a:command
 		if "deploy" == a:command
-			let antCommand = antCommand . " -Dproject.Folder=" . fnameescape(a:projectFolder) . " deployUnpackaged"
+			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(a:projectFolder) . " deployUnpackaged"
 		elseif "refresh" == a:command
-			let antCommand = antCommand . " -Dproject.Folder=" . fnameescape(a:projectFolder) . " retrieveSource"
+			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(a:projectFolder) . " retrieveSource"
 		endif
 	elseif "describeMetadata" == a:command
 		" get detail information of the metadata types currently being
@@ -77,7 +77,7 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 			return ""
 		endif
 		let outputFilePath = a:1
-		let antCommand = antCommand . " -Dresult.file.path=" . fnameescape(outputFilePath) . " describeMetadata"
+		let antCommand = antCommand . " -Dresult.file.path=" . shellescape(outputFilePath) . " describeMetadata"
 	elseif "listMetadata" == a:command
 		" get detail information about metadata components of a given type
 		if a:0 < 1 || len(a:1) < 1
@@ -90,7 +90,7 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		endif
 		let outputFilePath = a:1
 		let metadataType = a:2
-		let antCommand = antCommand . " -Dresult.file.path=" . fnameescape(outputFilePath). " -DmetadataType=" . shellescape(metadataType) . " listMetadata"
+		let antCommand = antCommand . " -Dresult.file.path=" . shellescape(outputFilePath). " -DmetadataType=" . shellescape(metadataType) . " listMetadata"
 	else
 		echoerr "Unsupported command".a:command
 	endif
