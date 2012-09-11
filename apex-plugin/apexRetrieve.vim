@@ -236,6 +236,7 @@ function! <SID>RetrieveSelected()
 				" check if copy succeeded
 				if !filereadable(targetFilePath)
 					echoerr "Something went wrong, failed to write file ".targetFilePath.". Process aborted."
+					return 
 				endif
 
 			endfor
