@@ -2,7 +2,7 @@ Plugin for developing on force.com
 
 NOTE: this README file is outdated, once installed see relevant section of 
 vim doc, e.g. :help force.com
-or read [./doc/force.com.txt](https://github.com/neowit/vim-force.com/blob/master/doc/force.com.txt) directly
+or read ./doc/force.com.txt directly
 
 force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 
