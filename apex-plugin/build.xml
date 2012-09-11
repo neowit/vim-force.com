@@ -79,4 +79,17 @@
 			resultFilePath="${result.file.path}" />
 	</target>
 
+	<!-- The bulkRetrieve task is used to download a large number of metadata objects of a particular type into a set of local files. 
+		 It automatically generates the list of objects to be retrieved and batches the retrieve process based on the batchSize property-->
+    <target name="bulkRetrieve" description="load metadata from the source Org" >
+		<echo message="USERNAME=${dest.sf.username}" />
+		<echo message="SERVER=${dest.sf.serverurl}" />
+    	
+    	<mkdir dir="${backupResultDir}"/>
+        <!-- Retrieve the contents -->
+        <sf:bulkRetrieve username="${dest.sf.username}" password="${dest.sf.password}" serverurl="${dest.sf.serverurl}" 
+            retrieveTarget="${retrieveOutputDir}" unzip="true" maxPoll="100" metadataType="${metadataType}" />
+            
+    </target>
+
 </project>
