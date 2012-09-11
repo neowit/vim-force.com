@@ -149,6 +149,8 @@ command! -nargs=0 ApexRefreshProject :call apex#refreshProject()
 command! RefreshSFDCProject :ApexRefreshProject
 command! ApexRefreshFile :call apex#refreshFile(expand("%:p"))
 command! ApexPrintChanged :call apex#printChangedFiles(expand("%:p"))
+command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
+
 " select file type, create it and switch buffer
 command! ApexNewFile :call apexMetaXml#createFileAndSwitch(expand("%:p"))
 
