@@ -266,7 +266,8 @@ function! apexOs#exe(...)
 		let result .= ' &'
 	endif
 
-	:exe "!".result
+	exe "!".result
+	"call system(result) " system() does not show any progress
 endfunction	
 
 " @return: true of given path name has trailing path separator
