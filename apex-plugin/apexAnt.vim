@@ -116,7 +116,7 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		echoerr "Unsupported command".a:command
 	endif
 	let antCommand = antCommand ." 2>&1 |".g:apex_binary_tee." ".shellescape(ANT_ERROR_LOG)
-	echo "antCommand=".antCommand
+	"echo "antCommand=".antCommand
     call apexOs#exe(antCommand)
 	return ANT_ERROR_LOG
 endfunction

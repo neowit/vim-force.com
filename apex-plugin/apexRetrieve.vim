@@ -19,9 +19,11 @@ if exists("g:loaded_apex_retrieve") || &compatible || stridx(&cpo, "<") >=0
 	finish
 endif
 "let g:loaded_apex_retrieve = 1
-
+let s:instructionPrefix = '||'
+let s:instructionFooter = '='
 let s:header = [
   \ "|| vim-force.com plugin",
+  \ "||",
   \ "|| Select types to retrieve, then issue command :Retrieve" ,
   \ "|| t=toggle Select/Deselect",
   \ "|| :Retrieve = retrieve selected types into the project folder",
@@ -106,6 +108,19 @@ function! apexRetrieve#open(filePath)
 		exec 'command! -buffer -bang -nargs=0 Retrieve :call <SNR>'.s:sid.'_RetrieveSelected()'
 
 	endif
+
+	" syntax highlight
+	if has("syntax")
+		syntax on
+		exec "syn match ApexRetrieveInstructionsText '^\s*".s:instructionPrefix.".*'"
+		exec "syn match ApexRetrieveInstructionsFooter '^\s*".s:instructionFooter."*$'"
+		exec "syn match ApexRetrieveSelectedItem '^\s*\\".s:MARK_SELECTED.".*'"
+	endif
+
+	exec "highlight link ApexRetrieveInstructionsText Constant"
+	exec "highlight link ApexRetrieveInstructionsFooter Comment"
+	exec "highlight link ApexRetrieveSelectedItem Keyword"
+
 
 endfunction
 
