@@ -51,9 +51,12 @@ function! ApexCompare(...)
 		echo 'comparison cancelled'
 		return ""
 	endif
+	
 	if executable(g:apex_diff_cmd)
 		let scriptPath = shellescape(g:apex_diff_cmd)
-		let command = scriptPath.' '.shellescape(leftFilePath).' '.shellescape(rightFilePath)
+		"let command = scriptPath.' '.shellescape(leftFilePath).' '.shellescape(rightFilePath)
+		let command = scriptPath.' '.apexOs#fnameescape(leftFilePath).' '.apexOs#fnameescape(rightFilePath)
+		"echo "command=".command
 	
 		":exe "!".command
 		call apexOs#exe(command, 1)
