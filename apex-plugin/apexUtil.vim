@@ -55,7 +55,7 @@ function! ApexCompare(...)
 	if executable(g:apex_diff_cmd)
 		let scriptPath = shellescape(g:apex_diff_cmd)
 		"let command = scriptPath.' '.shellescape(leftFilePath).' '.shellescape(rightFilePath)
-		let command = scriptPath.' '.apexOs#fnameescape(leftFilePath).' '.apexOs#fnameescape(rightFilePath)
+		let command = scriptPath.' '.apexOs#shellescape(leftFilePath).' '.apexOs#shellescape(rightFilePath)
 		"echo "command=".command
 	
 		":exe "!".command
