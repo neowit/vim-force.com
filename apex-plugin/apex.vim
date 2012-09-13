@@ -93,7 +93,7 @@ function! apex#MakeProject(...)
 	endif
 	
 
-	let ANT_ERROR_LOG = apexAnt#deploy(projectName, projectPath)
+	let ANT_ERROR_LOG = apexAnt#deploy(projectName, preparedTempProjectPath)
 	if len(ANT_ERROR_LOG) > 0
 		" check if BUILD FAILED
 		let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
