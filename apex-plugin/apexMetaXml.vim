@@ -43,15 +43,21 @@ function apexMetaXml#createFileAndSwitch(filePath)
 	let fileContent = s:getFilesContent{typeAndName.fileType}(typeAndName.fileName)
 	"check that required file does not exist
 	let fileNameWithExtension = typeAndName.fileName.".".fileContent.fileExtension
-	let newFilePath = apexOs#joinPath([projectPath, "src",  fileContent.folderName, fileNameWithExtension])
+	let folderPath = apexOs#joinPath([projectPath, "src",  fileContent.folderName])
+	let newFilePath = apexOs#joinPath([folderPath, fileNameWithExtension])
 	if filereadable(newFilePath)
 		echo "\n"
 		call apexUtil#warning("File already exists: " . newFilePath)
 		return
 	endif
 	"echo "About to create file: ".newFilePath
+	"check if target folder exist
+	if !isdirectory(folderPath)
+		call apexOs#createDir(folderPath)
+	endif
 	"generate -meta.xml
 	let metaFilePath =  newFilePath . "-meta.xml"
+
 	let metaRes = writefile(fileContent.metaContent, metaFilePath )
 	if 0 == metaRes 
 		"set last modified time 10 seconds in the past to make sure file is picked up for
