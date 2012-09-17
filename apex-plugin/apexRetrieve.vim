@@ -180,7 +180,7 @@ endfunction
 function! s:bulkRetrieve(typeName)
 	let typeName = a:typeName
 	if index(["Profile", "PermissionSet"], typeName) < 0
-		return apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, l:type)
+		return apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, typeName)
 	else
 		if "Profile" ==? typeName || "PermissionSet" ==? typeName
 			" The contents of a profile retrieved depends on the contents of the
