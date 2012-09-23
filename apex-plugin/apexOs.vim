@@ -120,16 +120,17 @@ endfunction
 
 " OS dependent temporary directory create/delete
 function! apexOs#createTempDir()
+	let tempFolderPath = apexOs#getTempFolder()
 	if has("unix")
 		" remove existing folder
-		silent exe "!rm -R ". shellescape(apexOs#getTempFolder())
+		silent exe "!rm -R ". shellescape(tempFolderPath)
 		" recreate temp folder
-		silent exe "!mkdir ". shellescape(apexOs#getTempFolder())
-		return apexOs#getTempFolder()
+		call apexOs#createDir(tempFolderPath)
+		return tempFolderPath
 	elseif s:is_windows
-		silent exe "!rd ".GetWin32ShortName(apexOs#getTempFolder())." /s /q "
-		call apexOs#createDir(apexOs#getTempFolder())
-		return apexOs#getTempFolder()
+		silent exe "!rd ".GetWin32ShortName(tempFolderPath)." /s /q "
+		call apexOs#createDir(tempFolderPath)
+		return tempFolderPath
 	else
 		echoerr "Not implemented"
 	endif
