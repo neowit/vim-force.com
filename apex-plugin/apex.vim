@@ -82,7 +82,7 @@ function! apex#MakeProject(...)
 		" copy package XML into the work folder
 		call apexOs#copyFile(apexOs#joinPath([projectPath, s:SRC_DIR_NAME, "package.xml"]),  apexOs#joinPath([projectDescriptor.preparedSrcPath, 'package.xml']))
 
-	else
+	else "all
 		" deploy project in its entirety regardless of 'modified' files status
 		let projectPair = apex#getSFDCProjectPathAndName(filePath)
 		let projectPath = projectPair.path
@@ -90,6 +90,9 @@ function! apex#MakeProject(...)
 		"echo "project.path='" . projectPair.path . "'"
 		"echo "project.name='" . projectPair.name . "'"
 		let preparedTempProjectPath = projectPath
+		" as we are not copying sources to temp folder we need to make sure that
+		" it exists because it is needed for ant error log anyway
+		call apexOs#createTempDir()
 	endif
 	
 
