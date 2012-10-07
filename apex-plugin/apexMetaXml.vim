@@ -76,10 +76,57 @@ endfun
 "	type-name1:[member1, member2, ...], 
 "	type-name2:[*, member1, member2,...],
 " ...}
-function apexMetaXml#packageXmlNew()
+function! apexMetaXml#packageXmlNew()
 	return {}
 endfunction	
 
+"read existing package.xml into a 'package' map
+"Args:
+"@param: srcFolderPath - full path to ./src folder
+"
+"@see apexMetaXml#packageXmlNew()
+"@return: 'package' map
+function! apexMetaXml#packageXmlRead(srcFolderPath)
+	let fname = apexOs#joinPath([a:srcFolderPath, "package.xml"])
+	if !filereadable(fname)
+		echoerr "File ".fname." is not readable."
+	endif
+
+	let result = {}
+	let curType = ''
+	let members = []
+	for line in readfile(fname, '', 10000) " assuming metadata types file will never contain more than 10K lines
+		"echo "line=".line
+        if line =~? '^\s*<types>\s*$'
+			"echo "start new type"
+			let curType = ''
+			let members = []
+		elseif line =~? '^\s*</types>\s*$'
+			"echo "end type, record type and members".curType
+			if len(curType) > 0
+				let result[curType] = members
+			endif
+		elseif line =~? '^\s*<name>\(\w*\|*\)</name>\s*$'
+			"<name>CustomApplication</name>
+			let curType = substitute(line, '^\(\s*<name>\)\(\w*\)\(</name>\s*\)$', '\2', '')
+			"echo "curType=".curType
+		elseif line =~? '^\s*<members>\(\w*\|*\)</members>\s*$'
+							"        ^ - Starting at the beginning of the string 
+							"        \s* - optional whitespace 
+							"        \(\w*\|*\) word or single star character
+							"        \s* - optional whitespace 
+							"        $ - end of line
+			let member = substitute(line, '^\(\s*<members>\)\(\w*\|*\)\(</members>\s*\)$', '\2', '')
+							"remove everything except second group match, i.e.
+							"leave only content between </members>...</members>
+
+			"echo "member=".member
+			call add(members, member)
+		end
+	endfor
+	"echo result
+	return result
+endfunction
 
 " add new members to package 
 " ex: call packageXmlAdd(package, 'CustomObject', ['Account', 'My_Object__c', '*'])
@@ -94,7 +141,7 @@ function! apexMetaXml#packageXmlAdd(package, type, members)
 
 	" add all members making sure they are not already included
 	for member in a:members
-		if len(members) >0 && index(members, member) >0
+		if len(members) >0 && index(members, member) >= 0
 			"already exist
 			continue
 		endif
@@ -116,17 +163,19 @@ function! apexMetaXml#packageWrite(package, srcFolderPath)
 	let lines = ['<?xml version="1.0" encoding="UTF-8"?>',
 				\ '<Package xmlns="http://soap.sforce.com/2006/04/metadata">'
 				\]
-	for key in keys(package)
+	let sortedKeys = sort(keys(package))
+
+	for key in sortedKeys
 		let members = package[key]
-		call add(lines, "<types>")
+		call add(lines, "	<types>")
 		for member in members
-			call add(lines, "<members>" . member . "</members>")
+			call add(lines, "		<members>" . member . "</members>")
 		endfor
-		call add(lines, "<name>" . key . "</name>")
-		call add(lines, "</types>")
+		call add(lines, "		<name>" . key . "</name>")
+		call add(lines, "	</types>")
 	endfor
 
-	call add(lines, "<version>".g:apex_API_version."</version>")
+	call add(lines, "	<version>".g:apex_API_version."</version>")
 	call add(lines, "</Package>")
 
 	let fname = apexOs#joinPath([a:srcFolderPath, "package.xml"])

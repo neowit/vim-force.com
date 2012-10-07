@@ -20,16 +20,6 @@ if exists("g:loaded_apex_retrieve") || &compatible || stridx(&cpo, "<") >=0
 endif
 "let g:loaded_apex_retrieve = 1
 let s:instructionPrefix = '||'
-let s:instructionFooter = '='
-let s:header = [
-  \ "|| vim-force.com plugin",
-  \ "||",
-  \ "|| Select types to retrieve, then issue command :Retrieve" ,
-  \ "|| t=toggle Select/Deselect",
-  \ "|| :Retrieve = retrieve selected types into the project folder",
-  \ "============================================================================="
-  \ ]
-let s:headerLineCount = len(s:header)  
 
 let s:MARK_SELECTED = "*"
 let s:HIERARCHY_SHIFT = "--"
@@ -48,6 +38,7 @@ let s:BUFFER_NAME = 'vim-force.com Metadata Retrieve'
 
 let s:SRC_DIR_NAME='src' " TODO name of src folder is also defined in apex.vim, consider merging
 
+
 " open existing or load new file with metadata types
 " retrieved list of supported metadata types is stored
 " in ./vim-force.com folder under project root, next to ./src/
@@ -58,6 +49,8 @@ function! apexRetrieve#open(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectName = projectPair.name
 	let projectPath = projectPair.path
+	"init header and length variables
+	call s:init(projectPath)
 
 	" check if buffer with file types already exist
 	if exists("g:APEX_META_TYPES_BUF_NUM") && bufloaded(g:APEX_META_TYPES_BUF_NUM)
@@ -217,9 +210,9 @@ endfunction
 function! <SID>RetrieveSelected()
 	echo "Retrieve all selected items"
 	let selectedTypes = s:getSelectedTypes()
+	let retrievedTypes = {} "type-name => 1  - means type has been retrieved
 	for l:type in selectedTypes
 
-		"let outputDir = apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, l:type)
 		let outputDir = s:bulkRetrieve(l:type)
 		"echo "outputDir=".outputDir
 		" now we need to sort out current type before downloading the next one
@@ -293,11 +286,25 @@ function! <SID>RetrieveSelected()
 				if !filereadable(targetFilePath)
 					echoerr "Something went wrong, failed to write file ".targetFilePath.". Process aborted."
 					return 
+				else
+					"mark current type is retrieved
+					let retrievedTypes[l:type] = ['*']
 				endif
 
 			endfor
 		endif "len(sourceFiles) < 1
 	endfor
+	"update package.xml
+	if len(retrievedTypes) > 0
+		let packageXml = apexMetaXml#packageXmlRead(b:SRC_PATH)
+		for typeName in keys(retrievedTypes)
+			call apexMetaXml#packageXmlAdd(packageXml, typeName, retrievedTypes[typeName])
+		endfor
+		"write updated package.xml
+		"echo packageXml
+		call apexMetaXml#packageWrite(packageXml, b:SRC_PATH)
+	endif
+	
 endfunction
 
 function! s:isSelected(lineStr)
@@ -537,6 +544,25 @@ function! s:getMetaTypesList(projectName, projectPath, forceLoad)
 	let types = sort(types)
 	"call writefile(types, metaTypesFilePath)
 	return types
+endfunction
+
+" call this method before any other as soon as Project Path becomes available
+function! s:init(projectPath)
+	let s:instructionFooter = '='
+	let s:header = [
+				\ "|| vim-force.com plugin - metadata retrieval",
+				\ "||",
+				\ "|| Select types to retrieve, then issue command :Retrieve" ,
+				\ "|| ",
+				\ "|| t=toggle Select/Deselect",
+				\ "|| :Retrieve = retrieve selected types into the project folder",
+				\ "|| ",
+				\ "|| NOTE: cached list of metadata types is stored in: ",
+				\ "||		 '".apexOs#joinPath([a:projectPath, s:CACHE_FOLDER_NAME, s:ALL_METADATA_LIST_FILE])."' file.",
+				\ "||		To clear cached types delete this file and run :ApexRetrieve to reload fresh version.",
+				\ "============================================================================="
+				\ ]
+	let s:headerLineCount = len(s:header)  
 endfunction
 "function! TestParseListMetadataResult(metadataType, fname)
 "	call s:parseListMetadataResult(a:metadataType, a:fname)
