@@ -5,6 +5,8 @@ License: Same terms as Vim itself (see |license|)
 force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 
 |force.com-description|   Description
+|force.com-features|      Features
+|force.com-limitations|   Limitations
 |force.com-system-requirements|     Installation/System requirements
 |force.com-config-example|          Minimal config example
 
@@ -17,8 +19,6 @@ force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 |force.com-settings|      Settings
 	|force.com-shortcuts-example| example of recommended keyboard shortcuts
 
-|force.com-features|      Features
-|force.com-limitations|   Limitations
 |Recommended-Plugins|     other recommended Vim plugins
 |force.com-credits|       Credits 
 
@@ -88,7 +88,7 @@ ex: ~/vim/force.com
 
 7. Add 'force.com' folder to vim runtime path and make sure it loads apexcode filetype detection
 
-e.g.
+e.g. >
 	if has("unix")
 		let &runtimepath=&runtimepath . ',~/vim/force.com'
 	elseif has("win32")
@@ -96,54 +96,57 @@ e.g.
 	endif
 	" make sure vim loads apexcode filetype detection
 	runtime ftdetect/apexcode.vim
+<
 
 8. Enable filetype plugin and syntax highlighting
 
-e.g. add these lines into .vimrc (or _vimrc on windows)
+e.g. add these lines into .vimrc (or _vimrc on windows) >
 	filetype plugin on
 	syntax on
+<
 
 8. Index help file
 
-e.g.
+e.g. >
     :helptags ~/vim/force.com/doc
 
-    Or if using with pathogen.vim plugin and force.com is in .vim/bundle run
+<    Or if using with pathogen.vim plugin and force.com is in .vim/bundle run >
     :Helptags
-
+<
 
 ==============================================================================
 Example of minimal _vimrc configuration for win32    *force.com-config-example*
 
-""""""""""""""""""""""""""""""""" _vimrc """""""""""""""""""""""""""""""""""""
-set nocompatible
-
-filetype plugin on
-syntax on
-
-let &runtimepath=&runtimepath . ',c:\Documents and\ Settings\user\vimfiles\force.com'
-runtime ftdetect/apexcode.vim
-
-
-if has("win32")
-	if !exists("g:apex_backup_folder")
-		" full path required here, relative may not work
-		let g:apex_backup_folder="c:\\temp\\apex\\backup"
-	endif
-	if !exists("g:apex_temp_folder")
-		" full path required here, relative may not work
-		let g:apex_temp_folder="c:\\temp\\apex\\gvim-deployment"
-	endif
-	if !exists("g:apex_deployment_error_log")
-		let g:apex_deployment_error_log="gvim-deployment-error.log"
-	endif
-	if !exists("g:apex_properties_folder")
-		" full path required here, relative may not work
-		let g:apex_properties_folder="c:\\temp\\vim-force.com-tests\\secure-properties"
-	endif
-	let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
-	let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
-endif	
+""""""""""""""""""""""""""""""""" _vimrc """"""""""""""""""""""""""""""""""""" >
+ set nocompatible
+ 
+ filetype plugin on
+ syntax on
+ 
+ let &runtimepath=&runtimepath . ',c:\Documents and\ Settings\user\vimfiles\force.com'
+ runtime ftdetect/apexcode.vim
+ 
+ 
+ if has("win32")
+ 	if !exists("g:apex_backup_folder")
+ 		" full path required here, relative may not work
+ 		let g:apex_backup_folder="c:\\temp\\apex\\backup"
+ 	endif
+ 	if !exists("g:apex_temp_folder")
+ 		" full path required here, relative may not work
+ 		let g:apex_temp_folder="c:\\temp\\apex\\gvim-deployment"
+ 	endif
+ 	if !exists("g:apex_deployment_error_log")
+ 		let g:apex_deployment_error_log="gvim-deployment-error.log"
+ 	endif
+ 	if !exists("g:apex_properties_folder")
+ 		" full path required here, relative may not work
+ 		let g:apex_properties_folder="c:\\temp\\vim-force.com-tests\\secure-properties"
+ 	endif
+ 	let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
+ 	let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
+ endif	
+<
 """""""""""""""""""""" end config example """"""""""""""""""""""""""""""""""""
 
 
@@ -227,6 +230,9 @@ Plugin exposes following commands:                              *apex-commands*
 
 |ApexNewFile|                       create new file
 
+|ApexRetrieve|                      retrieve specified metadata types from server
+									this feature is currently EXPERIMENTAL
+
                                                                   *ApexCompare*
 Imagine you have 2 sandboxes of the same Org and want to compare current file
 with its counterpart in another sandbox
@@ -304,7 +310,17 @@ See apexcode.vim s:Apex_TList_Toggle() method for more details
                                                             *ApexNewFile*
 Invoke file types menu and create Apex file (class, trigger, etc). 
 Not all files currently supported.
-File will be greated with API version defined by |g:apex_API_version| variable
+File will be created with API version defined by |g:apex_API_version| variable
+
+                                                            *ApexRetrieve*
+Invoke metadata types list "menu" and load data of specified types.  
+Usually :ApexRefreshProject will retrieve all types defined in package.xml.
+:ApexRetrieve can be used to load types which are not part of current package.xml
+Use this command when package.xml does not yet contain necessary metadata type(s).
+If retrieved type is not part of the package.xml system will offer to
+update package.xml accordingly. 
+*WARNING* :ApexRetrieve command is Experimental. You may want to backup your
+project before running :ApexRetrieve.
 
 ==============================================================================
 SETTINGS                                                   *force.com-settings*
@@ -314,9 +330,9 @@ The plugin provides the following options that can customise the behaviour the
 force.com plugin behaviour. These options should be set in your vimrc.
 
 All of the examples below are for Unix environments. When defining paths for MS Windows 
-use double slash, like this:
-let g:apex_backup_folder="c:\\temp\\apex\\backup"
-
+use double slash, like this: >
+	let g:apex_backup_folder="c:\\temp\\apex\\backup"
+<
 
 Required
 |'g:apex_backup_folder'|          project backup folder
@@ -334,7 +350,7 @@ Optional
 |'g:apex_syntax_case_sensitive'|	defines whether Apex syntax highlighting is case sensitive 
 |'g:apex_API_version'|				force.com API version to use when create new files, ex: 25.0
 
-|apex-config-example|               .vimrc config example
+|apex-config-example|             .vimrc config example
 
                                                         *'g:apex_backup_folder'*
 
@@ -348,31 +364,31 @@ ex:
 Every time when ApexDeploy is called we copy files (to be fed to ANT job and deployed to sfdc) 
 into /path/to/folder defined by g:apex_temp_folder
 Note, full path is required.
-ex: 
+ex: >
 	let g:apex_temp_folder="/tmp/apex/gvim-deployment"
-
+<
                                                   *'g:apex_deployment_error_log'*	
 
 ANT error log file name which is stored in "g:apex_temp_folder
-ex:
+ex: >
 	let g:apex_deployment_error_log="gvim-deployment-error.log"
-
+<
                                                     *'g:apex_properties_folder'*	
 Path to folder with *.property files which contain SFDC orgs access details
 It is recommended to store those files in encrypted folder or partition.
 Note, full path is required.
-If path is incorrect then you will get error looking something like this:
+If path is incorrect then you will get error looking something like this: >
 	BUILD FAILED
 	/.../build.xml:57: Failed to login: Failed to send request to https://${dest.sf.serverurl}/services/Soap/u/...
-
+<
 Example below assumes that we are using Truecrypt
 
-ex:
+ex: >
 	let g:apex_properties_folder="/media/truecrypt1"
-
-or for win32, assuming that Truecrypt volume is T:
+<
+or for win32, assuming that Truecrypt volume is T: >
 	let g:apex_properties_folder="t:"
-
+<
                                                           *force.com-unix_utils*
 Plugin is using unix utilities 'tee' and 'touch'
 On MS Windows these commands are not available out of the box.
@@ -394,32 +410,32 @@ See apexOs.vim for details
 Full path to shell command 'tee'
 tee - read from standard input and write to standard output and files
 
-ex:
+ex: >
 	let g:apex_binary_tee = "/usr/bin/tee"
-or for win32
+<or for win32 >
 	let g:apex_binary_tee = "d:\\bin\\UnixUtils\\tee.exe"
-
+<
                                                          *'g:apex_binary_touch'*
 Full path to shell command 'touch'
 tee - read from standard input and write to standard output and files
 
-ex:
+ex: >
 	let g:apex_binary_touch = "/usr/bin/touch"
-or for win32
+<or for win32 >
 	let g:apex_binary_touch = "d:\\bin\\UnixUtils\\touch.exe"
-
+<
                                                              *'g:apex_diff_cmd'*
 /path/to/file/compare/tool
-ex:
+ex: >
 	let g:apex_diff_cmd="/usr/bin/meld"
-
+<
 If undefined then internal vimdiff will be used
 
                                                              *'g:apex_ctags_cmd'*
 /path/to/exuberant/ctags/binary
-ex:
+ex: >
 	let g:apex_ctags_cmd="/usr/local/bin/ctags"
-
+<
 If undefined then first available ctags binary will be used for tag generation
 
 if ctags used to generate tag files then it is useful to add to your ~/.ctags file
@@ -431,56 +447,56 @@ this way we tell ctags to process Apex classes and triggers as Java files
 Use this variable to specify that Apex classes and triggers shall use case sensitive
 syntax highlighting.
 If not specified then Apex default is used - ignore case
-ex:
+ex: >
 	let g:apex_syntax_case_sensitive = 1 " make syntax highlighting case sensitive
-
+<
                                                            *apex-config-example*
 
-Example of configuration for Unix and MS Windows environments
+Example of configuration for Unix and MS Windows environments >
 
-" define local paths for force.com plugin
-if has('gui') " do not use on headless machines
-	if has("unix")
-		" g:apex_backup_folder - /path/to/folder where current project source
-		" is backed up before refresh from SFDC
-		if !exists("g:apex_backup_folder")
-			let g:apex_backup_folder="/tmp/apex/backup"
-		endif
-		" every time when ApexDeploy is called we copy files (to be fed to ANT 
-		" job and deployed to sfdc) into /path/to/folder defined by
-		" "g:apex_temp_folder
-		if !exists("g:apex_temp_folder")
-			let g:apex_temp_folder="/tmp/apex/gvim-deployment"
-		endif
-		" ANT error log file name which is stored in "g:apex_temp_folder
-		if !exists("g:apex_deployment_error_log")
-			let g:apex_deployment_error_log="gvim-deployment-error.log"
-		endif
-		" path to folder with *.property files which contain SFDC orgs access
-		" details
-		if !exists("g:apex_properties_folder")
-			let g:apex_properties_folder="/media/truecrypt1"
-		endif
-	elseif has("win32")
-		if !exists("g:apex_backup_folder")
-			let g:apex_backup_folder="c:\\temp\\apex\\backup"
-		endif
-		if !exists("g:apex_temp_folder")
-			let g:apex_temp_folder="c:\\temp\\apex\\gvim-deployment"
-		endif
-		if !exists("g:apex_deployment_error_log")
-			let g:apex_deployment_error_log="gvim-deployment-error.log"
-		endif
-		if !exists("g:apex_properties_folder")
-			let g:apex_properties_folder="t:"
-		endif
-	endif	
-	if has("win32")	|| has("win64")
-		let g:apex_binary_tee = "d:\\bin\\UnixUtils\\tee.exe"
-		let g:apex_binary_touch = "d:\\bin\\UnixUtils\\touch.exe"
-	endif	
-endif	
-
+ " define local paths for force.com plugin
+ if has('gui') " do not use on headless machines
+ 	if has("unix")
+ 		" g:apex_backup_folder - /path/to/folder where current project source
+ 		" is backed up before refresh from SFDC
+ 		if !exists("g:apex_backup_folder")
+ 			let g:apex_backup_folder="/tmp/apex/backup"
+ 		endif
+ 		" every time when ApexDeploy is called we copy files (to be fed to ANT 
+ 		" job and deployed to sfdc) into /path/to/folder defined by
+ 		" "g:apex_temp_folder
+ 		if !exists("g:apex_temp_folder")
+ 			let g:apex_temp_folder="/tmp/apex/gvim-deployment"
+ 		endif
+ 		" ANT error log file name which is stored in "g:apex_temp_folder
+ 		if !exists("g:apex_deployment_error_log")
+ 			let g:apex_deployment_error_log="gvim-deployment-error.log"
+ 		endif
+ 		" path to folder with *.property files which contain SFDC orgs access
+ 		" details
+ 		if !exists("g:apex_properties_folder")
+ 			let g:apex_properties_folder="/media/truecrypt1"
+ 		endif
+ 	elseif has("win32")
+ 		if !exists("g:apex_backup_folder")
+ 			let g:apex_backup_folder="c:\\temp\\apex\\backup"
+ 		endif
+ 		if !exists("g:apex_temp_folder")
+ 			let g:apex_temp_folder="c:\\temp\\apex\\gvim-deployment"
+ 		endif
+ 		if !exists("g:apex_deployment_error_log")
+ 			let g:apex_deployment_error_log="gvim-deployment-error.log"
+ 		endif
+ 		if !exists("g:apex_properties_folder")
+ 			let g:apex_properties_folder="t:"
+ 		endif
+ 	endif	
+ 	if has("win32")	|| has("win64")
+ 		let g:apex_binary_tee = "d:\\bin\\UnixUtils\\tee.exe"
+ 		let g:apex_binary_touch = "d:\\bin\\UnixUtils\\touch.exe"
+ 	endif	
+ endif	
+<
 ==============================================================================
 RECOMMENDED KEYBOARD SHORTCUTS                    *force.com-shortcuts-example*
 
@@ -490,74 +506,74 @@ something like this in your .vimrc file
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Apex code specific Keyboard mapping
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-function! s:setApexShortcuts()
-
-	""""""""""""""""""""""""""""""""""""""""""
-	" Search in files
-	""""""""""""""""""""""""""""""""""""""""""
-
-	" search exact word
-	nmap <leader>sc :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.cls ../**/*.trigger <CR>:cwin<CR>
-	nmap <leader>st :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.trigger <CR>:cwin<CR>
-	nmap <leader>sp :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.page <CR>:cwin<CR>
-	nmap <leader>ss :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.scf <CR>:cwin<CR>
-	nmap <leader>sa :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf <CR>:cwin<CR>
-
-	" search - *contains* - partal match is allowed
-	nmap <leader>sC :noautocmd vimgrep /<C-R><C-W>/j ../**/*.cls ../**/*.trigger <CR>:cwin<CR>
-	nmap <leader>sT :noautocmd vimgrep /<C-R><C-W>/j ../**/*.trigger <CR>:cwin<CR>
-	nmap <leader>sP :noautocmd vimgrep /<C-R><C-W>/j ../**/*.page <CR>:cwin<CR>
-	nmap <leader>sS :noautocmd vimgrep /<C-R><C-W>/j ../**/*.scf <CR>:cwin<CR>
-	nmap <leader>sA :noautocmd vimgrep /<C-R><C-W>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf <CR>:cwin<CR>
-
-	" prepare search string, but do not run
-	nmap <leader>sm :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf \|cwin
-
-	" search visual selection
-	" in this mode we have to delete leading 5 characters '<,'> which system
-	" inserts into command line by default
-	" we also need to use Control+R* combination to get selection into command
-	" line
-	vmap <leader>sc :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.cls ../**/*.trigger <CR>:cwin<CR>
-	vmap <leader>st :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.trigger <CR>:cwin<CR>
-	vmap <leader>sp :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.page <CR>:cwin<CR>
-	vmap <leader>ss :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.scf <CR>:cwin<CR>
-	vmap <leader>sa :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf <CR>:cwin<CR>
-
-
-	""""""""""""""""""""""""""""""""""""""""""
-	" CTags shortcuts
-	""""""""""""""""""""""""""""""""""""""""""
-	" shortcut to update ctags DB manually
-	" note for XFCE: disable default workspace 11 switch (Ctrl-F11) shortcut
-	" (settings-> Window Manager -> Keyboard),
-	" otherwise C-F11 in vim does not work
-	map <C-F11> <Esc>:ApexUpdateCtags<CR>
-
-
-	""""""""""""""""""""""""""""""""""""""""""
-	" Tagglist shortcuts
-	""""""""""""""""""""""""""""""""""""""""""
-	" use F3 to toggle Tagglist
-	nmap <silent> <F3> :ApexTListToggle<CR>
-	imap <silent> <F3> <Esc>:ApexTListToggle<CR>
-	vmap <silent> <F3> <Esc>:ApexTListToggle<CR>
-
-	""""""""""""""""""""""""""""""""""""""""""
-	" Apex build shorctuts 
-	""""""""""""""""""""""""""""""""""""""""""
-	" build without saving current file
-	map <F11> :call apex#MakeProject()<CR>
-	imap <F11> <Esc>:call apex#MakeProject()<CR>
-
-endfunction
-
-" load shortcut mapping when one of apexcode file types is detected/loaded
-autocmd FileType apexcode.java call s:setApexShortcuts()
-autocmd FileType apexcode.html call s:setApexShortcuts()
-autocmd FileType apexcode.javascript call s:setApexShortcuts()
-
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" >
+ function! s:setApexShortcuts()
+ 
+ 	""""""""""""""""""""""""""""""""""""""""""
+ 	" Search in files
+ 	""""""""""""""""""""""""""""""""""""""""""
+ 
+ 	" search exact word
+ 	nmap <leader>sc :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.cls ../**/*.trigger <CR>:cwin<CR>
+ 	nmap <leader>st :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.trigger <CR>:cwin<CR>
+ 	nmap <leader>sp :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.page <CR>:cwin<CR>
+ 	nmap <leader>ss :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.scf <CR>:cwin<CR>
+ 	nmap <leader>sa :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf <CR>:cwin<CR>
+ 
+ 	" search - *contains* - partal match is allowed
+ 	nmap <leader>sC :noautocmd vimgrep /<C-R><C-W>/j ../**/*.cls ../**/*.trigger <CR>:cwin<CR>
+ 	nmap <leader>sT :noautocmd vimgrep /<C-R><C-W>/j ../**/*.trigger <CR>:cwin<CR>
+ 	nmap <leader>sP :noautocmd vimgrep /<C-R><C-W>/j ../**/*.page <CR>:cwin<CR>
+ 	nmap <leader>sS :noautocmd vimgrep /<C-R><C-W>/j ../**/*.scf <CR>:cwin<CR>
+ 	nmap <leader>sA :noautocmd vimgrep /<C-R><C-W>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf <CR>:cwin<CR>
+ 
+ 	" prepare search string, but do not run
+ 	nmap <leader>sm :noautocmd vimgrep /\<<C-R><C-W>\>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf \|cwin
+ 
+ 	" search visual selection
+ 	" in this mode we have to delete leading 5 characters '<,'> which system
+ 	" inserts into command line by default
+ 	" we also need to use Control+R* combination to get selection into command
+ 	" line
+ 	vmap <leader>sc :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.cls ../**/*.trigger <CR>:cwin<CR>
+ 	vmap <leader>st :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.trigger <CR>:cwin<CR>
+ 	vmap <leader>sp :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.page <CR>:cwin<CR>
+ 	vmap <leader>ss :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.scf <CR>:cwin<CR>
+ 	vmap <leader>sa :<Del><Del><Del><Del><Del>noautocmd vimgrep /<C-R><S-*>/j ../**/*.cls ../**/*.trigger ../**/*.page ../**/*.scf <CR>:cwin<CR>
+ 
+ 
+ 	""""""""""""""""""""""""""""""""""""""""""
+ 	" CTags shortcuts
+ 	""""""""""""""""""""""""""""""""""""""""""
+ 	" shortcut to update ctags DB manually
+ 	" note for XFCE: disable default workspace 11 switch (Ctrl-F11) shortcut
+ 	" (settings-> Window Manager -> Keyboard),
+ 	" otherwise C-F11 in vim does not work
+ 	map <C-F11> <Esc>:ApexUpdateCtags<CR>
+ 
+ 
+ 	""""""""""""""""""""""""""""""""""""""""""
+ 	" Tagglist shortcuts
+ 	""""""""""""""""""""""""""""""""""""""""""
+ 	" use F3 to toggle Tagglist
+ 	nmap <silent> <F3> :ApexTListToggle<CR>
+ 	imap <silent> <F3> <Esc>:ApexTListToggle<CR>
+ 	vmap <silent> <F3> <Esc>:ApexTListToggle<CR>
+ 
+ 	""""""""""""""""""""""""""""""""""""""""""
+ 	" Apex build shorctuts 
+ 	""""""""""""""""""""""""""""""""""""""""""
+ 	" build without saving current file
+ 	map <F11> :call apex#MakeProject()<CR>
+ 	imap <F11> <Esc>:call apex#MakeProject()<CR>
+ 
+ endfunction
+ 
+ " load shortcut mapping when one of apexcode file types is detected/loaded
+ autocmd FileType apexcode.java call s:setApexShortcuts()
+ autocmd FileType apexcode.html call s:setApexShortcuts()
+ autocmd FileType apexcode.javascript call s:setApexShortcuts()
+<
 
 
 ==============================================================================
@@ -566,8 +582,9 @@ FEATURES                                                   *force.com-features*
 Build/Save to SFDC 
 - with error reporting
 
-Syntax highlighting
-- supports syntax highlighting of Apex Classes, Triggers, Pages, JS Resources
+Load/update metadata from SFDC
+
+Create triggers/classes/pages
 
 Refresh current file from SFDC
 
@@ -578,6 +595,9 @@ Search
 - find word everywhere
 - find visual selection
 
+Syntax highlighting
+- supports syntax highlighting of Apex Classes, Triggers, Pages, JS Resources
+
 Basic Visualforce code completion
 - try following in .page file (do not type single quote characters)
       '<' Ctrl-X,Ctrl-U
@@ -587,22 +607,20 @@ Basic Visualforce code completion
 ==============================================================================
 LIMITATIONS                                             *force.com-limitations*
 
-vim force.com plugin does not support creating force.com project or files within
-project. Use SFDC web interface to create new class/trigger/page... and then issue
-:ApexRefreshProject
-to pull new files down to local drive
+vim force.com plugin does not support creating force.com project. Use provided
+template instead.
 
-ant-salesforce.jar library does not report error line numbers in Visualforce pages
-making it impossible to go-to actual problem line if compile/save fails due to syntax
-error. This is similar to Force.com IDE for Eclipse.
+ant-salesforce.jar library does not (in most cases) report error line numbers
+in Visualforce pages making it impossible to go-to actual problem line if
+compile/save fails due to syntax error. This is similar to Force.com IDE for
+Eclipse.
 
 Current version does not support environment aware code completion
-For example if you write
-
+For example if you write >
 	String val = 'abc';
-typing 
+< typing >
 	val.
-will not bring the list of String methods as Force.com IDE may do
+< will not bring the list of String methods as Force.com IDE may do.
 
 "Execute Anonymous" and "Run test" features are not implemented. Use your favourite 
 web browser in the meantime.
