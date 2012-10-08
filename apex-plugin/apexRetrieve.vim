@@ -21,7 +21,14 @@ endif
 "let g:loaded_apex_retrieve = 1
 let s:instructionPrefix = '||'
 
-let s:MARK_SELECTED = "*"
+"let s:MARK_SELECTED = "*"
+let s:MARK_SELECTED = "x"
+let s:SELECTED_LINE_REGEX = '^\v(\s*)\V\('.s:MARK_SELECTED.'\)\v(\s*\w*)$'
+							"\v enable super magic to avoid too many slashes
+							"\s* - any number of white-space characters
+							"\V - very no magic, to ignore anything which can be in s:MARK_SELECTED
+							"use () to group in 3 groups, second group 'mark symbol' will be
+							"dynamically removed later
 let s:HIERARCHY_SHIFT = "--"
 
 let s:ALL_METADATA_LIST_FILE = "describeMetadata-result.txt"
@@ -107,7 +114,8 @@ function! apexRetrieve#open(filePath)
 		syntax on
 		exec "syn match ApexRetrieveInstructionsText '^\s*".s:instructionPrefix.".*'"
 		exec "syn match ApexRetrieveInstructionsFooter '^\s*".s:instructionFooter."*$'"
-		exec "syn match ApexRetrieveSelectedItem '^\s*\\".s:MARK_SELECTED.".*'"
+		"exec 'syn match ApexRetrieveSelectedItem "^\v\s*\V'.s:MARK_SELECTED.'\v\s*\w*$"'
+		exec 'syn match ApexRetrieveSelectedItem /'.s:SELECTED_LINE_REGEX.'/'
 	endif
 
 	exec "highlight link ApexRetrieveInstructionsText Constant"
@@ -120,12 +128,11 @@ endfunction
 " mark entry as Selected/Deselected
 function! <SID>ToggleSelected()
   " Toggle type selection
-	" let lineNum = line('.')
-	" let lineStr = getline(lineNum)
 	let lineStr = s:getCurrentLine()
 	if s:isSelected(lineStr)
 		"remove mark
-		let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
+		let lineStr = substitute(lineStr, s:SELECTED_LINE_REGEX, '\1\3', '')
+						"remove group \2 (i.e. mark symbol) from current line
 	else
 		"add mark
 		let lineStr = s:MARK_SELECTED . lineStr
@@ -308,8 +315,7 @@ function! <SID>RetrieveSelected()
 endfunction
 
 function! s:isSelected(lineStr)
-	let markIndex = stridx(a:lineStr, s:MARK_SELECTED)
-	return markIndex >= 0
+	return a:lineStr =~ s:SELECTED_LINE_REGEX
 endfunction
 
 function! s:getCurrentLine()
