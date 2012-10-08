@@ -129,7 +129,14 @@ function! apexMetaXml#packageXmlRead(srcFolderPath)
 endfunction
 
 " add new members to package 
+"Args:
+"@param: package - Map: meta-type-name => [member....]
+"@param: meta-type to add
+"@param: members to add for given meta-type
+"
 " ex: call packageXmlAdd(package, 'CustomObject', ['Account', 'My_Object__c', '*'])
+"Return:
+"		>0 if changes were made to given package, otherwise 0
 function! apexMetaXml#packageXmlAdd(package, type, members)
 	let package = a:package
 	let members = []
@@ -139,6 +146,7 @@ function! apexMetaXml#packageXmlAdd(package, type, members)
 		let members = []
 	endif
 
+	let countChanges = 0
 	" add all members making sure they are not already included
 	for member in a:members
 		if len(members) >0 && index(members, member) >= 0
@@ -146,9 +154,10 @@ function! apexMetaXml#packageXmlAdd(package, type, members)
 			continue
 		endif
 		call add(members, member)
+		let countChanges += 1
 	endfor
 	let package[a:type] = members
-	return package
+	return countChanges
 endfunction	
 
 " write well formed package.xml using 'package' map previously created with

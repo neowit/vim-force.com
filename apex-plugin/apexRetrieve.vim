@@ -21,8 +21,7 @@ endif
 "let g:loaded_apex_retrieve = 1
 let s:instructionPrefix = '||'
 
-"let s:MARK_SELECTED = "*"
-let s:MARK_SELECTED = "x"
+let s:MARK_SELECTED = "*"
 let s:SELECTED_LINE_REGEX = '^\v(\s*)\V\('.s:MARK_SELECTED.'\)\v(\s*\w*)$'
 							"\v enable super magic to avoid too many slashes
 							"\s* - any number of white-space characters
@@ -198,8 +197,8 @@ function! s:bulkRetrieve(typeName)
 			let package = apexMetaXml#packageXmlNew()
 			let types = keys(typesMap)
 			call add(types, "*") " add <members>*</members> option
-			let package = apexMetaXml#packageXmlAdd(package, "CustomObject", types)
-			let package = apexMetaXml#packageXmlAdd(package, typeName, ['*'])
+			call apexMetaXml#packageXmlAdd(package, "CustomObject", types)
+			call apexMetaXml#packageXmlAdd(package, typeName, ['*'])
 			let tempDir = apexOs#createTempDir()
 			let srcDir = apexOs#joinPath([tempDir, s:SRC_DIR_NAME])
 			call apexOs#createDir(srcDir)
@@ -304,12 +303,20 @@ function! <SID>RetrieveSelected()
 	"update package.xml
 	if len(retrievedTypes) > 0
 		let packageXml = apexMetaXml#packageXmlRead(b:SRC_PATH)
+		let changeCount = 0
 		for typeName in keys(retrievedTypes)
-			call apexMetaXml#packageXmlAdd(packageXml, typeName, retrievedTypes[typeName])
+			let changeCount += apexMetaXml#packageXmlAdd(packageXml, typeName, retrievedTypes[typeName])
 		endfor
 		"write updated package.xml
 		"echo packageXml
-		call apexMetaXml#packageWrite(packageXml, b:SRC_PATH)
+		if changeCount >0
+			echohl WarningMsg
+			let response = input('Update package.xml with new types [y/N]? ')
+			echohl None
+			if 'y' == response || 'Y' == response
+				call apexMetaXml#packageWrite(packageXml, b:SRC_PATH)
+			endif
+		endif
 	endif
 	
 endfunction
