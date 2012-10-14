@@ -151,6 +151,12 @@ command! ApexRefreshFile :call apex#refreshFile(expand("%:p"))
 command! ApexPrintChanged :call apex#printChangedFiles(expand("%:p"))
 command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
 
+"staging
+command! ApexStage :call apexStage#open(expand("%:p"))
+command! ApexStageAdd :call apexStage#add(expand("%:p"))
+command! ApexStageRemove :call apexStage#remove(expand("%:p"))
+command! ApexStageClear :call apexStage#clear(expand("%:p"))
+
 " select file type, create it and switch buffer
 command! ApexNewFile :call apexMetaXml#createFileAndSwitch(expand("%:p"))
 

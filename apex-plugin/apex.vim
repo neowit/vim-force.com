@@ -33,6 +33,11 @@ let s:FILE_TIME_DIFF_TOLERANCE_SEC = 1 " if .cls and .cls-meta.xml file time dif
 let s:APEX_EXTENSIONS_WITH_META_XML = ['cls', 'trigger', 'page', 'scf', 'resource', 'component']
 let s:APEX_EXTENSIONS = s:APEX_EXTENSIONS_WITH_META_XML + ['labels', 'object']
 
+"folder where intermediate project data is stored
+"this folder is safe to delete, it will be recreated
+"as needed
+let s:CACHE_FOLDER_NAME = ".vim-force.com"
+
 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " Apex Code Compilation
@@ -114,6 +119,17 @@ function! apex#MakeProject(...)
 endfun
 
 
+" return existing or create new and return path to
+" plugin cache directory
+function! apex#getCacheFolderPath(projectPath)
+	let cacheFolderPath = apexOs#joinPath([a:projectPath, s:CACHE_FOLDER_NAME])
+
+	if !isdirectory(cacheFolderPath)
+		"cache directory does not exist, need to create it first
+		call apexOs#createDir(cacheFolderPath)
+	endif
+	return cacheFolderPath
+endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""
 " Get SFDC project path and name assuming we have a standard folder structure and
 " project folder matches SFDC project name
