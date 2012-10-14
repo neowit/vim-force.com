@@ -31,7 +31,6 @@ let s:SELECTED_LINE_REGEX = '^\v(\s*)\V\('.s:MARK_SELECTED.'\)\v(\s*\w*)$'
 let s:HIERARCHY_SHIFT = "--"
 
 let s:ALL_METADATA_LIST_FILE = "describeMetadata-result.txt"
-let s:CACHE_FOLDER_NAME = ".vim-force.com"
 
 let b:PROJECT_NAME = ""
 let b:PROJECT_PATH = ""
@@ -446,17 +445,6 @@ function! s:loadChildrenOfType(typeName)
 	return typesMap
 endfunction
 
-" return existing or create new and return path to
-" plugin cache directory
-function! s:getCacheFolderPath(projectPath)
-	let metaTypesFolderPath = apexOs#joinPath([a:projectPath, s:CACHE_FOLDER_NAME])
-
-	if !isdirectory(metaTypesFolderPath)
-		"cache directory does not exist, need to create it first
-		call apexOs#createDir(metaTypesFolderPath)
-	endif
-	return metaTypesFolderPath
-endfunction
 
 function! s:getMetaTypesCache(allMetaTypesFilePath)
 	let allMetaTypesFilePath = a:allMetaTypesFilePath
@@ -531,7 +519,7 @@ endfunction
 "
 " return: list of all supported metadata types
 function! s:getMetaTypesList(projectName, projectPath, forceLoad)
-	let allMetaTypesFilePath = apexOs#joinPath([s:getCacheFolderPath(a:projectPath), s:ALL_METADATA_LIST_FILE])
+	let allMetaTypesFilePath = apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:ALL_METADATA_LIST_FILE])
 
 	if !filereadable(allMetaTypesFilePath) || a:forceLoad
 		"cache file does not exist, need to load it first
@@ -571,7 +559,7 @@ function! s:init(projectPath)
 				\ "|| :Retrieve = retrieve selected types into the project folder",
 				\ "|| ",
 				\ "|| NOTE: cached list of metadata types is stored in: ",
-				\ "||		 '".apexOs#joinPath([a:projectPath, s:CACHE_FOLDER_NAME, s:ALL_METADATA_LIST_FILE])."' file.",
+				\ "||		 '".apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:ALL_METADATA_LIST_FILE])."' file.",
 				\ "||		To clear cached types delete this file and run :ApexRetrieve to reload fresh version.",
 				\ "============================================================================="
 				\ ]
