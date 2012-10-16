@@ -144,6 +144,7 @@ command! -nargs=0 ApexDeploy :call apex#MakeProject()
 command! -nargs=0 ApexDeployOpen :call apex#MakeProject('', 'open')
 command! -nargs=0 ApexDeployConfirm :call apex#MakeProject('', 'confirm')
 command! -nargs=0 ApexDeployAll :call apex#MakeProject('', 'all')
+command! -nargs=0 ApexDeployStaged :call apex#MakeProject('', 'staged')
 
 command! -nargs=0 ApexRefreshProject :call apex#refreshProject()
 command! RefreshSFDCProject :ApexRefreshProject

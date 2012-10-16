@@ -18,7 +18,7 @@ if exists("g:loaded_apex_retrieve") || &compatible || stridx(&cpo, "<") >=0
 	"<SID> requires that the '<' flag is not present in 'cpoptions'.
 	finish
 endif
-"let g:loaded_apex_retrieve = 1
+let g:loaded_apex_retrieve = 1
 let s:instructionPrefix = '||'
 
 let s:MARK_SELECTED = "*"
@@ -353,7 +353,7 @@ function! s:getSelectedTypes()
 endfunction
 
 function! s:SID()
-  " Return the SID number for a file
+  " Return the SID number for this file
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
 endfun
 let s:sid = s:SID()
@@ -565,11 +565,6 @@ function! s:init(projectPath)
 				\ ]
 	let s:headerLineCount = len(s:header)  
 endfunction
-"function! TestParseListMetadataResult(metadataType, fname)
-"	call s:parseListMetadataResult(a:metadataType, a:fname)
-"endfunction
-
-" call apexRetrieve#open("SForce", "/Users/andrey/eclipse.workspace/Sforce - SFDC Experiments/SForce")
 
 function! TestRetrieve()
 
