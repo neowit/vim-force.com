@@ -49,9 +49,11 @@ let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged'] "supported D
 "			'open' - deploy only files from currently open Tabs or Buffers (if
 "			less than 2 tabs open)
 "			'confirm' - all changed files with confirmation for every file
-"			'changed' - all changed files
+"			'modified' - all changed files
 "			'all' - all files under ./src folder
 "			'staged' - all files listed in stage-list.txt file
+" param 3: destination project name, must match one of .properties file with
+" login details
 function! apex#MakeProject(...)
 	let filePath = expand("%:p")
 	let mode = 'modified'
@@ -63,9 +65,35 @@ function! apex#MakeProject(...)
 		let mode = a:2
 	endif
 
+	let providedProjectName = ''
+	if a:0 >2 
+		let providedProjectName = a:3
+	endif
+
 	let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
-	let projectName = ''
-	let projectPath = ''
+	let projectPair = apex#getSFDCProjectPathAndName(filePath)
+	let projectPath = '' "projectPair.path
+	let projectName = projectPair.name
+
+	if len(providedProjectName) > 0
+		"check if properties file exist
+		"make sure providedProjectName does not contain .properties
+		let providedProjectName = substitute(providedProjectName, '.properties$', '', '')
+		
+		let propFilePath = apexOs#joinPath([propertiesFolder, providedProjectName]).".properties"
+		"check if we need to append .properties
+		echo "providedProjectName=".providedProjectName
+		echo "propFilePath=".propFilePath
+
+		if !filereadable(propFilePath)
+			echoerr propFilePath." with login details does not exist or not readable."
+			return
+		else
+			let projectName = providedProjectName
+		endif	
+	endif
+
+	echo "project.name='" . projectName . "'"
 
 	if 'all' != mode
 		" prepare pack
@@ -81,8 +109,8 @@ function! apex#MakeProject(...)
 
 
 		let preparedTempProjectPath = apexOs#removeTrailingPathSeparator(apexOs#splitPath(projectDescriptor.preparedSrcPath).head)
-		let projectName = projectDescriptor.project
-		let projectPath = projectDescriptor.projectPath
+		"let projectName = projectDescriptor.project
+		let projectPath = projectDescriptor.projectPath "path to temp folder with prepared for deploy files
 
 
 		" copy package XML into the work folder
@@ -90,11 +118,9 @@ function! apex#MakeProject(...)
 
 	else "all
 		" deploy project in its entirety regardless of 'modified' files status
-		let projectPair = apex#getSFDCProjectPathAndName(filePath)
-		let projectPath = projectPair.path
-		let projectName = projectPair.name
-		"echo "project.path='" . projectPair.path . "'"
-		"echo "project.name='" . projectPair.name . "'"
+		"let projectPair = apex#getSFDCProjectPathAndName(filePath)
+		let projectPath = projectPair.path "path to current project, not the temp one but real
+		"let projectName = projectPair.name
 		let preparedTempProjectPath = projectPath
 		" as we are not copying sources to temp folder we need to make sure that
 		" it exists because it is needed for ant error log anyway
@@ -282,7 +308,7 @@ function! apex#hasChangedFiles(filePath)
 
 	"{'filesByFolder': {'folder-name' : [files list]}, 
 	" 'timeMap': {"classes/MyClass.cls-meta.xml": src-time} }
-	let fileDescriptor = s:prepareFileDescriptor(projectPath, 'changed', '')
+	let fileDescriptor = s:prepareFileDescriptor(projectPath, 'modified', '')
 	"echo fileDescriptor
 	if empty(fileDescriptor) || empty(fileDescriptor.filesByFolder)
 		"echomsg 'Nothing to deploy'
@@ -300,7 +326,7 @@ function! apex#printChangedFiles(filePath)
 
 	"{'filesByFolder': {'folder-name' : [files list]}, 
 	" 'timeMap': {"classes/MyClass.cls-meta.xml": src-time} }
-	let fileDescriptor = s:prepareFileDescriptor(projectPath, 'changed', '')
+	let fileDescriptor = s:prepareFileDescriptor(projectPath, 'modified', '')
 	let dirs =keys(fileDescriptor.filesByFolder)
 
 	let nothingModified = 1
@@ -348,7 +374,7 @@ function! s:backupOpenFiles(projectPath, projectName)
 	" now backup modified files which are not open
 	"{'filesByFolder': {'folder-name' : [files list]}, 
 	" 'timeMap': {"classes/MyClass.cls-meta.xml": src-time} }
-	let fileDescriptor = s:prepareFileDescriptor(a:projectPath, 'changed', '')
+	let fileDescriptor = s:prepareFileDescriptor(a:projectPath, 'modified', '')
 	let dirs =keys(fileDescriptor.filesByFolder)
 	"echo filesMap
 	for dirName in dirs
@@ -432,9 +458,8 @@ endfunction
 function! s:prepareApexPackage(filePath, mode)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
-	echo "project.path='" . projectPair.path . "'"
-	echo "project.name='" . projectPair.name . "'"
 
+	echo "project.path='" . projectPath . "'"
 
 	let type = 'modified'
 	if index(s:MAKE_MODES, a:mode) >= 0
@@ -482,7 +507,7 @@ endfun
 "		*.resource 
 "		*.component
 "	files where <full-file-name>-meta.xml is older than actual source file
-"	File is considered 'changed' if its last modified date does not match its
+"	File is considered 'modified' if its last modified date does not match its
 "	'-meta.xml' counterpart
 "
 " @param: filePath - path to a single file, used only with mode=='onefile'
@@ -635,7 +660,7 @@ function! s:prepareFileDescriptor(projectPath, mode, filePath )
 		let srcPath = apexOs#joinPath([projectPath, s:SRC_DIR_NAME])
 		let stageFilePath = apexStage#getStageFilePath(projectPath)
 		for relFileName in apexStage#list(projectPath)
-			echo "staged relFileName=".relFileName
+			"echo "staged relFileName=".relFileName
 			"relFileName = 'classes/MyClass.cls'
 			let folder = apexOs#joinPath([s:SRC_DIR_NAME, apexOs#splitPath(relFileName).head]) "src/classes/
 			let fSrc = apexOs#joinPath([s:SRC_DIR_NAME, relFileName ]) "src/classes/MyClass.cls

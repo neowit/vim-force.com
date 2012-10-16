@@ -144,7 +144,6 @@ function! apexOs#createDir(path)
 		return
 	endif	
 	if has("unix")
-		echo "path=".path
 		call mkdir(path, "p", 0700)
 	elseif s:is_windows
 		call mkdir(path, "p")

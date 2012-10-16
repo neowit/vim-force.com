@@ -140,11 +140,11 @@ augroup END
 """"""""""""""""""""""""""""""""""""""""""""""""
 
 "defined a command to run MakeApex
-command! -nargs=0 ApexDeploy :call apex#MakeProject()
-command! -nargs=0 ApexDeployOpen :call apex#MakeProject('', 'open')
-command! -nargs=0 ApexDeployConfirm :call apex#MakeProject('', 'confirm')
-command! -nargs=0 ApexDeployAll :call apex#MakeProject('', 'all')
-command! -nargs=0 ApexDeployStaged :call apex#MakeProject('', 'staged')
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeploy :call apex#MakeProject('', 'modified', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames  ApexDeployOpen :call apex#MakeProject('', 'open', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames  ApexDeployConfirm :call apex#MakeProject('', 'confirm', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames  ApexDeployAll :call apex#MakeProject('', 'all', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames  ApexDeployStaged :call apex#MakeProject('', 'staged', <f-args>)
 
 command! -nargs=0 ApexRefreshProject :call apex#refreshProject()
 command! RefreshSFDCProject :ApexRefreshProject
@@ -186,3 +186,19 @@ let NERDTreeIgnore+=['.*\-meta\.xml$']
 hi link javaScript Normal
 
 
+""""""""""""""""""""""""""""""""""""""""""""""""
+" ApexDeploy project name completion
+""""""""""""""""""""""""""""""""""""""""""""""""
+" list .properties file names without extension
+function! ListProjectNames(A, L, P)
+	let fullPaths = apexOs#glob(g:apex_properties_folder . "**/*.properties")
+	let res = []
+	for fullName in fullPaths
+		let fName = apexOs#splitPath(fullName).tail
+		"take into account file prefix which user have already entered
+		if 0 == len(a:A) || match(fName, a:A) >= 0 
+			call add(res, fName)
+		endif	
+	endfor
+	return res
+endfunction	

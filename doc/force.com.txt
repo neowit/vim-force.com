@@ -262,6 +262,20 @@ i.e. parent of ./src/ folder, no need to drill down into project subfolders
                                                             *ApexDeploy*
 Use :|ApexDeploy| to upload/deploy/save all modified files of current project
 to SFDC
+All commands in :|ApexDeploy|* family support optional argument - 'project name' to deploy to.
+This name should match file name part of .properties file which contains access details.
+See |force.com-settings| for details about .properties files.
+For example if I am working in "My Sandbox1" project and have 2 .properties files:
+"My Sandbox 1.properties" and "My Sandbox 2.properties" then >
+ :ApexDeploy
+<will deploy by default using "My Sandbox 1.properties" file, while >
+ :ApexDeploy My Sandbox 2
+<will deploy files from current project using "My Sandbox 2.properties" file
+
+Project name argument of all commands in :|ApexDeploy|* family supports completion.
+For instance, using project names from the example above >
+ :ApexDeploy My<Tab>
+< will offer "My Sandbox 1" and "My Sandbox 2"
                                                             *force.com-F11*
 Plugin also defines keyboard shortcut F11 which calls :ApexDeploy and works
 in 'normal' and 'insert' modes
