@@ -19,13 +19,22 @@ if exists("g:loaded_apex_stage") || &compatible || stridx(&cpo, "<") >=0
 	finish
 endif
 
-"let g:loaded_apex_retrieve = 1
-let s:instructionPrefix = '||'
+let g:loaded_apex_stage = 1
 
 let s:STAGE_FILE = "stage-list.txt"
 let b:PROJECT_NAME = ""
 let b:PROJECT_PATH = ""
 let s:BUFFER_NAME = 'vim-force.com Staged Files'
+
+let s:instructionPrefix = '||'
+let s:instructionFooter = '='
+let s:header = [
+			\ "|| vim-force.com plugin - managing staged files",
+			\ "||",
+			\ "|| review staged files and run :Write when done" ,
+			\ "============================================================================="
+			\ ]
+let s:headerLineCount = len(s:header)  
 
 function! apexStage#open(filePath)
 
@@ -97,7 +106,7 @@ function! apexStage#open(filePath)
 endfunction	
 
 function! s:SID()
-  " Return the SID number for a file
+  " Return the SID number for current file
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
 endfun
 let s:sid = s:SID()
@@ -105,17 +114,42 @@ let s:sid = s:SID()
 "write changes to stage cache file
 function! <SID>Write()
 	let lines = getline(s:headerLineCount +1, line("$"))
-	let stageFilePath = apexOs#joinPath([apex#getCacheFolderPath(b:PROJECT_PATH), s:STAGE_FILE])
+	let stageFilePath = apexStage#getStageFilePath(b:PROJECT_PATH)
 
 	call writefile(lines, stageFilePath)
 	:bd
+
+endfunction
+function! apexStage#getStageFilePath(projectPath)
+	return apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:STAGE_FILE])
+endfunction
+
+" list staged files
+"Args:
+"projectPath - path to current project 
+"Return:
+" list of staged files
+" e.g.
+" [classes/MyClass.cls,  pages/MyPage.page, ...]
+function! apexStage#list(projectPath)
+	"check that file is not already staged
+	let lines = []
+	let alreadyAdded = 0
+
+	let stageFilePath = apexStage#getStageFilePath(a:projectPath)
+	if filereadable(stageFilePath)
+		for line in readfile(stageFilePath, '', 10000) " assuming stage file will never contain more than 10K lines
+			call add(lines, line)
+		endfor
+	endif
+	return lines
 
 endfunction
 " stage file for further operation like Deploy or Delete
 function! apexStage#add(filePath)
 
 	let projectPath = apex#getSFDCProjectPathAndName(a:filePath).path
-	let stageFilePath = apexOs#joinPath([apex#getCacheFolderPath(projectPath), s:STAGE_FILE])
+	let stageFilePath = apexStage#getStageFilePath(projectPath)
 	let filePair = apexOs#splitPath(a:filePath)
 	let fName = filePair.tail
 	let folder = apexOs#splitPath(filePair.head).tail
@@ -146,7 +180,7 @@ endfunction
 function! apexStage#remove(filePath)
 
 	let projectPath = apex#getSFDCProjectPathAndName(a:filePath).path
-	let stageFilePath = apexOs#joinPath([apex#getCacheFolderPath(projectPath), s:STAGE_FILE])
+	let stageFilePath = apexStage#getStageFilePath(projectPath)
 	let filePair = apexOs#splitPath(a:filePath)
 	let fName = filePair.tail
 	let folder = apexOs#splitPath(filePair.head).tail
@@ -176,11 +210,11 @@ endfunction
 function! apexStage#clear(filePath)
 
 	let projectPath = apex#getSFDCProjectPathAndName(a:filePath).path
-	let stageFilePath = apexOs#joinPath([apex#getCacheFolderPath(projectPath), s:STAGE_FILE])
+	let stageFilePath = apexStage#getStageFilePath(projectPath)
 
 	if filereadable(stageFilePath)
 		if 0 == delete(stageFilePath)
-			echo "cleared"
+			echo "cleared stage"
 		else
 			call apexUtil#warning('failed to delete stage file '.stageFilePath)
 		end	
@@ -194,12 +228,4 @@ endfunction
 
 " call this method before any other as soon as Project Path becomes available
 function! s:init(projectPath)
-	let s:instructionFooter = '='
-	let s:header = [
-				\ "|| vim-force.com plugin - managing staged files",
-				\ "||",
-				\ "|| review staged files and run :Write when done" ,
-				\ "============================================================================="
-				\ ]
-	let s:headerLineCount = len(s:header)  
 endfunction

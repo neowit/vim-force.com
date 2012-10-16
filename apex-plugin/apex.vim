@@ -38,19 +38,20 @@ let s:APEX_EXTENSIONS = s:APEX_EXTENSIONS_WITH_META_XML + ['labels', 'object']
 "as needed
 let s:CACHE_FOLDER_NAME = ".vim-force.com"
 
-
+let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged'] "supported Deploy modes
 """"""""""""""""""""""""""""""""""""""""""""""""
 " Apex Code Compilation
 """"""""""""""""""""""""""""""""""""""""""""""""
-"
+"Args:
 " param 1: (optional) path to file which belongs to apex project which needs
 " to be deployed
-" param 2: (optional) 'open|confirm|changed|all' - 
+" param 2: (optional) 'open|confirm|changed|all|staged' - 
 "			'open' - deploy only files from currently open Tabs or Buffers (if
 "			less than 2 tabs open)
 "			'confirm' - all changed files with confirmation for every file
 "			'changed' - all changed files
 "			'all' - all files under ./src folder
+"			'staged' - all files listed in stage-list.txt file
 function! apex#MakeProject(...)
 	let filePath = expand("%:p")
 	let mode = 'modified'
@@ -58,7 +59,7 @@ function! apex#MakeProject(...)
 		let filePath = a:1
 	endif
 
-	if a:0 >1 && index(['open', 'modified', 'confirm', 'all'], a:2) >= 0
+	if a:0 >1 && index(s:MAKE_MODES, a:2) >= 0
 		let mode = a:2
 	endif
 
@@ -112,6 +113,10 @@ function! apex#MakeProject(...)
 				" show what files we have just deployed
 				"echo metaFilePath
 			endfor	
+			if 'staged' == mode
+				"clear stage cache
+				call apexStage#clear(filePath)
+			endif	
 		endif
 	endif
 
@@ -431,14 +436,10 @@ function! s:prepareApexPackage(filePath, mode)
 	echo "project.name='" . projectPair.name . "'"
 
 
-	let type = 'changed'
-	if 'open' == a:mode
-		let type = 'open'
-	elseif 'confirm' == a:mode
-		let type = 'confirm'
-	elseif 'onefile' == a:mode
-		let type = 'onefile'
-	endif	
+	let type = 'modified'
+	if index(s:MAKE_MODES, a:mode) >= 0
+		let type = a:mode
+	endif
 
 	"{'filesByFolder': {'folder-name' : [files list]}, 
 	" 'timeMap': {"classes/MyClass.cls-meta.xml": src-time} }
@@ -469,10 +470,10 @@ endfun
 
 " prepares description (list and time) of files to be packed into deployment
 " package
-"
+"Args:
 " @param: projectPath - "/path/to/current/Project/"
-" @param: type - 'open|confirm|changed'
-"	if 'changed' then prepare *only* changed files for deployment/update into SFDC 
+" @param: type - 'open|confirm|modified|staged'
+"	if 'modified' then prepare *only* changed files for deployment/update into SFDC 
 "   Find 
 "		*.trigger, 
 "		*.cls, 
@@ -485,24 +486,26 @@ endfun
 "	'-meta.xml' counterpart
 "
 " @param: filePath - path to a single file, used only with mode=='onefile'
-" @return: {'filesByFolder': {'folder-name' : [files list]}, 
-"			'timeMap': {"classes/MyClass.cls-meta.xml": src-time} }
-"	
-function! s:prepareFileDescriptor(projectPath, type, filePath )
+" @return: {'filesByFolder': {'folder-name' : [files list relatively project root]}, 
+"			'timeMap': {"full-path-to-meta.xml": src-time} }
+"	e.g. 
+" {'filesByFolder': {'src/classes/': ['src/classes/MyClass.cls-meta.xml', 'src/classes/MyClass.cls']}, 
+"  'timeMap': {'/full/path/to/project/src/classes/MyClass.cls-meta.xml': 123456789}}
+"
+function! s:prepareFileDescriptor(projectPath, mode, filePath )
 	let projectPath = a:projectPath	
 
 	let filesByFolder = {}
 	let timeMap = {}
-	let type = 'changed'
+	let type = 'modified'
 
-	if len(a:type) >0 
-		let type = a:type
+	if len(a:mode) >0 
+		let type = a:mode
 	endif
 
-	if 'changed' == type || 'confirm' == type
+	if 'modified' == type || 'confirm' == type
 		let extPattern = join(s:APEX_EXTENSIONS_WITH_META_XML, "\\|\\.") 
 		let extPattern = "\\." .extPattern . "$"
-		"echo "extPattern='" . extPattern . "'"
 
 
 		let files = apexOs#glob(projectPath . "**/*-meta.xml")
@@ -554,7 +557,6 @@ function! s:prepareFileDescriptor(projectPath, type, filePath )
 	elseif 'open' == type
 		let extPattern = join(s:APEX_EXTENSIONS, "\\|\\.") 
 		let extPattern = "\\." .extPattern . "$"
-		"echo "extPattern='" . extPattern . "'"
 		"
 		" get a list of all buffers in all tabs
 		let bufferList = s:getOpenBuffers(a:projectPath)
@@ -625,8 +627,37 @@ function! s:prepareFileDescriptor(projectPath, type, filePath )
 			let timeMap[fMetaFullPath] = srcTime
 			call add(filesToDeploy, fSrc.'-meta.xml')
 		endif
+	elseif 'staged' == type
+		if len(projectPath) <1
+			echoerr 'parameter projectPath is required'
+			return {}
+		endif
+		let srcPath = apexOs#joinPath([projectPath, s:SRC_DIR_NAME])
+		let stageFilePath = apexStage#getStageFilePath(projectPath)
+		for relFileName in apexStage#list(projectPath)
+			echo "staged relFileName=".relFileName
+			"relFileName = 'classes/MyClass.cls'
+			let folder = apexOs#joinPath([s:SRC_DIR_NAME, apexOs#splitPath(relFileName).head]) "src/classes/
+			let fSrc = apexOs#joinPath([s:SRC_DIR_NAME, relFileName ]) "src/classes/MyClass.cls
+			let fullPath = apexOs#joinPath([projectPath, fSrc ]) "/path/to/project/src/classes/MyClass.cls
+			let filesToDeploy = []
+			if has_key(filesByFolder, folder)
+				let filesToDeploy = filesByFolder[folder]
+			endif	
+			call add(filesToDeploy, fSrc)
+			"check if file has -meta.xml counterpart
+			let fMetaFullPath = fullPath.'-meta.xml'
+			if filewritable(fMetaFullPath)
+				let srcTime = getftime(fullPath) 
+				let timeMap[fMetaFullPath] = srcTime
+				call add(filesToDeploy, fSrc.'-meta.xml')
+			endif
+
+			let filesByFolder[folder] = filesToDeploy
+
+		endfor	
 	else
-		echoerr 'unsupported type='.a:type
+		echoerr 'unsupported type='.type
 		return {}
 	endif
 	return {'filesByFolder':filesByFolder, 'timeMap':timeMap}
