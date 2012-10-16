@@ -124,23 +124,27 @@ function! apexOs#createTempDir()
 	if has("unix")
 		" remove existing folder
 		silent exe "!rm -R ". shellescape(tempFolderPath)
-		" recreate temp folder
-		call apexOs#createDir(tempFolderPath)
-		return tempFolderPath
 	elseif s:is_windows
 		silent exe "!rd ".GetWin32ShortName(tempFolderPath)." /s /q "
-		call apexOs#createDir(tempFolderPath)
-		return tempFolderPath
 	else
 		echoerr "Not implemented"
+		return ""
 	endif
-	return ""
+	" recreate temp folder
+	call apexOs#createDir(tempFolderPath)
+	return tempFolderPath
+	return tempFolderPath
 endfunction
 " 
 " Os dependent directory create
 function! apexOs#createDir(path)
 	let path = apexOs#removeTrailingPathSeparator(a:path)
+	if isdirectory(path)
+		echoerr path." already exists, skip createDir()"
+		return
+	endif	
 	if has("unix")
+		echo "path=".path
 		call mkdir(path, "p", 0700)
 	elseif s:is_windows
 		call mkdir(path, "p")
