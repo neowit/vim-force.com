@@ -144,6 +144,10 @@ function! apex#MakeProject(...)
 				call apexStage#clear(filePath)
 			endif	
 		endif
+	else
+		"looks like we did not get to execute ant. error should have been
+		"displayed by now
+		return -1
 	endif
 
 	return result
