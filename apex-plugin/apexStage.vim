@@ -146,33 +146,41 @@ function! apexStage#list(projectPath)
 
 endfunction
 " stage file for further operation like Deploy or Delete
-function! apexStage#add(filePath)
-
-	let projectPath = apex#getSFDCProjectPathAndName(a:filePath).path
-	let stageFilePath = apexStage#getStageFilePath(projectPath)
-	let filePair = apexOs#splitPath(a:filePath)
-	let fName = filePair.tail
-	let folder = apexOs#splitPath(filePair.head).tail
-	let relPath = apexOs#joinPath([folder, fName])
-	"check that file is not already staged
-	let lines = []
-	let alreadyAdded = 0
-
-	if filereadable(stageFilePath)
-		for line in readfile(stageFilePath, '', 10000) " assuming stage file will never contain more than 10K lines
-			call add(lines, line)
-			if line =~? "^".relPath."$"
-				let alreadyAdded = 1
-			endif	
-		endfor
+"Args:
+"param 1: [optional] path to file which will be staged
+function! apexStage#add(...)
+	let filePath = expand("%:p")
+	if a:0 > 0
+		let filePath = a:1
 	endif
-	if alreadyAdded > 0
-		call apexUtil#warning('File "'.relPath.'" already staged. SKIP ')
-		return
+
+	let projectPath = apex#getSFDCProjectPathAndName(filePath).path
+	if  len(projectPath) > 0
+		let stageFilePath = apexStage#getStageFilePath(projectPath)
+		let filePair = apexOs#splitPath(filePath)
+		let fName = filePair.tail
+		let folder = apexOs#splitPath(filePair.head).tail
+		let relPath = apexOs#joinPath([folder, fName])
+		"check that file is not already staged
+		let lines = []
+		let alreadyAdded = 0
+
+		if filereadable(stageFilePath)
+			for line in readfile(stageFilePath, '', 10000) " assuming stage file will never contain more than 10K lines
+				call add(lines, line)
+				if line =~? "^".relPath."$"
+					let alreadyAdded = 1
+				endif	
+			endfor
+		endif
+		if alreadyAdded > 0
+			call apexUtil#warning('File "'.relPath.'" already staged. SKIP ')
+			return
+		endif
+		call add(lines, relPath)
+		call writefile(lines, stageFilePath)
+		echo "staged ".relPath
 	endif
-	call add(lines, relPath)
-	call writefile(lines, stageFilePath)
-	echo "staged ".relPath
 
 endfunction	
 
