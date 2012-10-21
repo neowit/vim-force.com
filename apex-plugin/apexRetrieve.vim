@@ -14,7 +14,7 @@
 " apexRetrieve.vim - part of vim-force.com plugin
 " Selective Metadata retrieval methods
 
-if exists("g:loaded_apex_retrieve") || &compatible || stridx(&cpo, "<") >=0
+if exists("g:loaded_apex_retrieve") && !exists ("g:vim_force_com_debug_mode") || &compatible || stridx(&cpo, "<") >=0
 	"<SID> requires that the '<' flag is not present in 'cpoptions'.
 	finish
 endif
@@ -147,23 +147,45 @@ function! <SID>ToggleSelected()
 		"selected element is a child of something else
 		"remove mark from parent element
 		let topLine = s:headerLineCount
-		let lineNum = currentLineNum -1
 		"find parent
-		while lineNum > topLine
-			let lineStr =  getline(lineNum)
-			if lineStr =~ s:HIERARCHY_SHIFT
-				let lineNum -= 1
-			else
-				break
-			endif
-		endwhile
+		let lineNum = s:getParentLineNum(currentLineNum)
 		
-		let lineStr =  getline(lineNum)
-		if s:isSelected(lineStr)
-			let lineStr = s:setSelection(lineStr, 0)
-			call setline(lineNum, lineStr)
+		if lineNum > 0
+			let lineStr =  getline(lineNum)
+			if s:isSelected(lineStr)
+				let lineStr = s:setSelection(lineStr, 0)
+				call setline(lineNum, lineStr)
+			endif
 		endif
 	end	
+endfunction
+
+" find line number of parent element of given line
+" if current line is level 1, i.e. child then go up
+" until we found line at level 0
+"Args:
+"param: lineNum - child line to start with
+"Return:
+" parent line number of -1 if no parent detected
+function! s:getParentLineNum(lineNum)
+	let topLine = s:headerLineCount
+	let lineNum = a:lineNum -1
+	"find parent
+	let found = 0
+	while lineNum > topLine
+		let lineStr =  getline(lineNum)
+		if lineStr =~ s:HIERARCHY_SHIFT
+			let lineNum -= 1
+		else
+			let found = 1
+			break
+		endif
+	endwhile
+	if found
+		return lineNum
+	endif
+	return -1 "current line is not child line
+
 endfunction
 
 " set or remove selection mark from given text
@@ -190,22 +212,8 @@ function! <SID>ExpandCurrent()
 	"echo "load children of current line"
 
 	let lineNum = line('.')
-	let lineStr = s:getCurrentLine()
-	"remove mark if exist
-	let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
-	let typeName = apexUtil#trim(lineStr)
-
-	" load children of given metadata type
-	let typesMap = s:loadChildrenOfType(typeName)
-	if len(typesMap) > 0
-		let typesList = sort(keys(typesMap))
-		let shiftedList = []
-		" append types below current
-		for curType in typesList
-			call add(shiftedList, s:HIERARCHY_SHIFT . curType)
-		endfor
-		call append(lineNum, shiftedList)
-	endif
+	call s:deleteChildren(lineNum)
+	call s:expandOne(lineNum)
 endfunction
 
 
@@ -224,7 +232,8 @@ function! <SID>ExpandSelected()
 	"remove all children of selected root types
 	while lineNum <= line("$")
 		let line = getline(lineNum)
-		if s:isSelected(line)
+		"find all selected items of level 0, ignore all Children
+		if s:isSelected(line) && match(line, s:HIERARCHY_SHIFT) < 0
 			"remove existing children
 			let deletedLineCount = s:deleteChildren(lineNum)
 			"echo "Deleted ".deletedLineCount." lines "
@@ -234,17 +243,26 @@ function! <SID>ExpandSelected()
 
 	"load children of each selected root type
 	let lineNum = firstSelectedLineNum
+	let hasSelectedRootTypes = 0
 	while lineNum <= line("$")
 		let line = getline(lineNum)
-		if s:isSelected(line)
+		if s:isSelected(line) && match(line, s:HIERARCHY_SHIFT) < 0
 			"now insert new children
 			let typeMap = s:expandOne(lineNum)
 			let shiftSize = len(typeMap)
-			let lineNum += shiftSize
+			if shiftSize >0
+				let lineNum += shiftSize
+			else "no members of selected type available
+				let lineNum += 1
+			endif
+			let hasSelectedRootTypes = 1
 		else
 			let lineNum += 1
 		endif
-	endwhile	
+	endwhile
+	if hasSelectedRootTypes < 1
+		echo "No Root types selected"
+	endif
 
 endfunction
 
@@ -296,55 +314,97 @@ function! s:expandOne(lineNum)
 	endif
 	return typesMap
 endfunction
+
 " for most types this method just calls apexAnt#bulkRetrieve
 " but some (like Profile and PermissionSet) require special treatment
 "
 " return: temp folder path which contains subfolder with retrieved components
 " ex: /tmp/temp
-function! s:bulkRetrieve(typeName)
+" Args:
+" typeName: name of currently retrieved type, ex: ApexClass
+" members - list of members ot retrieve, ex: ['MyClass1.cls', 'MyClass2.cls']
+" allTypeMap - map of all types with members selected by user
+"	this map is relevan for things like Profile & PermissionSet
+function! s:bulkRetrieve(typeName, members, allTypeMap)
 	let typeName = a:typeName
-	if index(["Profile", "PermissionSet"], typeName) < 0
+	let members = a:members
+	if index(["Profile", "PermissionSet"], typeName) < 0 && members == ['*']
 		return apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, typeName)
-	else
-		if "Profile" ==? typeName || "PermissionSet" ==? typeName
-			" The contents of a profile retrieved depends on the contents of the
-			" organization. For example, profiles will only include field-level
-			" security for fields included in custom objects returned at the same
-			" time as the profiles.
-			" we have to retrieve all object types and generate package.xml
-			" load children of given metadata type
-			let typesMap = s:loadChildrenOfType("CustomObject")
+	elseif "Profile" ==? typeName || "PermissionSet" ==? typeName
+		" The contents of a profile retrieved depends on the contents of the
+		" organization. For example, profiles will only include field-level
+		" security for fields included in custom objects returned at the same
+		" time as the profiles.
+		" we have to retrieve all object types and generate package.xml
+		" load children of given metadata type
+		" generate package.xml which contains Custom Objects and Profiles
+		let package = apexMetaXml#packageXmlNew()
+		if has_key(a:allTypeMap, "CustomObject")
+			"call extend(types, a:allTypeMap["CustomObject"]) " add <members>...</members> option
+			let customObjTypes = a:allTypeMap["CustomObject"]
+		else
+			let typesMap = s:loadChildrenOfType("CustomObject") "map of types with service info like file name, etc
+																"each key is API Name of custom object
 			if len(typesMap) <=0
-				call apexUtil#warning("Somethign went wrong. There are no objects available. Abort.")
+				call apexUtil#warning("Something went wrong. There are no objects available. Abort.")
 				return ""
 			endif
-			" generate package.xml which contains Custom Objects and Profiles
-			let package = apexMetaXml#packageXmlNew()
-			let types = keys(typesMap)
-			call add(types, "*") " add <members>*</members> option
-			call apexMetaXml#packageXmlAdd(package, "CustomObject", types)
-			call apexMetaXml#packageXmlAdd(package, typeName, ['*'])
-			let tempDir = apexOs#createTempDir()
-			let srcDir = apexOs#joinPath([tempDir, s:SRC_DIR_NAME])
-			call apexOs#createDir(srcDir)
-			let packageXmlPath = apexMetaXml#packageWrite(package, srcDir)
+			let customObjTypes = keys(typesMap) "names of all custom objects retrieved above"
+			"no specific CustomObject types selected, use all
+			"call add(types, "*") " add <members>*</members> option
+		endif
+		call apexMetaXml#packageXmlAdd(package, "CustomObject", customObjTypes)
+		call apexMetaXml#packageXmlAdd(package, typeName, members)
+		let tempDir = apexOs#createTempDir()
+		let srcDir = apexOs#joinPath([tempDir, s:SRC_DIR_NAME])
+		call apexOs#createDir(srcDir)
+		let packageXmlPath = apexMetaXml#packageWrite(package, srcDir)
 
-			" call Retrieve Ant task
-			call apexAnt#refresh(b:PROJECT_NAME, tempDir)
-			"now we expect some folders created under srcDir
-			return srcDir
-		endif	
+		" call Retrieve Ant task
+		call apexAnt#refresh(b:PROJECT_NAME, tempDir)
+		"now we expect some folders created under srcDir
+		return srcDir
+	else 
+		"single type name with selected members
+		return s:retrieveOne(typeName, members)
 	endif
+endfunction
+
+" load selected members of given type
+"Args:
+"typeName - meta type name like: 'CustomObject' or 'ApexClass'
+"members - list of members of given meta type, ex: ['MyClass.cls', 'MyController.cls']
+function! s:retrieveOne(typeName, members)
+	let package = apexMetaXml#packageXmlNew()
+	call apexMetaXml#packageXmlAdd(package, a:typeName, a:members)
+	let tempDir = apexOs#createTempDir()
+	let srcDir = apexOs#joinPath([tempDir, s:SRC_DIR_NAME])
+	call apexOs#createDir(srcDir)
+	let packageXmlPath = apexMetaXml#packageWrite(package, srcDir)
+
+	" call Retrieve Ant task
+	call apexAnt#refresh(b:PROJECT_NAME, tempDir)
+	"now we expect some folders created under srcDir
+	return srcDir
+
 endfunction
 
 " retrieve components of all selected metadata types
 function! <SID>RetrieveSelected()
 	echo "Retrieve all selected items"
+	"go through root meta types
 	let selectedTypes = s:getSelectedTypes()
-	let retrievedTypes = {} "type-name => 1  - means type has been retrieved
-	for l:type in selectedTypes
+	"{'ApexClass': ['asasa.cls', 'adafsd.cls'], 'AnalyticSnapshot': ['*'], 'ApexComponent': ['*']}
 
-		let outputDir = s:bulkRetrieve(l:type)
+	"echo "s:getSelectedTypes"
+	echo selectedTypes
+
+	let retrievedTypes = {} "type-name => 1  - means type has been retrieved
+	for l:type in keys(selectedTypes)
+		let members = selectedTypes[l:type]
+		"members can be a list of Child Types or constant list ['*']
+
+		let outputDir = s:bulkRetrieve(l:type, members, selectedTypes)
 		"echo "outputDir=".outputDir
 		" now we need to sort out current type before downloading the next one
 		" because target temp folder will be overwritten
@@ -419,12 +479,15 @@ function! <SID>RetrieveSelected()
 					return 
 				else
 					"mark current type is retrieved
-					let retrievedTypes[l:type] = ['*']
+					let retrievedTypes[l:type] = members
 				endif
 
 			endfor
 		endif "len(sourceFiles) < 1
 	endfor
+	"now go through individual elements on level 1
+	"ex: individual Object or class names
+	
 	"update package.xml
 	if len(retrievedTypes) > 0
 		let packageXml = apexMetaXml#packageXmlRead(b:SRC_PATH)
@@ -481,20 +544,47 @@ function! s:setCurrentLine(line)
 	let lineStr = setline(lineNum, a:line)
 endfunction
 
+"remove all marks line selection '*' or hierarchy shift '--'
+function! s:removeMarks(line)
+	let cleanStr = s:setSelection(a:line, 0) " remove *
+	let cleanStr = substitute(cleanStr, s:CHILD_LINE_REGEX, '\1\3', '') " remove --
+	return cleanStr
+endfunction
+
+" map of selected types
+"Return:
+" {"type-name1" -> "*", "type-name2" -> ["name1", "name2"]}
+"ex:
+" {"ApexPage" : ["*"], "ApexClass" : ["MyClass1.cls", "MyClass2.cls"]}
+"
 function! s:getSelectedTypes()
 	let lines = getline(s:headerLineCount +1, line("$"))
-	let selectedLines = []
+	let selectedLines = {}
 	"let l:count = 0
 
-	for line in lines
-		"echo "line=".line
+	let lineNum = s:headerLineCount+1
+	while lineNum < line("$")
+		let line = getline(lineNum)
 		if s:isSelected(line)
-			let line = substitute(line, s:MARK_SELECTED, "", "")
-			"echo "selected line=".line
-			let selectedLines = add(selectedLines, line)
+			let typeStr = s:removeMarks(line)
+			if line =~ s:HIERARCHY_SHIFT
+				"this line is level 1
+				let parentNum = s:getParentLineNum(lineNum)
+				let parentTypeStr = getline(parentNum)
+
+				let typeList = []
+				if has_key(selectedLines, parentTypeStr)
+					let typeList = selectedLines[parentTypeStr]
+				endif
+				call add(typeList, typeStr)
+				let selectedLines[parentTypeStr] = typeList
+			else
+				"this line is level 0
+				let selectedLines[typeStr] = ["*"]
+			endif
 		endif
-		"let l:count = l:count +1
-	endfor
+		let lineNum += 1
+	endwhile
 	return selectedLines
 endfunction
 
@@ -544,7 +634,7 @@ function! s:parseListMetadataResult(metadataType, fname)
 	"************************************************************
 	
 	for line in readfile(a:fname, '', 10000) " assuming metadata types file will never contain more than 10K lines
-		"echo "line=".line
+		"echo 'line='.line
 		let items = split(line, ':')
 		if len(items) < 2
 			continue
@@ -552,6 +642,7 @@ function! s:parseListMetadataResult(metadataType, fname)
 
 		let key = apexUtil#trim(items[0])
 		let value = apexUtil#trim(items[1])
+		"echo 'key='.key.' value='.value
 
 		if "FileName" == key
 			" initialise new type

@@ -338,6 +338,26 @@ update package.xml accordingly.
 *WARNING* :ApexRetrieve command is Experimental. You may want to backup your
 project before running :ApexRetrieve.
 
+There are 2 potential scenarios which may involve :ApexReteieve
+1. Load all members of given metadata type
+   e.g. to load all Custom Objects you will do something like this >
+	:ApexRetrieve
+< then select CustomObjects line and then run >
+	:Retrieve
+<
+2. Load selected members of given metadata type
+   e.g. to load only Account metadata you will do something like this >
+	:ApexRetrieve
+< then select CustomObjects line and then run >
+	:Expand
+< then select Account and run >
+	:Retrieve
+<
+
+Note: some meta data types (e.g. Profile and PermissionSet) will not bring
+anything useful if you do not select relevant (or all) custom objects in the
+same transaction
+
 ==============================================================================
 SETTINGS                                                   *force.com-settings*
 
