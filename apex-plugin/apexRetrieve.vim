@@ -22,13 +22,15 @@ let g:loaded_apex_retrieve = 1
 let s:instructionPrefix = '||'
 
 let s:MARK_SELECTED = "*"
-let s:SELECTED_LINE_REGEX = '^\v(\s*)\V\('.s:MARK_SELECTED.'\)\v(\s*\w*)$'
+let s:SELECTED_LINE_REGEX = '^\v(\s*)\V\('.s:MARK_SELECTED.'\)\v(\s*\w*.*)$'
 							"\v enable super magic to avoid too many slashes
 							"\s* - any number of white-space characters
 							"\V - very no magic, to ignore anything which can be in s:MARK_SELECTED
 							"use () to group in 3 groups, second group 'mark symbol' will be
 							"dynamically removed later
 let s:HIERARCHY_SHIFT = "--"
+let s:CHILD_LINE_REGEX = '^\v(\s*)\V\('.s:HIERARCHY_SHIFT.'\)\v(\s*\w*.*)$'
+
 
 let s:ALL_METADATA_LIST_FILE = "describeMetadata-result.txt"
 
@@ -104,6 +106,7 @@ function! apexRetrieve#open(filePath)
 		" Define commands for current buffer
 		"exec 'command! -buffer -bang -nargs=0 Expand :call <SNR>'.s:sid.'_ExpandSelected()'
 		exec 'command! -buffer -bang -nargs=0 Retrieve :call <SNR>'.s:sid.'_RetrieveSelected()'
+		exec 'command! -buffer -bang -nargs=0 Expand :call <SNR>'.s:sid.'_ExpandSelected()'
 
 	endif
 
@@ -126,22 +129,65 @@ endfunction
 " mark entry as Selected/Deselected
 function! <SID>ToggleSelected()
   " Toggle type selection
+	let currentLineNum = line('.')
 	let lineStr = s:getCurrentLine()
+	let removeParentMark = 0
 	if s:isSelected(lineStr)
 		"remove mark
-		let lineStr = substitute(lineStr, s:SELECTED_LINE_REGEX, '\1\3', '')
-						"remove group \2 (i.e. mark symbol) from current line
+		let lineStr = s:setSelection(lineStr, 0)
+	else
+		"add mark
+		let lineStr = s:setSelection(lineStr, 1)
+		let removeParentMark = 1
+	endif
+	call s:setCurrentLine(lineStr)
+
+	"remove selection from parent component
+	if removeParentMark && lineStr =~ s:HIERARCHY_SHIFT
+		"selected element is a child of something else
+		"remove mark from parent element
+		let topLine = s:headerLineCount
+		let lineNum = currentLineNum -1
+		"find parent
+		while lineNum > topLine
+			let lineStr =  getline(lineNum)
+			if lineStr =~ s:HIERARCHY_SHIFT
+				let lineNum -= 1
+			else
+				break
+			endif
+		endwhile
+		
+		let lineStr =  getline(lineNum)
+		if s:isSelected(lineStr)
+			let lineStr = s:setSelection(lineStr, 0)
+			call setline(lineNum, lineStr)
+		endif
+	end	
+endfunction
+
+" set or remove selection mark from given text
+"Args:
+"param: enable if 1 then add selection mark, otherwise remove selection mark
+function! s:setSelection(lineStr, on)
+	let lineStr = a:lineStr
+	if !a:on
+		if s:isSelected(lineStr)
+			"remove mark
+			let lineStr = substitute(lineStr, s:SELECTED_LINE_REGEX, '\1\3', '')
+							"remove group \2 (i.e. mark symbol) from current line
+		endif
 	else
 		"add mark
 		let lineStr = s:MARK_SELECTED . lineStr
 	endif
-	call s:setCurrentLine(lineStr)
+	return lineStr
 endfunction
 
 " retrieve children of selected component
 " get detail information about metadata components of selected type
 function! <SID>ExpandCurrent()
-	echo "load children of current line"
+	"echo "load children of current line"
 
 	let lineNum = line('.')
 	let lineStr = s:getCurrentLine()
@@ -162,14 +208,94 @@ function! <SID>ExpandCurrent()
 	endif
 endfunction
 
+
 function! <SID>ExpandSelected()
-	echo "Expand children of all selected items"
-	let selectedLines = s:getSelectedTypes()
-	if len(selectedLines) >0
-		"insert child types of selected lines into buffer
+	"echo "load children of all selected items"
+	"check if there are selected lines
+	let firstSelectedLineNum = s:getFirstSelected()
+	if firstSelectedLineNum < 1
+		echo "nothing selected"
+		return 0
 	endif
+	"let lines = getline(lineNum, line("$"))
+	"let l:count = 0
+	let lineNum = firstSelectedLineNum
+
+	"remove all children of selected root types
+	while lineNum <= line("$")
+		let line = getline(lineNum)
+		if s:isSelected(line)
+			"remove existing children
+			let deletedLineCount = s:deleteChildren(lineNum)
+			"echo "Deleted ".deletedLineCount." lines "
+		endif
+		let lineNum += 1
+	endwhile
+
+	"load children of each selected root type
+	let lineNum = firstSelectedLineNum
+	while lineNum <= line("$")
+		let line = getline(lineNum)
+		if s:isSelected(line)
+			"now insert new children
+			let typeMap = s:expandOne(lineNum)
+			let shiftSize = len(typeMap)
+			let lineNum += shiftSize
+		else
+			let lineNum += 1
+		endif
+	endwhile	
+
 endfunction
 
+"1delete
+"%delete
+"1,$delete
+"Delete children of given line
+"
+function! s:deleteChildren(lineNum)
+	let l:count = 0
+	let firstLine = a:lineNum +1
+	for lineStr in getline(firstLine, line("$"))
+		"echo "lineStr=".lineStr
+		if lineStr =~ s:CHILD_LINE_REGEX
+			let l:count += 1
+			"echo "to be deleted"
+		else
+			"echo "reached the end of children"
+			break
+		endif
+	endfor	
+	"echo "count=".l:count
+	if l:count > 0
+		exe firstLine.','.(firstLine + l:count).'delete'
+	endif
+	return l:count
+
+endfunction
+
+"load children of metadata type in given line
+function! s:expandOne(lineNum)
+	let lineNum = a:lineNum
+
+	let lineStr = getline(lineNum)
+	"remove mark if exist
+	let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
+	let typeName = apexUtil#trim(lineStr)
+
+	" load children of given metadata type
+	let typesMap = s:loadChildrenOfType(typeName)
+	if len(typesMap) > 0
+		let typesList = sort(keys(typesMap))
+		let shiftedList = []
+		" append types below current
+		for curType in typesList
+			call add(shiftedList, s:HIERARCHY_SHIFT . curType)
+		endfor
+		call append(lineNum, shiftedList)
+	endif
+	return typesMap
+endfunction
 " for most types this method just calls apexAnt#bulkRetrieve
 " but some (like Profile and PermissionSet) require special treatment
 "
@@ -324,6 +450,26 @@ function! s:isSelected(lineStr)
 	return a:lineStr =~ s:SELECTED_LINE_REGEX
 endfunction
 
+"Args:
+"param: a:1 - first line to start looking
+"Return:
+"number of first selected line or 0 if no selection found
+function! s:getFirstSelected(...)
+	let startLine = s:headerLineCount +1
+	if a:0 >0
+		let startLine = a:1
+	endif
+	let lineNum = startLine
+	for lineStr in getline(startLine, line("$"))
+		if s:isSelected(lineStr)
+			return lineNum
+		endif
+		let lineNum += 1
+	endfor
+	return 0 "nothing found
+
+endfunction	
+
 function! s:getCurrentLine()
 	let lineNum = line('.')
 	let lineStr = getline(lineNum)
@@ -437,8 +583,8 @@ function! s:loadChildrenOfType(typeName)
 	let l:tmpfile = tempname()
 	call apexAnt#listMetadata(b:PROJECT_NAME, b:PROJECT_PATH, l:tmpfile, a:typeName)
 	if !filereadable(l:tmpfile)
-		call apexUtil#warning( "No subtypes of ".lineStr." found.")
-		return
+		call apexUtil#warning( "No subtypes of ".a:typeName." found.")
+		return {}
 	endif	
 	" parse returned file into manageable format
 	let typesMap = s:parseListMetadataResult(a:typeName, l:tmpfile)
@@ -556,9 +702,10 @@ function! s:init(projectPath)
 				\ "|| Select types to retrieve, then issue command :Retrieve" ,
 				\ "|| ",
 				\ "|| t=toggle Select/Deselect",
+				\ "|| :Expand = retrieve children of selected types for further selection",
 				\ "|| :Retrieve = retrieve selected types into the project folder",
 				\ "|| ",
-				\ "|| NOTE: cached list of metadata types is stored in: ",
+				\ "|| NOTE: cached list of CORE metadata types is stored in: ",
 				\ "||		 '".apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:ALL_METADATA_LIST_FILE])."' file.",
 				\ "||		To clear cached types delete this file and run :ApexRetrieve to reload fresh version.",
 				\ "============================================================================="
