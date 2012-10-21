@@ -261,17 +261,34 @@ endfunction
 " ""d:\my path\build.cmd" "param 1" "param 2" param3"
 "Args:
 " param 1: command to execute
-" param 2: optional - if =1 then command will be executed in background
-"				ignored on MS Windows
+" param 2: [optional] string of options - 
+"	b - command will be executed in background ignored on MS Windows
+"	M - disable --more-- prompt when screen fills up with messages
 function! apexOs#exe(...)
 	let result = a:1
+	let disableMore = 0
 	if s:is_windows
 		let result = '"'.result.'"'
-	elseif a:0 > 1 && a:2
-		let result .= ' &'
+	elseif a:0 > 1 
+		if a:2 =~ "b"
+			let result .= ' &'
+		endif
+		let disableMore = a:2 =~ "M"
+	endif
+
+	"temporarily disable more if enabled
+	"also see :help hit-enter
+	let reEnableMore = 0
+	if disableMore
+		let reEnableMore = &more
+		set nomore
 	endif
 
 	exe "!".result
+
+	if disableMore && reEnableMore
+		set more
+	endif
 	"call system(result) " system() does not show any progress
 endfunction	
 

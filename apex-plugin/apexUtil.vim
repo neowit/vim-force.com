@@ -59,7 +59,7 @@ function! ApexCompare(...)
 		"echo "command=".command
 	
 		":exe "!".command
-		call apexOs#exe(command, 1)
+		call apexOs#exe(command, 'b')
 	else
 		" use built-in diff
 		:exe "vert diffsplit ".substitute(rightFilePath, " ", "\\\\ ", "g")
