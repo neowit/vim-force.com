@@ -117,7 +117,7 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	endif
 	let antCommand = antCommand ." 2>&1 |".g:apex_binary_tee." ".shellescape(ANT_ERROR_LOG)
 	"echo "antCommand=".antCommand
-    call apexOs#exe(antCommand)
+    call apexOs#exe(antCommand, 'M') "disable --more--
 	return ANT_ERROR_LOG
 endfunction
 
