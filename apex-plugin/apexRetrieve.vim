@@ -225,8 +225,6 @@ function! <SID>ExpandSelected()
 		echo "nothing selected"
 		return 0
 	endif
-	"let lines = getline(lineNum, line("$"))
-	"let l:count = 0
 	let lineNum = firstSelectedLineNum
 
 	"remove all children of selected root types
@@ -391,12 +389,11 @@ endfunction
 
 " retrieve components of all selected metadata types
 function! <SID>RetrieveSelected()
-	echo "Retrieve all selected items"
+	"echo "Retrieve all selected items"
 	"go through root meta types
 	let selectedTypes = s:getSelectedTypes()
 	"{'ApexClass': ['asasa.cls', 'adafsd.cls'], 'AnalyticSnapshot': ['*'], 'ApexComponent': ['*']}
 
-	"echo "s:getSelectedTypes"
 	echo selectedTypes
 
 	let retrievedTypes = {} "type-name => 1  - means type has been retrieved
@@ -558,12 +555,10 @@ endfunction
 " {"ApexPage" : ["*"], "ApexClass" : ["MyClass1.cls", "MyClass2.cls"]}
 "
 function! s:getSelectedTypes()
-	let lines = getline(s:headerLineCount +1, line("$"))
 	let selectedLines = {}
-	"let l:count = 0
 
 	let lineNum = s:headerLineCount+1
-	while lineNum < line("$")
+	while lineNum <= line("$")
 		let line = getline(lineNum)
 		if s:isSelected(line)
 			let typeStr = s:removeMarks(line)
