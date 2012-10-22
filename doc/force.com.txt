@@ -354,10 +354,6 @@ There are 2 potential scenarios which may involve :ApexReteieve
 	:Retrieve
 <
 
-Note: some meta data types (e.g. Profile and PermissionSet) will not bring
-anything useful if you do not select relevant (or all) custom objects in the
-same transaction
-
 ==============================================================================
 SETTINGS                                                   *force.com-settings*
 
