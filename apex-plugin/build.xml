@@ -91,4 +91,17 @@
             
     </target>
 
+	<!-- Delete Files -->
+	<target name="deleteUnpackaged" description="remove files from destination org">
+		<!-- Retrieve the contents of the destination data which is about to be Deleted -->
+		<sf:retrieve username="${dest.sf.username}" password="${dest.sf.password}" serverurl="${dest.sf.serverurl}" retrieveTarget="${targetBackupDir}/src" unpackaged="${destructiveChangesDir}/destructiveChanges_change-me_package.xml" />
+
+		<zip description="Save destination files which are about to be overwritten" destfile="${targetBackupDir}/${DSTAMP}-${TSTAMP}-deleted-src.zip" basedir="${targetBackupDir}/src" update="false" />
+
+		<echo message="USERNAME=${dest.sf.username}" />
+		<echo message="SERVER=${dest.sf.serverurl}" />
+
+		<sf:deploy checkOnly="${checkOnly}" username="${dest.sf.username}" password="${dest.sf.password}" serverurl="${dest.sf.serverurl}" deployRoot="${destructiveChangesDir}" maxPoll="1000" />
+	</target>
+
 </project>
