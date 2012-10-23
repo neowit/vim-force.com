@@ -506,6 +506,56 @@ function! <SID>RetrieveSelected()
 	
 endfunction
 
+" load Dictionary of available meta-types
+" Args:
+" projectName: name of .properties file name
+" projectPath: full path to project folder to load/save cache
+" forceLoad: if true then cached file will be ignored and metadata reloaded
+"			from server
+" Return:
+" map of metadata which looks like this:
+"{'CustomPageWebLink': {'InFolder': 'false', 'DirName': 'weblinks','ChildObjects': [], 'HasMetaFile': 'false', 'Suffix': 'weblink'}, 
+"'OpportunitySharingRules': {'InFolder': 'false', 'DirName': 'opportunitySharingRules', 
+"		'ChildObjects': ['OpportunityOwnerSharingRule', 'OpportunityCriteriaBasedSharingRule'], 
+"		'HasMetaFile': 'false', 'Suffix': 'sharingRules'}, 
+"'CustomLabels': {'InFolder': 'false', 'DirName': 'labels', 'ChildObjects':['CustomLabel'], 'HasMetaFile': 'false', 'Suffix': 'labels'}, 
+" …}
+"
+"
+function! s:getMetaTypesMap(projectName, projectPath, forceLoad)
+	let allMetaTypesFilePath = apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:ALL_METADATA_LIST_FILE])
+
+	if !filereadable(allMetaTypesFilePath) || a:forceLoad
+		"cache file does not exist, need to load it first
+		let response = input('Load list of supported metadata types from server?: [y/n]? ')
+		if 'y' != response && 'Y' != response
+			" clear message line
+			echo "\nCancelled" 
+			return []
+		endif
+
+		call apexAnt#loadMetadataList(a:projectName, a:projectPath, allMetaTypesFilePath)
+	endif
+	let typesMap = s:getMetaTypesCache(allMetaTypesFilePath)
+	return typesMap
+
+endfunction
+
+"reverse map returned by s:getMetaTypesMap and use folder names as keys and
+"XML names as values
+" Return:
+" {'weblinks': 'CustomPageWebLink', 'labels' : 'CustomLabels'}
+function! apexRetrieve#getTypeXmlByFolder(projectName, projectPath, forceLoad)
+	let typesMap = s:getMetaTypesMap(a:projectName, a:projectPath, a:forceLoad)
+	let xmlNameByDirName = {}
+	for xmlName in keys(typesMap)
+		let dirName = typesMap[xmlName]['DirName']
+
+		let xmlNameByDirName[dirName] = xmlName
+	endfor
+	return xmlNameByDirName
+endfunction	
+
 function! s:isSelected(lineStr)
 	return a:lineStr =~ s:SELECTED_LINE_REGEX
 endfunction
@@ -678,6 +728,14 @@ function! s:loadChildrenOfType(typeName)
 endfunction
 
 
+" parse metadata definition file and return result in following format
+"
+"{'CustomPageWebLink': {'InFolder': 'false', 'DirName': 'weblinks','ChildObjects': [], 'HasMetaFile': 'false', 'Suffix': 'weblink'}, 
+"'OpportunitySharingRules': {'InFolder': 'false', 'DirName': 'opportunitySharingRules', 
+"		'ChildObjects': ['OpportunityOwnerSharingRule', 'OpportunityCriteriaBasedSharingRule'], 
+"		'HasMetaFile': 'false', 'Suffix': 'sharingRules'}, 
+"'CustomLabels': {'InFolder': 'false', 'DirName': 'labels', 'ChildObjects':['CustomLabel'], 'HasMetaFile': 'false', 'Suffix': 'labels'}, 
+"…}
 function! s:getMetaTypesCache(allMetaTypesFilePath)
 	let allMetaTypesFilePath = a:allMetaTypesFilePath
 
@@ -745,29 +803,13 @@ function! s:getMetaTypesCache(allMetaTypesFilePath)
 
 endfunction	
 
-" return path to cached metadata file
 " if file does not exist then plugin will attempt loading list
 " of supported metadata types from SFDC
 "
 " return: list of all supported metadata types
 function! s:getMetaTypesList(projectName, projectPath, forceLoad)
-	let allMetaTypesFilePath = apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:ALL_METADATA_LIST_FILE])
 
-	if !filereadable(allMetaTypesFilePath) || a:forceLoad
-		"cache file does not exist, need to load it first
-		let response = input('Load list of supported metadata types from server?: [y/n]? ')
-		if 'y' != response && 'Y' != response
-			" clear message line
-			echo "\nCancelled" 
-			return []
-		endif
-
-		call apexAnt#loadMetadataList(a:projectName, a:projectPath, allMetaTypesFilePath)
-		
-
-	endif
-
-	let typesMap = s:getMetaTypesCache(allMetaTypesFilePath)
+	let typesMap = s:getMetaTypesMap(a:projectName, a:projectPath, a:forceLoad)
 	" dump types in user friendly format
 	if len(typesMap) < 1
 		echoerr "Failed to load list of supported metadata types"
@@ -778,6 +820,7 @@ function! s:getMetaTypesList(projectName, projectPath, forceLoad)
 	"call writefile(types, metaTypesFilePath)
 	return types
 endfunction
+
 
 " call this method before any other as soon as Project Path becomes available
 function! s:init(projectPath)

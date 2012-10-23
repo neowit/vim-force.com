@@ -80,6 +80,29 @@ function! apexMetaXml#packageXmlNew()
 	return {}
 endfunction	
 
+"write definition of package.xml to be used with destructive delete
+"
+"package.xml used for Delete operation is very simple and does not have
+"dynamic parts, looks like this:
+"
+"<?xml version="1.0" encoding="UTF-8"?>
+"<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+"	<fullName>src</fullName>
+"	<version>19.0</version>
+"</Package>
+"Args:
+"srcFolderPath - path to folder where package.xml is to be created
+"
+function! apexMetaXml#packageWriteDestructive(srcFolderPath)
+	let lines = s:getHeader()
+	call add(lines, "<fullName>src</fullName>")
+	"append footer
+	call extend(lines, s:getFooter())
+
+	let fname = apexOs#joinPath([a:srcFolderPath, "package.xml"])
+	call writefile(lines, fname)
+	return fname
+endfunction	
 "read existing package.xml into a 'package' map
 "Args:
 "@param: srcFolderPath - full path to ./src folder
@@ -163,15 +186,23 @@ endfunction
 " write well formed package.xml using 'package' map previously created with
 " apexMetaXml#packageXmlNew and apexMetaXml#packageXmlAdd methods
 "
+"Args:
+" package: - instance of package created by previous packageRead or packageAdd
+" commands
+" srcFolderPath: - full path to folder where fiel will be created
+" param 3: [optional] package file name, if not provided then package.xml file name is
+" used
+"
+"Return:
 " return: /full/path/to/package.xml
-function! apexMetaXml#packageWrite(package, srcFolderPath)
+function! apexMetaXml#packageWrite(package, srcFolderPath, ...)
 	let package = a:package
 	if len(package) < 1
 		return ""
 	endif
-	let lines = ['<?xml version="1.0" encoding="UTF-8"?>',
-				\ '<Package xmlns="http://soap.sforce.com/2006/04/metadata">'
-				\]
+	"start with file header
+	let lines = s:getHeader()
+
 	let sortedKeys = sort(keys(package))
 
 	for key in sortedKeys
@@ -184,12 +215,30 @@ function! apexMetaXml#packageWrite(package, srcFolderPath)
 		call add(lines, "	</types>")
 	endfor
 
-	call add(lines, "	<version>".g:apex_API_version."</version>")
-	call add(lines, "</Package>")
+	"append footer
+	call extend(lines, s:getFooter())
 
-	let fname = apexOs#joinPath([a:srcFolderPath, "package.xml"])
+	let fileName = "package.xml"
+	if a:0 > 2
+		let fileName = a:3
+	endif
+	let fname = apexOs#joinPath([a:srcFolderPath, fileName])
 	call writefile(lines, fname)
 	return fname
+endfunction
+
+function! s:getHeader()
+	let lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+				\ '<Package xmlns="http://soap.sforce.com/2006/04/metadata">'
+				\]
+	return lines
+endfunction
+
+function! s:getFooter()
+	let lines = [ "	<version>".g:apex_API_version."</version>"
+				\ "</Package>"
+				\]
+	return lines
 endfunction
 
 " display menu with file types
