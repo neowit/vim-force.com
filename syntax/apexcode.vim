@@ -95,7 +95,8 @@ syn keyword apexcodeSFDCCollection	Map Set List
 syn keyword apexcodeSFDCId			Id
 syn keyword apexcodeSFDCSObject		SObject
 syn keyword apexcodeStandardInterface	Comparable Iterator Iterable InstallHandler Schedulable UninstallHandler
-syn match apexcodeStandardInterface	"Database\.Batchable\|Auth\.RegistrationHandler\|Messaging\.InboundEmailHandler\|Process\.Plugin\|Site\.UrlRewriter"
+syn match apexcodeStandardInterface	"Auth\.RegistrationHandler\|Messaging\.InboundEmailHandler\|Process\.Plugin\|Site\.UrlRewriter"
+syn match apexcodeStandardInterface	"Database\.\(Stateful\|BatchableContext\|Batchable\)"
 
 syn keyword apexcodeVisualforceClasses	apexcodePages Message PageReference SelectOption StandardController StandardSetController
 " apexcode System methods
