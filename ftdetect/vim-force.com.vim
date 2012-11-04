@@ -1,6 +1,6 @@
 " File: apexcode.vim
 " Author: Andrey Gavrikov 
-" Version: 1.0
+" Version: 1.1
 " Last Modified: 2012-03-05
 " Copyright: Copyright (C) 2010-2012 Andrey Gavrikov
 "            Permission is hereby granted to use and distribute this code,
@@ -15,10 +15,10 @@
 "
 
 "force.com related file types
-au! BufRead,BufNewFile *.cls,*.trigger set filetype=apexcode.java
+au! BufRead,BufNewFile *.cls,*.trigger set filetype=apexcode
 " set two file types for apex page: html (for syntax) and apexcode (for compilation and tags)
 " use <C-0> for Javascript and <C-U> for html complete
-au! BufRead,BufNewFile *.page,*.component,*.scf	set filetype=apexcode.html | set syntax=html | setlocal omnifunc=htmlcomplete#CompleteTags | setlocal completefunc=visualforcecomplete#Complete
+au! BufRead,BufNewFile *.page,*.component,*.scf	set filetype=visualforce | setlocal omnifunc=htmlcomplete#CompleteTags | setlocal completefunc=visualforcecomplete#Complete
 au! BufRead,BufNewFile *JS.resource set filetype=apexcode.javascript | set syntax=javascript | setlocal omnifunc=javascriptcomplete#CompleteJS
 
 
