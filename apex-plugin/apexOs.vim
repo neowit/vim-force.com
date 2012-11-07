@@ -197,32 +197,6 @@ function! apexOs#setftime(filePath, time)
 	endif
 endfun
 
-
-
-" param: path to this (apex.vim) script
-" return full path of the script to run for SFDC org refresh
-"function! apexOs#getRefreshShellScriptPath(apexPluginFolderPath)
-"	if has("unix")
-"		return shellescape(apexUtil#joinPath([a:apexPluginFolderPath, "build.sh"]))
-"	elseif s:is_windows 
-"		return shellescape(apexUtil#joinPath([a:apexPluginFolderPath, "build.cmd"]))
-"	else
-"		echoerr "not implemented"
-"	endif	
-"endfun	
-
-" param: path to this (apex.vim) script
-" return full path of the script to run for SFDC org deploy
-function! apexOs#getDeployShellScriptPath(apexPluginFolderPath)
-	if has("unix")
-		return shellescape(apexUtil#joinPath([a:apexPluginFolderPath, "build.sh"]))
-	elseif s:is_windows
-		return shellescape(apexUtil#joinPath([a:apexPluginFolderPath, "build.cmd"]))
-	else
-		echoerr "not implemented"
-	endif	
-endfun	
-
 " remove trailing path separator
 " i.e. make /path/to/folder from /path/to/folder/
 function! apexOs#removeTrailingPathSeparator (path)
@@ -230,7 +204,9 @@ function! apexOs#removeTrailingPathSeparator (path)
 endfun
 
 " "foo/bar/buz/hoge" -> { head: "foo/bar/buz/", tail: "hoge" }
-" taken from fuzzy finder plugin
+" current version is taken from fuzzy finder plugin
+" alterntive version of this function can be done with 
+" fnamemodify(path, ':h') && fnamemodify(path, ':t')
 function! apexOs#splitPath(path)
 	let path = apexOs#removeTrailingPathSeparator(a:path)
 	let head = matchstr(path, '^.*[/\\]')
