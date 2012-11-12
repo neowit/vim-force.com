@@ -195,6 +195,7 @@ function! ListProjectNames(A, L, P)
 	let res = []
 	for fullName in fullPaths
 		let fName = apexOs#splitPath(fullName).tail
+		let fName = fnamemodify(fName, ":r") " remove .properties
 		"take into account file prefix which user have already entered
 		if 0 == len(a:A) || match(fName, a:A) >= 0 
 			call add(res, fName)
