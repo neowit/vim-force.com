@@ -141,10 +141,19 @@ augroup END
 
 "defined a command to run MakeApex
 command! -nargs=? -complete=customlist,ListProjectNames ApexDeploy :call apex#MakeProject('', 'modified', <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames  ApexDeployOpen :call apex#MakeProject('', 'open', <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames  ApexDeployConfirm :call apex#MakeProject('', 'confirm', <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames  ApexDeployAll :call apex#MakeProject('', 'all', <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames  ApexDeployStaged :call apex#MakeProject('', 'staged', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployOpen :call apex#MakeProject('', 'open', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployConfirm :call apex#MakeProject('', 'confirm', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployAll :call apex#MakeProject('', 'all', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployStaged :call apex#MakeProject('', 'staged', <f-args>)
+"delete Staged files from specified Org
+"Examples:
+"1. Delete Staged files from currect project
+"   :ApexDeleteStaged
+"2. delete files listed in Stage from Org defined by specified <project name>
+"	:ApexDeleteStaged 'My Project' 
+"3. do not delete, but test deletion
+"	:ApexDeleteStaged 'My Project' t
+command! -nargs=* -complete=customlist,ListProjectNames ApexDeleteStaged :call apexDelete#run(<f-args>)
 
 command! -nargs=0 ApexRefreshProject :call apex#refreshProject()
 command! RefreshSFDCProject :ApexRefreshProject
@@ -157,6 +166,7 @@ command! ApexStage :call apexStage#open(expand("%:p"))
 command! ApexStageAdd :call apexStage#add(expand("%:p"))
 command! ApexStageRemove :call apexStage#remove(expand("%:p"))
 command! ApexStageClear :call apexStage#clear(expand("%:p"))
+
 
 " select file type, create it and switch buffer
 command! ApexNewFile :call apexMetaXml#createFileAndSwitch(expand("%:p"))

@@ -75,22 +75,9 @@ function! apex#MakeProject(...)
 	let projectPath = '' "projectPair.path
 	let projectName = projectPair.name
 
-	if len(providedProjectName) > 0
-		"check if properties file exist
-		"make sure providedProjectName does not contain .properties
-		let providedProjectName = substitute(providedProjectName, '.properties$', '', '')
-		
-		let propFilePath = apexOs#joinPath([propertiesFolder, providedProjectName]).".properties"
-		"check if we need to append .properties
-		echo "providedProjectName=".providedProjectName
-		echo "propFilePath=".propFilePath
-
-		if !filereadable(propFilePath)
-			echoerr propFilePath." with login details does not exist or not readable."
-			return
-		else
-			let projectName = providedProjectName
-		endif	
+	"check if properties file exist
+	if len(providedProjectName) > 0 && len(apex#getPropertiesFilePath(providedProjectName)) >0
+		let projectName = providedProjectName
 	endif
 
 	echo "project.name='" . projectName . "'"
@@ -153,6 +140,26 @@ function! apex#MakeProject(...)
 	return result
 endfun
 
+" use this method to validate existance of .properties file for specified
+" project name
+" Args:
+" param 1: projectName - name of project which must match existing .properties
+" file with login details
+function! apex#getPropertiesFilePath(projectName)
+	let l:providedProjectName = substitute(a:projectName, '.properties$', '', '')
+	let l:propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
+
+	let l:propFilePath = apexOs#joinPath([l:propertiesFolder, l:providedProjectName]).".properties"
+	"check if we need to append .properties
+	"echo "providedProjectName=".l:providedProjectName
+	"echo "propFilePath=".l:propFilePath
+
+	if !filereadable(l:propFilePath)
+		echoerr l:propFilePath." with login details does not exist or not readable."
+		return
+	endif
+	return l:propFilePath
+endfunction
 
 " return existing or create new and return path to
 " plugin cache directory
