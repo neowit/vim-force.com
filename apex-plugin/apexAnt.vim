@@ -48,6 +48,15 @@ function! apexAnt#bulkRetrieve(projectName, projectFolder, metadataType)
 	return outputDir
 endfunction
 
+" backup files specified in package.xml
+function! apexAnt#backup(projectName, backupDirPath, projectXmlFilePath)
+	return apexAnt#execute("backup", a:projectName, '', a:backupDirPath, a:projectXmlFilePath)
+endfunction
+
+function! apexAnt#delete(projectName, destructiveChangesFolder, checkOnly)
+	return apexAnt#execute("delete", a:projectName, '', a:destructiveChangesFolder, a:checkOnly)
+endfunction
+
 " param: command - deploy|refresh|describe
 " 
 " return: path to error log or empty string if ant could not be executed
@@ -112,11 +121,49 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		let outputFolderPath = a:1
 		let metadataType = a:2
 		let antCommand = antCommand . " -DretrieveOutputDir=" . shellescape(outputFolderPath). " -DmetadataType=" . shellescape(metadataType) . " bulkRetrieve"
+	elseif "backup" == a:command
+		"apexAnt#execute("backup", a:projectName, a:projectFolder, a:backupDirPath, a:projectXmlFilePath)
+		if a:0 < 1 || len(a:1) < 1
+			echoerr "missing backup folder path parameter"
+			return ""
+		endif
+		let backupDirPath = a:1
+		if !isdirectory(backupDirPath)
+			echoerr "provied backupDirPath ".backupDirPath." is not valid directory"
+			return ""
+		endif
+		if a:0 < 2 || len(a:2) < 1
+			echoerr "missing full path to project.xml file"
+			return ""
+		endif
+		let projectXmlFilePath = a:2
+		if !filereadable(projectXmlFilePath)
+			echoerr "file ". projectXmlFilePath . " is not readable."
+			return ""
+		endif
+		let antCommand = antCommand . " -Dpackage.xml.file.path=" . shellescape(projectXmlFilePath). " -DbackupDir=" . shellescape(backupDirPath) . " backupSelected"
+
+	elseif "delete" == a:command
+		"apexAnt#execute(..., a:destructiveChangesFolder, a:checkOnly)
+		if a:0 < 1 || len(a:1) < 1
+			echoerr "missing 'Destructive Changes' folder path parameter"
+			return ""
+		endif
+		let destructiveChangesDir = a:1
+		if !isdirectory(destructiveChangesDir)
+			echoerr "provied destructiveChangesFolder ".destructiveChangesDir." is not valid directory"
+			return ""
+		endif
+		let checkOnly = a:2
+		let antCommand = antCommand . " -DdestructiveChangesDir=" . shellescape(destructiveChangesDir). " -DcheckOnly=" . checkOnly . " deleteUnpackaged"
+
 	else
 		echoerr "Unsupported command".a:command
 	endif
 	let antCommand = antCommand ." 2>&1 |".g:apex_binary_tee." ".shellescape(ANT_ERROR_LOG)
-	"echo "antCommand=".antCommand
+	"create blank line after previous command
+	echo " "
+	echo "antCommand=".antCommand
     call apexOs#exe(antCommand, 'M') "disable --more--
 	return ANT_ERROR_LOG
 endfunction

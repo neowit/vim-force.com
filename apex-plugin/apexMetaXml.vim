@@ -165,8 +165,6 @@ function! apexMetaXml#packageXmlAdd(package, type, members)
 	let members = []
 	if has_key(package, a:type)
 		let members = package[a:type]
-	else
-		let members = []
 	endif
 
 	let countChanges = 0
@@ -219,24 +217,27 @@ function! apexMetaXml#packageWrite(package, srcFolderPath, ...)
 	call extend(lines, s:getFooter())
 
 	let fileName = "package.xml"
-	if a:0 > 2
-		let fileName = a:3
+	if a:0 > 0
+		let fileName = a:1
 	endif
 	let fname = apexOs#joinPath([a:srcFolderPath, fileName])
-	call writefile(lines, fname)
-	return fname
+	"echo "lines.size=".len(lines)
+	if 0 == writefile(lines, fname)
+		return fname
+	endif
+	return '' "failed to write package or nothing to write
 endfunction
 
 function! s:getHeader()
 	let lines = ['<?xml version="1.0" encoding="UTF-8"?>',
-				\ '<Package xmlns="http://soap.sforce.com/2006/04/metadata">'
+				\ '<Package xmlns="http://soap.sforce.com/2006/04/metadata">',
 				\]
 	return lines
 endfunction
 
 function! s:getFooter()
-	let lines = [ "	<version>".g:apex_API_version."</version>"
-				\ "</Package>"
+	let lines = [ "	<version>".g:apex_API_version."</version>",
+				\ "</Package>",
 				\]
 	return lines
 endfunction
