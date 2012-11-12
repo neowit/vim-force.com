@@ -150,31 +150,27 @@ function! apexUtil#compareWithPreRefreshVersion (apexBackupFolder)
 	call ApexCompare(leftFilePath, rightFilePath)
 
 endfunction	
+
 " using given filepath return path to the same file but in another project
-" project is to be selected
+" selected by user via Folder selection dialogue
 function! apexUtil#selectCounterpartFromAnotherProject(filepath)
 	let leftFile = a:filepath
 	"echo "leftFile=".leftFile
 	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
 	let leftProjectName = projectPair.name
+	let filePathRelativeProjectFolder = strpart(leftFile, len(projectPair.path))
 	"echo "projectPair.path=".projectPair.path
 
 	let rootDir = apexOs#splitPath(projectPair.path).head
 	"let rightProjectPath = browsedir("Select Root folder of the Project to compare with", rootDir)
 	let rightProjectPath = apexOs#browsedir('Please select project to compare with:', rootDir)
-	"echo "selected: ".rightProjectPath
+	"echo "rightProjectPath ".rightProjectPath
 
 	if len(rightProjectPath) <1 
 		" cancelled
 		return ""
 	endif
-	" at this point in time we have something like following:
-	" leftFile=/home/andrey/eclipse.workspace/Reed (CITDev1)/src/classes/OpportunityBeforeSupport.cls
-	" projectPair.path=/home/andrey/eclipse.workspace/Reed (CITDev1)/
-	" rightProjectPath: /home/andrey/eclipse.workspace/Reed (CITTest2)  	
-	let rightProjectName = apexOs#splitPath(rightProjectPath).tail
-	"echo "rightProjectName=".rightProjectName
-	let rightFilePath = substitute(leftFile, leftProjectName, rightProjectName, "")
+	let rightFilePath = apexOs#joinPath([rightProjectPath, filePathRelativeProjectFolder])
 	"echo "rightFilePath=".rightFilePath
 	return rightFilePath
 endfunction
