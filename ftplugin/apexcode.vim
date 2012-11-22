@@ -153,7 +153,7 @@ command! -nargs=? -complete=customlist,ListProjectNames ApexDeployStaged :call a
 "	:ApexDeleteStaged 'My Project' 
 "3. do not delete, but test deletion
 "	:ApexDeleteStaged 'My Project' t
-command! -nargs=* -complete=customlist,ListProjectNames ApexDeleteStaged :call apexDelete#run(<f-args>)
+command! -nargs=* -complete=customlist,ListProjectNames ApexRemoveStaged :call apexDelete#run(<f-args>)
 
 command! -nargs=0 ApexRefreshProject :call apex#refreshProject()
 command! RefreshSFDCProject :ApexRefreshProject
