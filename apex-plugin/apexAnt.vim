@@ -80,6 +80,10 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	"	deployUnpackaged
 	"
 	let antCommand = s:ANT_CMD . " -buildfile " . shellescape(buildFile). " -Ddest.org.name=" . shellescape(orgName) . " -Dproperties.path=" . shellescape(propertiesFolder) 
+					 
+	if exists("g:apex_pollWaitMillis")
+		let antCommand = antCommand . " -DpollWaitMillis=" . g:apex_pollWaitMillis
+	endif
 	if "deploy" == a:command || "refresh" == a:command
 		if "deploy" == a:command
 			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(a:projectFolder) . " deployUnpackaged"
