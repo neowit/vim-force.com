@@ -38,7 +38,7 @@ let s:APEX_EXTENSIONS = s:APEX_EXTENSIONS_WITH_META_XML + ['labels', 'object']
 "as needed
 let s:CACHE_FOLDER_NAME = ".vim-force.com"
 
-let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged'] "supported Deploy modes
+let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
 """"""""""""""""""""""""""""""""""""""""""""""""
 " Apex Code Compilation
 """"""""""""""""""""""""""""""""""""""""""""""""
