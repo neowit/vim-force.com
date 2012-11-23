@@ -82,7 +82,14 @@ if !executable(s:trim(g:apex_binary_tee))
 endif	
 
 "set desired API version
-call s:let('g:apex_API_version', '25.0')
+call s:let('g:apex_API_version', '26.0')
+
+" set pollWaitMillis for ant tasks. See ant-salesforce.jar
+" documentation for 'pollWaitMillis' parameter
+" the smaller the value defined by pollWaitMillis the quicker deploy will
+" finish, but on slow connections larger values, like 10000 may be necessary
+call s:let('g:apex_pollWaitMillis', '1000')
+
 
 """""""""""""""""""""""""""""""""""""""""""""""
 " OS Dependent methods

@@ -1,4 +1,4 @@
-<project name="Salesforce Ant tasks" default="deploySegmentation" basedir="." xmlns:sf="antlib:com.salesforce">
+<project name="Salesforce Ant tasks" default="no-default-task" basedir="." xmlns:sf="antlib:com.salesforce">
 	<!-- 
 		# ant config script  file for Bash
 		# Maintainer:	Andrey Gavrikov 
@@ -28,6 +28,7 @@
 	<property name="srcDir" value="${project.Folder}/src" />
 	<property name="package.xml.path" value="${srcDir}/package.xml" />
 	<property name="result.file.path" value="${srcDir}/out.txt" />
+	<property name="pollWaitMillis" value="10000" /> <!-- 10 seconds is default value, lower values recommended on good connections-->
 
 	<!-- 
 	<echo message="logOutputFile=${logOutputFile}" />
@@ -42,7 +43,7 @@
 
 		<!-- Retrieve the contents into another directory -->
 		<sf:retrieve username="${dest.sf.username}" password="${dest.sf.password}" serverurl="${dest.sf.serverurl}" 
-			retrieveTarget="${srcDir}" unpackaged="${package.xml.path}" maxPoll="1000"/>
+			retrieveTarget="${srcDir}" unpackaged="${package.xml.path}" maxPoll="1000" pollWaitMillis="${pollWaitMillis}"/>
 	</target>
 
 	<!-- Deploy the unpackaged set of metadata retrieved with retrieveUnpackaged -->
@@ -55,7 +56,7 @@
 		<!--NOTE: allowMissingFiles is used to make sure that we can do partial deployment, 
 			 i.e. only changed files as opposite to all declared in package.xml -->
 		<sf:deploy checkOnly="${checkOnly}" username="${dest.sf.username}" password="${dest.sf.password}" 
-			serverurl="${dest.sf.serverurl}" deployRoot="${srcDir}" maxPoll="1000" allowMissingFiles="true" />
+			serverurl="${dest.sf.serverurl}" deployRoot="${srcDir}" maxPoll="1000" allowMissingFiles="true" pollWaitMillis="${pollWaitMillis}"/>
 	</target>
 
 	<!-- The describeMetadata task is used to get detail information of the metadata types currently being supported. -->
