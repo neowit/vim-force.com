@@ -381,6 +381,7 @@ Optional
 |'g:apex_ctags_cmd'|                path to exuberant ctags 
 |'g:apex_syntax_case_sensitive'|	defines whether Apex syntax highlighting is case sensitive 
 |'g:apex_API_version'|				force.com API version to use when create new files, ex: 25.0
+|'g:apex_pollWaitMillis'|			number of milliseconds to wait between each poll of Salesforce to retrieve the results
 
 |apex-config-example|             .vimrc config example
 
@@ -482,6 +483,22 @@ If not specified then Apex default is used - ignore case
 ex: >
 	let g:apex_syntax_case_sensitive = 1 " make syntax highlighting case sensitive
 <
+
+                                                          *'g:apex_API_version'*
+Optional.
+When commands like |ApexNewFile| generate new *-meta.xml file the 
+<apiVersion>25.0</apiVersion> value is taken from 'g:apex_API_version' variable.
+Set this variable to desired value if default does not meet your needs.
+
+                                                       *'g:apex_pollWaitMillis'*
+Optional. 
+Defaults to 1000. Sets pollWaitMillis for ant tasks. 
+Number of milliseconds to wait between each poll of Salesforce to retrieve the
+results. The smaller the value defined by 'g:apex_pollWaitMillis' the quicker
+deploy will finish, but on slow connections larger values, like 10000 may be
+necessary.
+See ant-salesforce.jar documentation for 'pollWaitMillis' parameter.
+
                                                            *apex-config-example*
 
 Example of configuration for Unix and MS Windows environments >
