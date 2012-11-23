@@ -114,6 +114,8 @@ function! apexDelete#run(...)
 					endif
 				endfor
 			endif
+			"blank line before next message
+			echo " "
 		endif
 		"clear Stage
 		call apexStage#clear(filePath)
