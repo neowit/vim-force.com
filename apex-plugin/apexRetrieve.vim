@@ -401,7 +401,17 @@ function! <SID>RetrieveSelected()
 		let members = selectedTypes[l:type]
 		"members can be a list of Child Types or constant list ['*']
 
-		let outputDir = s:bulkRetrieve(l:type, members, selectedTypes)
+		let reEnableMore = 0
+		try
+			let reEnableMore = &more
+			set nomore "disable --More-- prompt
+
+			let outputDir = s:bulkRetrieve(l:type, members, selectedTypes)
+		finally
+			if reEnableMore
+				set more
+			endif
+		endtry	
 		"echo "outputDir=".outputDir
 		" now we need to sort out current type before downloading the next one
 		" because target temp folder will be overwritten
