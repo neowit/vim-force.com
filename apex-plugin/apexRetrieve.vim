@@ -544,7 +544,11 @@ function! s:getMetaTypesMap(projectName, projectPath, forceLoad)
 			return []
 		endif
 
-		call apexAnt#loadMetadataList(a:projectName, a:projectPath, allMetaTypesFilePath)
+		try
+			call apexAnt#loadMetadataList(a:projectName, a:projectPath, allMetaTypesFilePath)
+		catch
+			return {}
+		endtry
 	endif
 	let typesMap = s:getMetaTypesCache(allMetaTypesFilePath)
 	return typesMap

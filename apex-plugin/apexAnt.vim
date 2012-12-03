@@ -169,11 +169,16 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	echo " "
 	echo "antCommand=".antCommand
     call apexOs#exe(antCommand, 'M') "disable --more--
-	"check if build is successful
+	"check if build is successful or failed but just because of syntax errors
+	"in which case ant log will contain two lines like these:
+	"BUILD FAILED
+	".../apex-plugin/build.xml:59: FAILURES:
+	"
 	try
-		exe "noautocmd 1vimgrep /BUILD SUCCESSFUL/j ".ANT_ERROR_LOG
+		exe 'noautocmd 1vimgrep /BUILD FAILED\_.*FAILURES\|BUILD SUCCESSFUL/j '.ANT_ERROR_LOG
 	catch /^Vim\%((\a\+)\)\=:E480/
-		"if we are here then build failed
+		"if we are here then build failed for a reason which we do not
+		"process nicely
 		throw "OPERATION FAILED. Check error log. ".ANT_ERROR_LOG
 	endtry	
 	return ANT_ERROR_LOG
