@@ -169,6 +169,13 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	echo " "
 	echo "antCommand=".antCommand
     call apexOs#exe(antCommand, 'M') "disable --more--
+	"check if build is successful
+	try
+		exe "noautocmd 1vimgrep /BUILD SUCCESSFUL/j ".ANT_ERROR_LOG
+	catch /^Vim\%((\a\+)\)\=:E480/
+		"if we are here then build failed
+		throw "OPERATION FAILED. Check error log. ".ANT_ERROR_LOG
+	endtry	
 	return ANT_ERROR_LOG
 endfunction
 
