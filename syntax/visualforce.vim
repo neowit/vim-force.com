@@ -26,6 +26,6 @@ runtime! syntax/html.vim
 syn match htmlTagName contained "\(c\|apex\|chatter\|flow\|ideas\|knowledge\|messaging\|site\):[a-z]\+[A-Za-z]*"
 " fix syntax breakage when using '&{'in the code looking something like this
 " <apex:outputLink value="/path?param=1&{!mergeVar}">link</apex:outputLink>
-"syn match htmlSpecialChar contained "&{"
+syn match htmlSpecialChar contained "&{"
 syn region htmlSpecialChar start=+{!+ end=+}+
 
