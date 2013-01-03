@@ -73,6 +73,8 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		return ""
 	endif
 	let ANT_ERROR_LOG = apexOs#joinPath([apexOs#getTempFolder(), g:apex_deployment_error_log])
+	" make sure temp folder actually exist
+	call apexOs#createTempDir()
 	let buildFile=apexOs#joinPath([s:PLUGIN_FOLDER, "build.xml"])
 
 	"	ant  -buildfile "$buildFile" -Ddest.org.name="$destOrgName"
