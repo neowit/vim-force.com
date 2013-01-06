@@ -103,8 +103,8 @@ function! apexOs#browsedir(prompt, startDir)
 	if len(a:startDir) >0
 		let fPath = a:startDir
 	endif
-	if has("macunix")
-		" in current version of MacVim buil-in function browsedir() produces
+	if has("macunix") && v:version < 703 || v:version == 703 && !has("patch688")
+		" in version of MacVim < 7.3.688 buil-in function browsedir() produces
 		" file selection dialogue instead of folder selection, so have to use osascript instead
 		let strCommand ='osascript  -e "tell application \"Finder\"" -e "activate" -e "set fpath to POSIX path of (choose folder default location \"'.fPath.'\" with prompt \"'.prompt.'\")" -e "return fpath" -e "end tell"'
 		let fPath=system(strCommand)
