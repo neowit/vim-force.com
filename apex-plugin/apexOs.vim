@@ -126,20 +126,26 @@ function! apexOs#getBackupFolder()
 endfunction	
 
 " OS dependent temporary directory create/delete
-function! apexOs#createTempDir()
+" Arguments:
+" 1 - [optional]: 'wipe' - if specified then existing temp folder will be
+" erased and re-created
+function! apexOs#createTempDir(...)
 	let tempFolderPath = apexOs#getTempFolder()
-	if has("unix")
-		" remove existing folder
-		silent exe "!rm -R ". shellescape(tempFolderPath)
-	elseif s:is_windows
-		silent exe "!rd ".GetWin32ShortName(tempFolderPath)." /s /q "
-	else
-		echoerr "Not implemented"
-		return ""
+	let reCreate = (a:0 >0 && 'wipe' == a:1)
+
+	if !isdirectory(apexOs#getTempFolder()) || reCreate
+		if has("unix")
+			" remove existing folder
+			silent exe "!rm -R ". shellescape(tempFolderPath)
+		elseif s:is_windows
+			silent exe "!rd ".GetWin32ShortName(tempFolderPath)." /s /q "
+		else
+			echoerr "Not implemented"
+			return ""
+		endif
+		" recreate temp folder
+		call apexOs#createDir(tempFolderPath)
 	endif
-	" recreate temp folder
-	call apexOs#createDir(tempFolderPath)
-	return tempFolderPath
 	return tempFolderPath
 endfunction
 " 
