@@ -56,13 +56,13 @@ let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "
 " login details
 function! apex#MakeProject(...)
 	let filePath = expand("%:p")
-	let mode = 'modified'
+	let l:mode = 'modified'
 	if a:0 >0 && len(a:1) >0  
 		let filePath = a:1
 	endif
 
 	if a:0 >1 && index(s:MAKE_MODES, a:2) >= 0
-		let mode = a:2
+		let l:mode = a:2
 	endif
 
 	let providedProjectName = ''
@@ -82,13 +82,13 @@ function! apex#MakeProject(...)
 
 	echo "project.name='" . projectName . "'"
 
-	if 'all' != mode
+	if 'all' != l:mode
 		" prepare pack
 		"			{project: "project name", 
 		"			 preparedSrcPath: "/path/to/prepared/src", 
 		"			 projectPath: "/path/to/original/Project/",
 		"			 timeMap: {"classes/MyClass.cls-meta.xml": src-time}}
-		let projectDescriptor = s:prepareApexPackage(filePath, mode)
+		let projectDescriptor = s:prepareApexPackage(filePath, l:mode)
 		if len(projectDescriptor) <=0 
 			echomsg "Nothing to deploy"
 			return 0
@@ -119,14 +119,14 @@ function! apex#MakeProject(...)
 	if len(ANT_ERROR_LOG) > 0
 		" check if BUILD FAILED
 		let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
-		if result == 0 && 'all' != mode
+		if result == 0 && 'all' != l:mode
 			" no errors found, mark files as deployed
 			for metaFilePath in keys(projectDescriptor.timeMap)
 				call apexOs#setftime(metaFilePath, projectDescriptor.timeMap[metaFilePath])
 				" show what files we have just deployed
 				"echo metaFilePath
 			endfor	
-			if 'staged' == mode
+			if 'staged' == l:mode
 				"clear stage cache
 				call apexStage#clear(filePath)
 			endif	
