@@ -133,7 +133,6 @@ function! apexUtil#compareWithPreRefreshVersion (apexBackupFolder)
 	let projectPath = projectPair.path
 	let projectName = projectPair.name
 	let backupRoot = apexOs#joinPath([a:apexBackupFolder, projectName])
-	"let rightProjectPath = browsedir("Select folder fo Backup to compare with", backupRoot)
 	let rightProjectPath = apexOs#browsedir("Select folder from Backup to compare with", backupRoot)
 
 	if len(rightProjectPath) <1
