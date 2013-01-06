@@ -73,8 +73,10 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		return ""
 	endif
 	let ANT_ERROR_LOG = apexOs#joinPath([apexOs#getTempFolder(), g:apex_deployment_error_log])
+	
 	" make sure temp folder actually exist
 	call apexOs#createTempDir()
+
 	let buildFile=apexOs#joinPath([s:PLUGIN_FOLDER, "build.xml"])
 
 	"	ant  -buildfile "$buildFile" -Ddest.org.name="$destOrgName"
@@ -169,7 +171,7 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	let antCommand = antCommand ." 2>&1 |".g:apex_binary_tee." ".shellescape(ANT_ERROR_LOG)
 	"create blank line after previous command
 	echo " "
-	echo "antCommand=".antCommand
+	"echo "antCommand=".antCommand
     call apexOs#exe(antCommand, 'M') "disable --more--
 	"check if build is successful or failed but just because of syntax errors
 	"in which case ant log will contain two lines like these:
