@@ -185,6 +185,10 @@ function! apexOs#copyFile(srcPath, destPath)
 	else
 		echoerr "Not implemented"
 	endif
+	"check if copy succeeded
+	if !filereadable(a:destPath)
+		echoerr 'failed to copy '.a:destPath
+	endif	
 endfunction
 
 "OS dependent set file time
