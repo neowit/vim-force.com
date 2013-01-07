@@ -111,7 +111,7 @@ function! apex#MakeProject(...)
 		let preparedTempProjectPath = projectPath
 		" as we are not copying sources to temp folder we need to make sure that
 		" it exists because it is needed for ant error log anyway
-		call apexOs#createTempDir()
+		call apexOs#createTempDir('wipe')
 	endif
 	
 
@@ -483,7 +483,7 @@ function! s:prepareApexPackage(filePath, mode)
 	if len(fileDescriptor) >0
 		let dirsToCreate =keys(fileDescriptor.filesByFolder)
 		if len(dirsToCreate) >0
-			let tempDir = apexOs#createTempDir()
+			let tempDir = apexOs#createTempDir('wipe')
 			"append path separator
 			let tempDir = tempDir . apexOs#getPathSeparator()  
 
