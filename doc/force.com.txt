@@ -217,10 +217,12 @@ Plugin exposes following commands:                              *apex-commands*
 
 |ApexCompare|                       compare two projects
 |ApexCompareWithPreRefreshVersion|  compare with pre refresh project state
+
 |ApexDeploy|                        deploy project to SFDC
 |ApexDeployConfirm|                 deploy with confirmation for each file
 |ApexDeployOpen|                    deploy all open files
 |ApexDeployAll|                     deploy all files in current project EXPERIMENTAL
+
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
 |ApexPrintChanged|                  display all modified files
@@ -233,7 +235,9 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexNewFile|                       create new file
 
 |ApexRetrieve|                      retrieve specified metadata types from server
-									this feature is currently EXPERIMENTAL
+
+|ApexRemoveStaged|                  remove staged files from target SFDC ORG
+                                    this feature is currently EXPERIMENTAL
 
                                                                   *ApexCompare*
 Imagine you have 2 sandboxes of the same Org and want to compare current file
@@ -353,6 +357,15 @@ There are 2 potential scenarios which may involve :ApexReteieve
 < then select Account and run >
 	:Retrieve
 <
+
+                                                             *ApexRemoveStaged*
+Delete staged files from current or specified Org. See |ApexStageAdd|.
+Example 1: >
+	:ApexRemoveStaged
+< will remove all files listed in :ApexStage from the current Org
+Example 2: >
+	:ApexRemoveStaged My Other Org
+< will remove staged files from "My Other Org"
 
 ==============================================================================
 SETTINGS                                                   *force.com-settings*
