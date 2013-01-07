@@ -112,6 +112,9 @@ function! apexOs#browsedir(prompt, startDir)
 		let fPath = substitute(fPath, "\n", "", "")
 	else
 		" standard built-in method
+		" http://code.google.com/p/macvim/issues/detail?id=425#c3
+		" note: 'title' argument of MacVim browsedir() is ignored since open dialogs
+		" are in fact sheets and have no title.
 		let fPath = browsedir(prompt, fPath)
 	endif	
 	return fPath
