@@ -92,7 +92,11 @@ function! apexDelete#run(...)
 
 		"now call Ant Delete task and point it to tempFolder with package.xml
 		"and destructiveChanges.xml files
-		call apexAnt#delete(projectName, tempFolder, checkOnly)
+		let logFilePath =  apexAnt#delete(projectName, tempFolder, checkOnly)
+		if apexAnt#logHasFailure(logFilePath)
+			echoerr 'ERROR last ANT operation did not return "BUILD SUCCESSFUL". Please examine error log: '.logFilePath
+			return
+		endif
 
 		"check if we need to delete local files as well
 		if empty(providedProjectName) || projectPair.name == projectName

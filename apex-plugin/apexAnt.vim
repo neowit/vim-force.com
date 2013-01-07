@@ -57,6 +57,19 @@ function! apexAnt#delete(projectName, destructiveChangesFolder, checkOnly)
 	return apexAnt#execute("delete", a:projectName, '', a:destructiveChangesFolder, a:checkOnly)
 endfunction
 
+" check Ant log file to see if last ANT operation failed
+" Return:
+" 0 - no failure detected
+" 1 - ant operation failed
+function! apexAnt#logHasFailure(logFilePath)
+	try
+		exe "noautocmd 1vimgrep /BUILD SUCCESSFUL/j ".a:logFilePath
+	catch  /.*/
+		return 1 " log does not contain BUILD SUCCESSFUL
+	endtry	
+	return 0
+endfunction
+
 " param: command - deploy|refresh|describe
 " 
 " return: path to error log or empty string if ant could not be executed
