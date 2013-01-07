@@ -43,7 +43,7 @@ endfunction
 " bulk retrieve all metadata components of a given type
 " return: temp folder path which contains subfolder with retrieved components
 function! apexAnt#bulkRetrieve(projectName, projectFolder, metadataType)
-	let outputDir = apexOs#createTempDir()
+	let outputDir = apexOs#createTempDir('wipe')
 	call apexAnt#execute("bulkRetrieve", a:projectName, a:projectFolder, outputDir, a:metadataType)
 	return outputDir
 endfunction
@@ -72,10 +72,10 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		echohl None 
 		return ""
 	endif
-	let ANT_ERROR_LOG = apexOs#joinPath([apexOs#getTempFolder(), g:apex_deployment_error_log])
+	" make sure temp folder actually exist, but not overwrite existing 
+	let tempDir = apexOs#createTempDir()
+	let ANT_ERROR_LOG = apexOs#joinPath([tempDir, g:apex_deployment_error_log])
 	
-	" make sure temp folder actually exist
-	call apexOs#createTempDir()
 
 	let buildFile=apexOs#joinPath([s:PLUGIN_FOLDER, "build.xml"])
 

@@ -55,7 +55,7 @@ function! apexDelete#run(...)
 	endif
 
 
-	let tempFolder = apexOs#createTempDir()
+	let tempFolder = apexOs#createTempDir('wipe')
 	" write package.xml for destructive delete
 	call apexMetaXml#packageWriteDestructive(tempFolder)
 
