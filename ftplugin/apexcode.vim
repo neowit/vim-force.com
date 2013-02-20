@@ -144,7 +144,7 @@ command! -nargs=? -complete=customlist,ListProjectNames ApexDeploy :call apex#Ma
 command! -nargs=? -complete=customlist,ListProjectNames ApexDeployOpen :call apex#MakeProject('', 'open', <f-args>)
 command! -nargs=? -complete=customlist,ListProjectNames ApexDeployConfirm :call apex#MakeProject('', 'confirm', <f-args>)
 command! -nargs=? -complete=customlist,ListProjectNames ApexDeployAll :call apex#MakeProject('', 'all', <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeployStaged :call apex#MakeProject('', 'staged', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployStaged :call apexStage#write() | :call apex#MakeProject('', 'staged', <f-args>)
 "delete Staged files from specified Org
 "Examples:
 "1. Delete Staged files from currect project
