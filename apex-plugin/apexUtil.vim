@@ -74,6 +74,13 @@ function! apexUtil#warning(text)
 	echomsg a:text
 	echohl None 
 endfun	
+"
+" utility function to display highlighted info message
+function! apexUtil#info(text)
+	echohl Question
+	echomsg a:text
+	echohl None 
+endfun	
 
 " create Git repo for current Apex project and add files
 function! apexUtil#gitInit()

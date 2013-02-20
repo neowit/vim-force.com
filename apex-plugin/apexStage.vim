@@ -41,8 +41,6 @@ function! apexStage#open(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectName = projectPair.name
 	let projectPath = projectPair.path
-	"init header and length variables
-	call s:init(projectPath)
 
 	" check if buffer with file types already exist
 	if exists("g:APEX_STAGE_BUF_NUM") && bufloaded(g:APEX_STAGE_BUF_NUM)
@@ -90,6 +88,8 @@ function! apexStage#open(filePath)
 		"define commands for current buffer
 		exec 'command! -buffer -bang -nargs=0 Write :call <SNR>'.s:sid.'_Write()'
 
+		" write stage into a file every time before user leaving for another buffer 
+		autocmd BufLeave <buffer> call apexStage#write()
 	endif
 
 	" syntax highlight
@@ -111,15 +111,25 @@ function! s:SID()
 endfun
 let s:sid = s:SID()
 
-"write changes to stage cache file
+"write changes to stage cache file and delete Stage buffer
 function! <SID>Write()
-	let lines = getline(s:headerLineCount +1, line("$"))
-	let stageFilePath = apexStage#getStageFilePath(b:PROJECT_PATH)
-
-	call writefile(lines, stageFilePath)
+	call apexStage#write()
 	:bd
 
 endfunction
+
+"write changes to stage cache file
+function! apexStage#write()
+	"check if there is anything to write
+	if exists("g:APEX_STAGE_BUF_NUM") && bufloaded(g:APEX_STAGE_BUF_NUM) && exists("b:PROJECT_PATH")
+		let lines = getbufline(g:APEX_STAGE_BUF_NUM, s:headerLineCount +1, line("$"))
+		let stageFilePath = apexStage#getStageFilePath(b:PROJECT_PATH)
+
+		call writefile(lines, stageFilePath)
+		call apexUtil#info('Stage written to disk')
+	endif
+endfunction
+
 function! apexStage#getStageFilePath(projectPath)
 	return apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:STAGE_FILE])
 endfunction
@@ -222,7 +232,7 @@ function! apexStage#clear(filePath)
 
 	if filereadable(stageFilePath)
 		if 0 == delete(stageFilePath)
-			echo "cleared stage"
+			echo "Cleared stage from disk"
 		else
 			call apexUtil#warning('failed to delete stage file '.stageFilePath)
 		end	
@@ -234,6 +244,3 @@ function! apexStage#clear(filePath)
 endfunction	
 
 
-" call this method before any other as soon as Project Path becomes available
-function! s:init(projectPath)
-endfunction
