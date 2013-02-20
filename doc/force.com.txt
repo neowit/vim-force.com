@@ -221,7 +221,8 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexDeploy|                        deploy project to SFDC
 |ApexDeployConfirm|                 deploy with confirmation for each file
 |ApexDeployOpen|                    deploy all open files
-|ApexDeployAll|                     deploy all files in current project EXPERIMENTAL
+|ApexDeployAll|                     deploy all files in current project
+|ApexDeployStaged|                  deploy all files listed in Stage cache
 
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
@@ -237,8 +238,8 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexRetrieve|                      retrieve specified metadata types from server
 
 |ApexRemoveStaged|                  remove staged files from target SFDC ORG
-                                    this feature is currently EXPERIMENTAL
 
+------------------------------------------------------------------------------
                                                                   *ApexCompare*
 Imagine you have 2 sandboxes of the same Org and want to compare current file
 with its counterpart in another sandbox
@@ -300,6 +301,9 @@ will complain that it can not rename it, even if you are not trying to rename.
 If there are Objects and Workflows in current project then SFDC may complain
 that Objects have to be created before workflows, even if all objects already
 exist in SFDC.
+
+                                                            *ApexDeployStaged*
+Deploy all files previously added by :ApexStageAdd command
 
                                                             *ApexGitInit*
 If git is available then :ApexGitInit can be used to initialise new git
