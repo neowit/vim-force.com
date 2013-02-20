@@ -45,8 +45,8 @@ function! apexStage#open(filePath)
 	call s:init(projectPath)
 
 	" check if buffer with file types already exist
-	if exists("g:APEX_META_TYPES_BUF_NUM") && bufloaded(g:APEX_META_TYPES_BUF_NUM)
-		execute 'b '.g:APEX_META_TYPES_BUF_NUM
+	if exists("g:APEX_STAGE_BUF_NUM") && bufloaded(g:APEX_STAGE_BUF_NUM)
+		execute 'b '.g:APEX_STAGE_BUF_NUM
 	else "load types list and create new buffer
 		let stageFilePath = apexOs#joinPath([apex#getCacheFolderPath(projectPath), s:STAGE_FILE])
 		if !filereadable(stageFilePath) || len(readfile(stageFilePath, '', 1)) < 1
@@ -67,7 +67,7 @@ function! apexStage#open(filePath)
 		let b:PROJECT_NAME = projectName
 		let b:PROJECT_PATH = projectPath
 		let b:SRC_PATH = apex#getApexProjectSrcPath(a:filePath)
-		let g:APEX_META_TYPES_BUF_NUM = bufnr("%")
+		let g:APEX_STAGE_BUF_NUM = bufnr("%")
 
 		" load header and types list
 		let i = 0
