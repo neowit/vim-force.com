@@ -218,6 +218,11 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexCompare|                       compare two projects
 |ApexCompareWithPreRefreshVersion|  compare with pre refresh project state
 
+|ApexStage|                         show/switch-to "Stage" buffer
+|ApexStageAdd|                      add to Stage file in the current buffer
+|ApexStageRemove|                   remove from Stage file in the current buffer
+|ApexStageClear|                    clear Stage buffer
+
 |ApexDeploy|                        deploy project to SFDC
 |ApexDeployConfirm|                 deploy with confirmation for each file
 |ApexDeployOpen|                    deploy all open files
@@ -255,20 +260,33 @@ Assuming current project is 'sandbox 1' select 'prod org' folder and system will
 open specified (|'g:apex_diff_cmd'|) diff tool with both files 
 
 
-
                                              *ApexCompareWithPreRefreshVersion*
 Every time before refresh from SFDC is executed system backs up modified files
 from current project in the location specified by |'g:apex_backup_folder'|
 Once refresh is complete it is possible to quickly open diff tool to compare
 current file with its pre-refresh version.
-Same as with |ApexCompare| you only have to pick top level folder of the relevant backup
-i.e. parent of ./src/ folder, no need to drill down into project subfolders
+Same as with |ApexCompare| you only have to pick top level folder of the
+relevant backup i.e. parent of ./src/ folder, no need to drill down into
+project subfolders
 
-                                                            *ApexDeploy*
+                                                                  *ApexStage*
+Stage is a temporary buffer which can be used as a stack to list files/metadata
+types which will be used in subsequent Deploy/Remove operations.
+
+Stage content can be manipulated either by commands like :|ApexStageAdd|,
+:|ApexStageRemove|, :|ApexStageClear| or directly like any other text buffer.
+Stage is persistent and retains its content between vim editing sessions unless
+explicitly cleared.  If you use :Write command while in Stage buffer, or just
+switch from Stage to another file/buffer, Stage content will be autimatically
+written to a disk file.
+See also :|ApexRemoveStaged| and :|ApexDeployStaged|.
+
+                                                                  *ApexDeploy*
 Use :|ApexDeploy| to upload/deploy/save all modified files of current project
 to SFDC
-All commands in :|ApexDeploy|* family support optional argument - 'project name' to deploy to.
-This name should match file name part of .properties file which contains access details.
+All commands in :|ApexDeploy|* family support optional argument - 'project
+name' to deploy to.  This name should match file name part of .properties file
+which contains access details.
 See |force.com-settings| for details about .properties files.
 For example if I am working in "My Sandbox1" project and have 2 .properties files:
 "My Sandbox 1.properties" and "My Sandbox 2.properties" then >
