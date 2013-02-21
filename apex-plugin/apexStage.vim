@@ -225,8 +225,34 @@ function! apexStage#remove(filePath)
 
 endfunction	
 
+" Clear Stage buffer from user dded content
+function! s:clear()
+	" clear buffer first
+	if exists("g:APEX_STAGE_BUF_NUM") && bufloaded(g:APEX_STAGE_BUF_NUM)
+		let currBuff=bufnr("%")
+		if currBuff != g:APEX_STAGE_BUF_NUM
+			execute 'buffer ' . g:APEX_STAGE_BUF_NUM
+		endif
+		let lines = getbufline(g:APEX_STAGE_BUF_NUM, s:headerLineCount +1, line("$"))
+		let firstLine = s:headerLineCount +1
+		exe firstLine.',$delete'
+		" delete stage buffer
+		execute 'bd ' . g:APEX_STAGE_BUF_NUM 
+		"switch back to current buffer
+		if currBuff != g:APEX_STAGE_BUF_NUM
+			execute 'buffer ' . currBuff
+		endif
+	endif
+
+endfunction
+
+" clear Stage buffer and disk file
 function! apexStage#clear(filePath)
 
+	"clear Stage buffer
+	call s:clear()
+
+	" clear file on disk
 	let projectPath = apex#getSFDCProjectPathAndName(a:filePath).path
 	let stageFilePath = apexStage#getStageFilePath(projectPath)
 
@@ -237,7 +263,7 @@ function! apexStage#clear(filePath)
 			call apexUtil#warning('failed to delete stage file '.stageFilePath)
 		end	
 	else
-		"just blank like to clear status line
+		"just blank line to clear status line
 		echo ""
 	endif
 
