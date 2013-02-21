@@ -106,16 +106,21 @@ e.g.
 ==============================================================================
 FEATURES                                                   *force.com-features*
 
-Build/Save to SFDC 
+Build/Save to SFDC
 - with error reporting
 
+Deploy from one Org to Another
+
+Delete selected metadata from SFDC
+
+Persistent "Stage" for cherry-picking components to be deployed or deleted
+
 Load/update metadata from SFDC
+- Retrieve All or Selected components of given metadata type
 
 Create triggers/classes/pages
 
-Refresh current file from SFDC
-
-Refresh whole project from SFDC
+Refresh current file from SFDC, Refresh whole project from SFDC, etc
 
 Search
 - find word in classes/triggers
@@ -150,7 +155,7 @@ For example if you write >
 < will not bring the list of String methods as Force.com IDE may do.
 
 "Execute Anonymous" and "Run test" features are not implemented. Use your favourite 
-web browser in the meantime.
+web browser and "Developer Console" in the meantime.
 
 On MS Windows default configuration spawns separate DOS/CMD window on every call
 to command line utility, ex: ant deploy
