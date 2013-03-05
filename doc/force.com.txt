@@ -62,12 +62,14 @@ Before force.com plugin can be used following requirements must be met:
    tested with Apache Ant(TM) 
    - version 1.8.2 on Win XP SP3
    - version 1.8.0 on Linux
+   - version 1.8.2 on OSX 10.8
 
 4. Force.com Migration Tool  
+    http://wiki.developerforce.com/page/Force.com_Migration_Tool
 	Tested with salesforce_ant_19.0
 
     Download it as described here:
-    http://wiki.developerforce.com/page/Force.com_Migration_Tool#How_to_Install
+	http://www.salesforce.com/us/developer/docs/daas/index_Left.htm#StartTopic=Content/forcemigrationtool_install.htm
 
     ant-salesforce.jar library must be made available to ANT
 
