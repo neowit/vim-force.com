@@ -127,7 +127,7 @@ Example of minimal _vimrc configuration for win32    *force.com-config-example*
  filetype plugin on
  syntax on
  
- let &runtimepath=&runtimepath . ',c:\Documents and\ Settings\user\vimfiles\force.com'
+ let &runtimepath=&runtimepath . ',c:\Documents and Settings\user\vimfiles\force.com'
  runtime ftdetect/vim-force.com.vim
  
  
