@@ -89,7 +89,7 @@ e.g.
 		let &runtimepath=&runtimepath . ',c:\Documents and Settings\username\vimfiles\force.com'
 	endif
 	" make sure vim loads apexcode filetype detection
-	runtime ftdetect/apexcode.vim
+	runtime ftdetect/vim-force.com
 
 8. Enable filetype plugin and syntax highlighting
 
