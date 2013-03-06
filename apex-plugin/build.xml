@@ -1,4 +1,4 @@
-<project name="Salesforce Ant tasks" default="no-default-task" basedir="." xmlns:sf="antlib:com.salesforce">
+<project name="Salesforce Ant tasks" basedir="." xmlns:sf="antlib:com.salesforce">
 	<!-- 
 		# ant config script  file for Bash
 		# Maintainer:	Andrey Gavrikov 
