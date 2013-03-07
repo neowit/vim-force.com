@@ -177,7 +177,7 @@ function! apexOs#shellescape(val)
 		 "return escape(val, '%()')
 		 return escape(val, '%')
 	elseif s:is_windows
-		return GetWin32ShortName(a:fname)
+		return GetWin32ShortName(val)
 	endif
 	return val
 endfunction
