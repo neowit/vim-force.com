@@ -76,6 +76,7 @@ endfunction
 function! apexAnt#execute(command, projectName, projectFolder, ...)
 	let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
 	let orgName = a:projectName
+	let projectFolder = apexOs#removeTrailingPathSeparator(a:projectFolder)
 	" check that 'project name.properties' file with login credential exists
 	let projectPropertiesPath = apexOs#joinPath([propertiesFolder, a:projectName]) . ".properties"
 	if !filereadable(projectPropertiesPath)
@@ -103,9 +104,9 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	endif
 	if "deploy" == a:command || "refresh" == a:command
 		if "deploy" == a:command
-			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(a:projectFolder) . " deployUnpackaged"
+			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(projectFolder) . " deployUnpackaged"
 		elseif "refresh" == a:command
-			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(a:projectFolder) . " retrieveSource"
+			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(projectFolder) . " retrieveSource"
 		endif
 	elseif "describeMetadata" == a:command
 		" get detail information of the metadata types currently being
