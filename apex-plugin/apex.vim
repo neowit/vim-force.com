@@ -128,8 +128,11 @@ function! apex#MakeProject(...)
 			endfor	
 			if 'staged' == l:mode
 				"clear stage cache
+				let response = input('Clear Stage : [Y/n]? ')
+				if 'n' != response && 'N' != response
 				call apexStage#clear(filePath)
 			endif	
+		endif
 		endif
 	else
 		"looks like we did not get to execute ant. error should have been
