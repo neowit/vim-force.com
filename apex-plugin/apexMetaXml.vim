@@ -105,12 +105,16 @@ function! apexMetaXml#packageWriteDestructive(srcFolderPath)
 endfunction	
 "read existing package.xml into a 'package' map
 "Args:
-"@param: srcFolderPath - full path to ./src folder
+"@param: srcFolderPath - full path to ./src folder or /full/path/to/package.xml
 "
 "@see apexMetaXml#packageXmlNew()
 "@return: 'package' map
-function! apexMetaXml#packageXmlRead(srcFolderPath)
-	let fname = apexOs#joinPath([a:srcFolderPath, "package.xml"])
+function! apexMetaXml#packageXmlRead(path)
+	"check if path we were given is full path to "package.xml"
+	let fname = a:path
+	if isdirectory(fname) 
+		let fname = apexOs#joinPath([fname, "package.xml"])
+	endif
 	if !filereadable(fname)
 		echoerr "File ".fname." is not readable."
 	endif
@@ -226,6 +230,65 @@ function! apexMetaXml#packageWrite(package, srcFolderPath, ...)
 		return fname
 	endif
 	return '' "failed to write package or nothing to write
+endfunction
+
+" build package.xml based on the existing ./src/ folder content
+" package.xml is a map which looks like this
+" {
+"	type-name1:[member1, member2, ...], 
+"	type-name2:[*, member1, member2,...],
+" ...}
+"Args:
+"@param: srcFolderPath: full path to ./src folder which will be passed to ant
+"@param: options - 
+"		if contains 'p' then user will be prompted to add missing type to
+"		package.xml, otherwise type will be added with a wildcard silently
+"
+"Return:
+" return: /full/path/to/package.xml or "" if no changes made
+function! apexMetaXml#packageXmlGenerate(projectName, projectPath, packageXmlPath, options)
+	let package = apexMetaXml#packageXmlRead(a:packageXmlPath)
+	let srcFolderPath = apex#getApexProjectSrcPath(a:packageXmlPath)
+
+	"check each subfolder and make sure its metatype and components are
+	"present in package.xml
+	let files = apexOs#glob(srcFolderPath . "**/*")
+	" visit each folder and check if it is part of package.xml
+	let hasChanged = 0
+	let showPrompt = (a:options =~# 'p')
+	let metaTypes = apexRetrieve#getTypeXmlByFolder(a:projectName, a:projectPath, 0)
+	for path in files
+		if isdirectory(path)
+			let folderName = apexOs#splitPath(path).tail
+			let addMissing = 0
+			if !has_key(metaTypes, folderName)
+				let typeName = metaTypes[folderName]
+				let addMissing = 1
+				
+				if showPrompt
+					let addMissing = 0
+					let response = input('Type "'.typeName.'" is missing in your package.xml do you want to deploy it anyway [Y/n]? ')
+					if 'n' != response && 'N' != response
+						let addMissing = 1
+					endif	
+				endif	
+				if 1 == addMissing
+					let metaTypes = apexRetrieve#getTypeXmlByFolder(a:projectName, a:projectPath, 0)
+					if has_key(metaTypes, folderName)
+						let typeName = metaTypes[folderName]
+						if apexMetaXml#packageXmlAdd(package, typeName, ['*'])
+							let hasChanged = 1
+						endif
+					endif
+				endif
+			endif
+		endif	
+	endfor
+
+	if hasChanged
+		return apexMetaXml#packageWrite(package, srcFolderPath)
+	endif
+	return ""
 endfunction
 
 function! s:getHeader()
