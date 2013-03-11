@@ -100,8 +100,16 @@ function! apex#MakeProject(...)
 		let projectPath = projectDescriptor.projectPath "path to temp folder with prepared for deploy files
 
 
-		" copy package XML into the work folder
-		call apexOs#copyFile(apexOs#joinPath([projectPath, s:SRC_DIR_NAME, "package.xml"]),  apexOs#joinPath([projectDescriptor.preparedSrcPath, 'package.xml']))
+		" copy current package XML into the work folder
+		let tempPackXmlPath = apexOs#joinPath([projectDescriptor.preparedSrcPath, 'package.xml'])
+		call apexOs#copyFile(apexOs#joinPath([projectPath, s:SRC_DIR_NAME, "package.xml"]),  tempPackXmlPath)
+
+		" check if package.xml contains all files prepared for deployment
+		" and add missing components if necessary
+		let tempPackXmlPath = apexMetaXml#packageXmlGenerate(projectName, projectDescriptor.projectPath, tempPackXmlPath, 'p')
+		if len(tempPackXmlPath) > 0
+			call apexUtil#info("Saved updated ". tempPackXmlPath)
+		endif
 
 	else "all
 		" deploy project in its entirety regardless of 'modified' files status
@@ -130,9 +138,9 @@ function! apex#MakeProject(...)
 				"clear stage cache
 				let response = input('Clear Stage : [Y/n]? ')
 				if 'n' != response && 'N' != response
-				call apexStage#clear(filePath)
+					call apexStage#clear(filePath)
+				endif	
 			endif	
-		endif
 		endif
 	else
 		"looks like we did not get to execute ant. error should have been
