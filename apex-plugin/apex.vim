@@ -43,17 +43,20 @@ let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "
 " Apex Code Compilation
 """"""""""""""""""""""""""""""""""""""""""""""""
 "Args:
-" param 1: (optional) path to file which belongs to apex project which needs
-" to be deployed
-" param 2: (optional) 'open|confirm|changed|all|staged' - 
+"Param1: (optional) path to file which belongs to apex project which needs
+"					to be deployed
+"Param2: (optional) - 
 "			'open' - deploy only files from currently open Tabs or Buffers (if
-"			less than 2 tabs open)
+"					less than 2 tabs open)
 "			'confirm' - all changed files with confirmation for every file
 "			'modified' - all changed files
 "			'all' - all files under ./src folder
 "			'staged' - all files listed in stage-list.txt file
-" param 3: destination project name, must match one of .properties file with
-" login details
+"			'onefile' - single file specified in param 1
+"Param3: (optional) - list [] of other params
+"		'runTest' - deploy single file specified in param 1 and run 
+"Param4: destination project name, must match one of .properties file with
+"		login details
 function! apex#MakeProject(...)
 	let filePath = expand("%:p")
 	let l:mode = 'modified'
@@ -65,9 +68,17 @@ function! apex#MakeProject(...)
 		let l:mode = a:2
 	endif
 
+	"process list of optional params ['runTest',...]
+	let l:runTest = 0
+	if a:0 >2
+		if index(a:3, 'runTest') >=0
+			let l:runTest = 1
+		endif
+	endif
+
 	let providedProjectName = ''
-	if a:0 >2 
-		let providedProjectName = a:3
+	if a:0 >3 
+		let providedProjectName = a:4
 	endif
 
 	let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
@@ -122,34 +133,63 @@ function! apex#MakeProject(...)
 		call apexOs#createTempDir('wipe')
 	endif
 	
-
-	let ANT_ERROR_LOG = apexAnt#deploy(projectName, preparedTempProjectPath)
-	if len(ANT_ERROR_LOG) > 0
-		" check if BUILD FAILED
+	if l:runTest
+		let ANT_ERROR_LOG = apex#deployAndRunTests(projectDescriptor)
 		let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
-		if result == 0 && 'all' != l:mode
-			" no errors found, mark files as deployed
-			for metaFilePath in keys(projectDescriptor.timeMap)
-				call apexOs#setftime(metaFilePath, projectDescriptor.timeMap[metaFilePath])
-				" show what files we have just deployed
-				"echo metaFilePath
-			endfor	
-			if 'staged' == l:mode
-				"clear stage cache
-				let response = input('Clear Stage : [Y/n]? ')
-				if 'n' != response && 'N' != response
-					call apexStage#clear(filePath)
-				endif	
-			endif	
-		endif
 	else
-		"looks like we did not get to execute ant. error should have been
-		"displayed by now
-		return -1
+		let ANT_ERROR_LOG = apexAnt#deploy(projectName, preparedTempProjectPath)
+		if len(ANT_ERROR_LOG) > 0
+			" check if BUILD FAILED
+			let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
+			if result == 0 && 'all' != l:mode
+				" no errors found, mark files as deployed
+				for metaFilePath in keys(projectDescriptor.timeMap)
+					call apexOs#setftime(metaFilePath, projectDescriptor.timeMap[metaFilePath])
+					" show what files we have just deployed
+					"echo metaFilePath
+				endfor	
+				if 'staged' == l:mode
+					"clear stage cache
+					let response = input('Clear Stage : [Y/n]? ')
+					if 'n' != response && 'N' != response
+						call apexStage#clear(filePath)
+					endif	
+				endif	
+			endif
+		else
+			"looks like we did not get to execute ant. error should have been
+			"displayed by now
+			return -1
+		endif
+
 	endif
+
 
 	return result
 endfun
+
+function! apex#deployAndRunTests(projectDescriptor)
+	echo "HERE we would run tests" 
+	let projectName = a:projectDescriptor.project
+	let preparedSrcPath = a:projectDescriptor.preparedSrcPath
+	let projectPath = apexOs#splitPath(preparedSrcPath).head
+	echo 'projectPath='.projectPath
+	
+	let files = apexOs#glob(projectPath . "**/*.cls")
+	let classNames = []
+	for fClassFullPath in files
+		let fClassName = apexOs#splitPath(fClassFullPath).tail
+		"remove .cls
+		let fClassName = strpart(fClassName, 0, len(fClassName) - len('.cls'))
+		let classNames = add(classNames, fClassName)
+	endfor
+	if len(classNames) >0
+		return apexAnt#runTests(projectName, projectPath, classNames)
+	endif
+	return ''
+
+endfunction
+
 
 " use this method to validate existance of .properties file for specified
 " project name
@@ -453,12 +493,12 @@ function! s:getOpenBuffers(projectPath)
 	return values(buffersMap)
 endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" @param: filepath - path to any file in the current Apex project
-" @param: mode				
-" if mode == 'open' then prepare files in currently Open tabs
-" if mode == 'confirm' then ask confirmation for every changed file to be
-" if mode == 'onefile' deploy use only current file 
-" deployed
+"Param: filepath - path to any file in the current Apex project
+"Param: mode				
+" if mode == 'open' then prepare files in currently Open buffers
+" if mode == 'confirm' then ask confirmation for every changed file
+" if mode == 'onefile' deploy only current file 
+" 
 " Else prepare *all* and *only* changed files for deployment/update into SFDC 
 "
 "   1. Find 
@@ -472,7 +512,7 @@ endfunction
 "
 "   2.  Clean/Create a temp /src/ folder
 "		Copy all such files (in folders) with -meta.xml counterparts into the temp /src/ folder
-"	@return {project: "project name", 
+"Return: {project: "project name", 
 "			preparedSrcPath: "/path/to/prepared/src", 
 "			projectPath: "/path/to/original/Project/", 
 "			timeMap: {"classes/MyClass.cls-meta.xml": src-time}} 
@@ -759,7 +799,10 @@ function! s:parseErrorLog(logFilePath, srcPath)
 		"clear quickfix
 		"call setqflist([])
 
+		"TODO process Unit Test failures
+		"exe "noautocmd vimgrep 'Error: \|Test failure' ".fileName
 		exe "noautocmd vimgrep 'Error: ' ".fileName
+
 		" if we are still here then the above line did not fail and found the
 		" key
 		call s:processQuickfix(a:srcPath)
@@ -787,7 +830,10 @@ endfunction
 " Error: pages/VimPluginTest.page(VimPluginTest):Unknown property 'ProfileTemplateController.varMainTitle'
 " Error: pages/VimPluginTest.page(VimPluginTest):Unsupported attribute escape
 "		 in <apex:inputField> in VimPluginTest at line 49 column 46
-"
+" 
+" Unit Test falure looks like this:
+" Test failure, method: x1.MyClassTest.test1 -- System.AssertException: Assertion Failed: expected this test to fail stack Class.x1.MyClassTest.test1: line 4, column 1
+" 
 " @param: srcPath - full path to the folder which contains classes, triggers,
 " pages, etc folders, usually this is path to /src/ folder
 function! s:processQuickfix(srcPath)

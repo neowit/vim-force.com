@@ -140,11 +140,15 @@ augroup END
 """"""""""""""""""""""""""""""""""""""""""""""""
 
 "defined a command to run MakeApex
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeploy :call apex#MakeProject('', 'modified', <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeployOpen :call apex#MakeProject('', 'open', <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeployConfirm :call apex#MakeProject('', 'confirm', <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeployAll :call apex#MakeProject('', 'all', <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeployStaged :call apexStage#write() | :call apex#MakeProject('', 'staged', <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeploy :call apex#MakeProject('', 'modified', [], <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployOpen :call apex#MakeProject('', 'open', [], <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployConfirm :call apex#MakeProject('', 'confirm', [], <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployAll :call apex#MakeProject('', 'all', [], <f-args>)
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployStaged :call apexStage#write() | :call apex#MakeProject('', 'staged', [], <f-args>)
+
+"Unit testing
+command! -nargs=? -complete=customlist,ListProjectNames ApexDeployAndTest :call apex#MakeProject('', 'onefile', ['runTest'], <f-args>)
+
 "delete Staged files from specified Org
 "Examples:
 "1. Delete Staged files from currect project
