@@ -48,6 +48,16 @@ function! apexAnt#bulkRetrieve(projectName, projectFolder, metadataType)
 	return outputDir
 endfunction
 
+" run Unit Tests using provided class names
+"Args:
+"Param: classNames - ['MyTestClass', 'class2'...]
+function! apexAnt#runTests(projectName, projectFolder, classNames)
+	echo "classNames=" 
+	echo a:classNames
+	return apexAnt#execute("runTest", a:projectName, a:projectFolder, a:classNames)
+endfunction
+
+
 " backup files specified in package.xml
 function! apexAnt#backup(projectName, backupDirPath, projectXmlFilePath)
 	return apexAnt#execute("backup", a:projectName, '', a:backupDirPath, a:projectXmlFilePath)
@@ -70,7 +80,49 @@ function! apexAnt#logHasFailure(logFilePath)
 	return 0
 endfunction
 
-" param: command - deploy|refresh|describe
+" generate build.xml include with list of classes to run tests
+"Agrs:
+"Param: classNameList - list of class names without extension, 
+"	e.g. ['MyTestClass', 'class2'...]
+function! apexAnt#generateTestsXml(projectFolder, classNameList)
+	let nestedHead = [
+				\ '<project xmlns:sf="antlib:com.salesforce">',
+				\ '<target name="deployAndRunTest"  >',
+				\ '	 <echo message="Destination USERNAME=${dest.sf.username}" />',
+				\ '	 <echo message="Destination SERVER=${dest.sf.serverurl}" />',
+				\ '	 <echo message="Source files folder=${srcDir}" />',
+				\ '  <sf:deploy checkOnly="${checkOnly}" username="${dest.sf.username}" password="${dest.sf.password}" ',
+				\ '           serverurl="${dest.sf.serverurl}" deployRoot="${srcDir}" maxPoll="1000" allowMissingFiles="true" ',
+				\ '           pollWaitMillis="${pollWaitMillis}"> '
+				\ ]
+	let nestedTail = [
+				\ '  </sf:deploy>',
+				\ '</target>',
+				\ '</project>'
+				\ ]
+	
+	let fileName = "sfdeploy-with-tests-nested.xml"
+	let fileContent = []
+	if len(a:classNameList) > 0
+		let fileContent = fileContent + nestedHead
+
+		for fName in a:classNameList
+			let line = '<runTest>' . fName . '</runTest>'
+			call add(fileContent, line)
+		endfor
+		let fileContent = fileContent + nestedTail
+	endif
+	
+	if len(fileContent) > 0
+		let fullPath = apexOs#joinPath([a:projectFolder, fileName])
+		echo "fullPath=".fullPath
+		let res = writefile(fileContent, fullPath)
+		echo "res=".res
+	endif
+
+endfunction
+
+" param: command - deploy|refresh|describeMetadata|listMetadata|bulkRetrieve|backup|delete|runTest
 " 
 " return: path to error log or empty string if ant could not be executed
 function! apexAnt#execute(command, projectName, projectFolder, ...)
@@ -108,6 +160,16 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		elseif "refresh" == a:command
 			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(projectFolder) . " retrieveSource"
 		endif
+	elseif "runTest" == a:command
+		echo "a:0=" . a:0
+		if a:0 < 1 || len(a:1) < 1
+			echoerr "missing class names list parameter"
+			return ""
+		endif
+		let classNameList = a:1
+		call apexAnt#generateTestsXml(projectFolder, classNameList)
+		" run tests on all classes included in the package
+		let antCommand = antCommand . " -Dproject.Folder=" . shellescape(projectFolder) . " deployAndRunTest"
 	elseif "describeMetadata" == a:command
 		" get detail information of the metadata types currently being
 		" supported
