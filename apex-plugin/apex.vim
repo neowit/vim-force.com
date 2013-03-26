@@ -799,9 +799,8 @@ function! s:parseErrorLog(logFilePath, srcPath)
 		"clear quickfix
 		"call setqflist([])
 
-		"TODO process Unit Test failures
-		"exe "noautocmd vimgrep 'Error: \|Test failure' ".fileName
-		exe "noautocmd vimgrep 'Error: ' ".fileName
+		exe "noautocmd vimgrep 'Error: \\|Test failure' ".fileName
+		"exe "noautocmd vimgrep 'Error: ' ".fileName
 
 		" if we are still here then the above line did not fail and found the
 		" key
@@ -831,8 +830,6 @@ endfunction
 " Error: pages/VimPluginTest.page(VimPluginTest):Unsupported attribute escape
 "		 in <apex:inputField> in VimPluginTest at line 49 column 46
 " 
-" Unit Test falure looks like this:
-" Test failure, method: x1.MyClassTest.test1 -- System.AssertException: Assertion Failed: expected this test to fail stack Class.x1.MyClassTest.test1: line 4, column 1
 " 
 " @param: srcPath - full path to the folder which contains classes, triggers,
 " pages, etc folders, usually this is path to /src/ folder
@@ -842,40 +839,52 @@ function! s:processQuickfix(srcPath)
 	for item in rawErrorList
 		" get text from quickfix, i.e. full error line returned by Ant and then vimgrep
 		let text = item.text
-		" remove 'Error: ' prefix
-		let text = strpart(text, stridx(text, 'Error: ') + len('Error: ')) 
-		
-		"classes/EventFromLeadSupport.cls(25,24):unexpected token: createEvents'
-		"get folder and file name
-		let path = strpart(text, 0, stridx(text, "("))
-		let text = strpart(text, len(path))
-		"(25,24):unexpected token: createEvents'
-		"get line and column number
-		let lineAndColumn = strpart(text, 0, stridx(text, ")"))
-		let text = strpart(text, len(lineAndColumn)+2)
-		"echo 'error text='.text.'#'
-
-		let lineAndColumnPair = split(substitute(lineAndColumn, "[\(\)]", "", "g"), ",")
-		" lineAndColumnPair has only 1 element then we are most likely parsing
-		" VF page error which returns (page-name) instead of (line, column)
-		if len(lineAndColumnPair) <2
-			" check if we are dealing with the Page error which does have
-			" column/line numbers in following format:
-			" ...Unsupported attribute escape in <apex:inputField> in VimPluginTest at line 49 column 46
-			let lineNumIndex = stridx(text, " at line ")
-			if lineNumIndex > 0
-				let coordinateText = strpart(text, lineNumIndex + len(" at line "))
-				" coordinateText = "49 column 46"
-				let lineAndColumnPair = split(coordinateText, " column ")
-			endif	
-		endif	
-
-		"echo lineAndColumnPair
-		" init new quickfix line
 		let errLine = {}
-		if len(lineAndColumnPair) >1
-			let errLine.lnum = lineAndColumnPair[0]
-			let errLine.col = lineAndColumnPair[1]
+		"check if this was unit test failure
+		let res = s:quickfixLineTestFailure(text)
+
+		if len(res) > 0
+			"current error line is a unit test error
+			let errLine.lnum = res[0]
+			let errLine.col = res[1]
+			"unit tests are always classes, so it is safe to assume that file
+			"name is a class name
+			let path = 'classes/'.res[2]. '.cls'
+		else
+			" remove 'Error: ' prefix
+			let text = strpart(text, stridx(text, 'Error: ') + len('Error: ')) 
+			
+			"classes/EventFromLeadSupport.cls(25,24):unexpected token: createEvents'
+			"get folder and file name
+			let path = strpart(text, 0, stridx(text, "("))
+			let text = strpart(text, len(path))
+			"(25,24):unexpected token: createEvents'
+			"get line and column number
+			let lineAndColumn = strpart(text, 0, stridx(text, ")"))
+			let text = strpart(text, len(lineAndColumn)+2)
+			"echo 'error text='.text.'#'
+
+			let lineAndColumnPair = split(substitute(lineAndColumn, "[\(\)]", "", "g"), ",")
+			" lineAndColumnPair has only 1 element then we are most likely parsing
+			" VF page error which returns (page-name) instead of (line, column)
+			if len(lineAndColumnPair) <2
+				" check if we are dealing with the Page error which does have
+				" column/line numbers in following format:
+				" ...Unsupported attribute escape in <apex:inputField> in VimPluginTest at line 49 column 46
+				let lineNumIndex = stridx(text, " at line ")
+				if lineNumIndex > 0
+					let coordinateText = strpart(text, lineNumIndex + len(" at line "))
+					" coordinateText = "49 column 46"
+					let lineAndColumnPair = split(coordinateText, " column ")
+				endif	
+			endif	
+
+			"echo lineAndColumnPair
+			" init new quickfix line
+			if len(lineAndColumnPair) >1
+				let errLine.lnum = lineAndColumnPair[0]
+				let errLine.col = lineAndColumnPair[1]
+			endif
 		endif
 		let errLine.text = text
 		let errLine.filename = a:srcPath .apexOs#getPathSeparator(). path
@@ -886,6 +895,53 @@ function! s:processQuickfix(srcPath)
 	endfor	
 
 	call setqflist(prettyErrorList)
+
+endfunction	
+
+" check if current line is a unit test failure report line
+" Unit Test falure looks like this:
+" Test failure, method: x1.MyClassTest.test1 -- System.AssertException: Assertion Failed: expected this test to fail stack Class.x1.MyClassTest.test1: line 4, column 1
+"
+"Return:  list of 3 elements [line, column, className, errorText]
+function! s:quickfixLineTestFailure(text)
+	let text = a:text
+	let res = []
+	let lineAndColumnPair = []
+	let className = ''
+	if text =~ 'Test failure'
+		" try to find line/col like this ": line 4, column 1"
+		let lineNumIndex = match(text, ': line ')
+		if lineNumIndex > 0
+			let coordinateText = strpart(text, lineNumIndex + len(': line '))
+			"coordinateText = "4, column 1"
+			let lineAndColumnPair = split(coordinateText, ", column ")
+		endif
+		" extract class name from part which looks like this:
+		" Test failure, method: x1.MyClassTest.test1 -- 
+		let classNameStart = match(text, ' method: ')
+		if classNameStart > 0
+			let classNameStart = classNameStart + len(' method: ')
+			let classNameEnd = match(text, ' --', classNameStart)
+			let classNamePart = strpart(text, classNameStart, classNameEnd)
+			let classNameParts = split(classNamePart, '\.')
+			if len(classNameParts) >2
+				" ['x1', 'MyClassTest', 'test1'], i.e. with namespace
+				let className = classNameParts[1]
+			else
+				" ['MyClassTest', 'test1']
+				let className = classNameParts[0]
+			endif
+		endif
+		
+	endif
+	if len(lineAndColumnPair) >1 && len(className) > 0
+		call add(res, lineAndColumnPair[0]) " line
+		call add(res, lineAndColumnPair[1]) " column
+		call add(res, className)
+		call add(res, text)
+	endif
+
+	return res
 
 endfunction	
 """""""""""""""""""""""""""""""""""""""""""""""""""
