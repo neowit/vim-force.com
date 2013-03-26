@@ -117,17 +117,18 @@
 	<!-- Deploy the unpackaged set of metadata and run tests on all classes in ./classes/ folder -->
 	<import file="${project.Folder}/sfdeploy-with-tests-nested.xml" optional="true"/>
 	<!-- imported file is auto generated and will look like this 
+	<project xmlns:sf="antlib:com.salesforce">
 	<target name="deployAndRunTest"  >
-		<echo message="Destination USERNAME=${dest.sf.username}" />
-		<echo message="Destination SERVER=${dest.sf.serverurl}" />
-		<echo message="Source files folder=${srcDir}" />
-			<sf:deploy checkOnly="${checkOnly}" username="${dest.sf.username}" password="${dest.sf.password}" 
-				serverurl="${dest.sf.serverurl}" deployRoot="${srcDir}" maxPoll="1000" allowMissingFiles="true" pollWaitMillis="${pollWaitMillis}">
-					<runTest>ClassTest1</runTest>
-					...
-					<runTest>MyClassTest</runTest>
-			</sf:deploy>	
+		 <echo message="Destination USERNAME=${dest.sf.username}" />
+		 <echo message="Destination SERVER=${dest.sf.serverurl}" />
+		 <echo message="Source files folder=${srcDir}" />
+	  <sf:deploy checkOnly="${checkOnly}" username="${dest.sf.username}" password="${dest.sf.password}" 
+			   serverurl="${dest.sf.serverurl}" deployRoot="${srcDir}" maxPoll="1000" allowMissingFiles="true" 
+			   pollWaitMillis="${pollWaitMillis}"> 
+		<runTest>MyClassTest</runTest>
+	  </sf:deploy>
 	</target>
+	</project>
 	-->
 
 </project>
