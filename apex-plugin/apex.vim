@@ -169,11 +169,9 @@ function! apex#MakeProject(...)
 endfun
 
 function! apex#deployAndRunTests(projectDescriptor)
-	echo "HERE we would run tests" 
 	let projectName = a:projectDescriptor.project
 	let preparedSrcPath = a:projectDescriptor.preparedSrcPath
 	let projectPath = apexOs#splitPath(preparedSrcPath).head
-	echo 'projectPath='.projectPath
 	
 	let files = apexOs#glob(projectPath . "**/*.cls")
 	let classNames = []
@@ -819,8 +817,42 @@ function! s:parseErrorLog(logFilePath, srcPath)
 	return 1 " error found in the log file
 endfunction	
 
+" Process Compile and Unit Test errors and populate quickfix
+"
 " http://vim.1045645.n5.nabble.com/execute-command-in-vim-grep-results-td3236900.html
 " http://vim.wikia.com/wiki/Automatically_sort_Quickfix_list
+" 
+" Param: srcPath - full path to the folder which contains classes, triggers,
+"					pages, etc folders, usually this is path to /src/ folder
+function! s:processQuickfix(srcPath)
+	let rawErrorList = getqflist()
+	let prettyErrorList = []
+	for item in rawErrorList
+		" get text from quickfix, i.e. full error line returned by Ant and then vimgrep
+		let text = item.text
+
+		"check if this was a compile error
+		let errLine = s:processCompileError(text)
+
+		if len(errLine) < 3
+			"check if this was unit test failure
+			let errLine = s:parseUnitTestFailure(text)
+		endif
+
+		if len(errLine) > 0
+			let errLine.filename = a:srcPath .apexOs#getPathSeparator(). errLine.filename
+
+			"echo errLine
+			call add(prettyErrorList, errLine)
+			copen
+		endif
+	endfor	
+
+	call setqflist(prettyErrorList)
+
+endfunction	
+
+
 " ant error return looks like this
 " Error in class
 " Error: classes/EventFromLeadSupport.cls(25,24):unexpected token: createEvents'
@@ -830,82 +862,75 @@ endfunction
 " Error: pages/VimPluginTest.page(VimPluginTest):Unsupported attribute escape
 "		 in <apex:inputField> in VimPluginTest at line 49 column 46
 " 
-" 
-" @param: srcPath - full path to the folder which contains classes, triggers,
-" pages, etc folders, usually this is path to /src/ folder
-function! s:processQuickfix(srcPath)
-	let rawErrorList = getqflist()
-	let prettyErrorList = []
-	for item in rawErrorList
-		" get text from quickfix, i.e. full error line returned by Ant and then vimgrep
-		let text = item.text
-		let errLine = {}
-		"check if this was unit test failure
-		let res = s:quickfixLineTestFailure(text)
+" Return:  dictionary: see :help setqflist()
+"         {
+"			filename: file name relatively project/src folder, 
+"				e.g. "pages/MyPage.page"
+"			lnum: line number in the file
+"			col:  column number
+"			text: description of the error
+"         }
+function! s:processCompileError(text)
+	let text = a:text
+	let errLine = {}
+	" remove 'Error: ' prefix
+	let text = strpart(text, stridx(text, 'Error: ') + len('Error: ')) 
 
-		if len(res) > 0
-			"current error line is a unit test error
-			let errLine.lnum = res[0]
-			let errLine.col = res[1]
-			"unit tests are always classes, so it is safe to assume that file
-			"name is a class name
-			let path = 'classes/'.res[2]. '.cls'
-		else
-			" remove 'Error: ' prefix
-			let text = strpart(text, stridx(text, 'Error: ') + len('Error: ')) 
-			
-			"classes/EventFromLeadSupport.cls(25,24):unexpected token: createEvents'
-			"get folder and file name
-			let path = strpart(text, 0, stridx(text, "("))
-			let text = strpart(text, len(path))
-			"(25,24):unexpected token: createEvents'
-			"get line and column number
-			let lineAndColumn = strpart(text, 0, stridx(text, ")"))
-			let text = strpart(text, len(lineAndColumn)+2)
-			"echo 'error text='.text.'#'
+	"classes/EventFromLeadSupport.cls(25,24):unexpected token: createEvents'
+	"get folder and file name
+	let path = strpart(text, 0, stridx(text, "("))
+	let text = strpart(text, len(path))
+	"(25,24):unexpected token: createEvents'
+	"get line and column number
+	let lineAndColumn = strpart(text, 0, stridx(text, ")"))
+	let text = strpart(text, len(lineAndColumn)+2)
+	"echo 'error text='.text.'#'
 
-			let lineAndColumnPair = split(substitute(lineAndColumn, "[\(\)]", "", "g"), ",")
-			" lineAndColumnPair has only 1 element then we are most likely parsing
-			" VF page error which returns (page-name) instead of (line, column)
-			if len(lineAndColumnPair) <2
-				" check if we are dealing with the Page error which does have
-				" column/line numbers in following format:
-				" ...Unsupported attribute escape in <apex:inputField> in VimPluginTest at line 49 column 46
-				let lineNumIndex = stridx(text, " at line ")
-				if lineNumIndex > 0
-					let coordinateText = strpart(text, lineNumIndex + len(" at line "))
-					" coordinateText = "49 column 46"
-					let lineAndColumnPair = split(coordinateText, " column ")
-				endif	
-			endif	
+	let lineAndColumnPair = split(substitute(lineAndColumn, "[\(\)]", "", "g"), ",")
+	" lineAndColumnPair has only 1 element then we are most likely parsing
+	" VF page error which returns (page-name) instead of (line, column)
+	if len(lineAndColumnPair) <2
+		" check if we are dealing with the Page error which does have
+		" column/line numbers in following format:
+		" ...Unsupported attribute escape in <apex:inputField> in VimPluginTest at line 49 column 46
+		let lineNumIndex = stridx(text, " at line ")
+		if lineNumIndex > 0
+			let coordinateText = strpart(text, lineNumIndex + len(" at line "))
+			" coordinateText = "49 column 46"
+			let lineAndColumnPair = split(coordinateText, " column ")
+		endif	
+	endif	
 
-			"echo lineAndColumnPair
-			" init new quickfix line
-			if len(lineAndColumnPair) >1
-				let errLine.lnum = lineAndColumnPair[0]
-				let errLine.col = lineAndColumnPair[1]
-			endif
-		endif
+	"echo lineAndColumnPair
+	" init new quickfix line
+	if len(lineAndColumnPair) >1 && len(path) > 0
+		let errLine.lnum = lineAndColumnPair[0]
+		let errLine.col = lineAndColumnPair[1]
 		let errLine.text = text
-		let errLine.filename = a:srcPath .apexOs#getPathSeparator(). path
-
-		"echo errLine
-		call add(prettyErrorList, errLine)
-		copen
-	endfor	
-
-	call setqflist(prettyErrorList)
-
-endfunction	
+		let errLine.filename = path
+	endif
+	return errLine
+endfunction
 
 " check if current line is a unit test failure report line
+"
 " Unit Test falure looks like this:
 " Test failure, method: x1.MyClassTest.test1 -- System.AssertException: Assertion Failed: expected this test to fail stack Class.x1.MyClassTest.test1: line 4, column 1
+" or, without namespace
+" Test failure, method: MyClassTest.test1 -- System.AssertException: Assertion Failed: expected this test to fail stack Class.MyClassTest.test1: line 4, column 1
 "
-"Return:  list of 3 elements [line, column, className, errorText]
-function! s:quickfixLineTestFailure(text)
+" Return:  dictionary: see :help setqflist()
+"         {
+"			filename: file name relatively project/src folder, 
+"				e.g. "classes/MyClass.cls"
+"			lnum: line number in the file
+"			col:  column number
+"			text: description of the error
+"         }
+"
+function! s:parseUnitTestFailure(text)
 	let text = a:text
-	let res = []
+	let errLine = {}
 	let lineAndColumnPair = []
 	let className = ''
 	if text =~ 'Test failure'
@@ -917,12 +942,12 @@ function! s:quickfixLineTestFailure(text)
 			let lineAndColumnPair = split(coordinateText, ", column ")
 		endif
 		" extract class name from part which looks like this:
-		" Test failure, method: x1.MyClassTest.test1 -- 
-		let classNameStart = match(text, ' method: ')
+		" stack Class.MyClassTest.test1: line 4, column 1 
+		let classNameStart = match(text, 'stack Class.')
 		if classNameStart > 0
-			let classNameStart = classNameStart + len(' method: ')
-			let classNameEnd = match(text, ' --', classNameStart)
-			let classNamePart = strpart(text, classNameStart, classNameEnd)
+			let classNameStart = classNameStart + len('stack Class.')
+			let classNameEnd = match(text, ':', classNameStart)
+			let classNamePart = strpart(text, classNameStart, classNameEnd-classNameStart)
 			let classNameParts = split(classNamePart, '\.')
 			if len(classNameParts) >2
 				" ['x1', 'MyClassTest', 'test1'], i.e. with namespace
@@ -935,13 +960,13 @@ function! s:quickfixLineTestFailure(text)
 		
 	endif
 	if len(lineAndColumnPair) >1 && len(className) > 0
-		call add(res, lineAndColumnPair[0]) " line
-		call add(res, lineAndColumnPair[1]) " column
-		call add(res, className)
-		call add(res, text)
+		let errLine.lnum = lineAndColumnPair[0] " line
+		let errLine.col = lineAndColumnPair[1] " column
+		let errLine.filename = 'classes/'.className. '.cls'
+		let errLine.text = text
 	endif
 
-	return res
+	return errLine
 
 endfunction	
 """""""""""""""""""""""""""""""""""""""""""""""""""
