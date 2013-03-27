@@ -231,6 +231,7 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexDeployOpen|                    deploy all open files
 |ApexDeployAll|                     deploy all files in current project
 |ApexDeployStaged|                  deploy all files listed in Stage cache
+|ApexDeployAndTest|                 deploy current file and run its Unit Tests
 
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
@@ -326,6 +327,11 @@ exist in SFDC.
                                                             *ApexDeployStaged*
 Deploy all files previously added by :ApexStageAdd command
 
+                                                            *ApexDeployAndTest*
+Deploy class in current buffer and run unit tests contained in this class.
+By default no debug log is generated. Log level can be configured via
+|'g:apex_test_logType'| variable.
+
                                                             *ApexGitInit*
 If git is available then :ApexGitInit can be used to initialise new git
 repository in current force.com project and add (with confirmation) existing
@@ -417,9 +423,10 @@ Required MS Windows only
 Optional
 |'g:apex_diff_cmd'|                 path to file comparison tool
 |'g:apex_ctags_cmd'|                path to exuberant ctags 
-|'g:apex_syntax_case_sensitive'|	defines whether Apex syntax highlighting is case sensitive 
-|'g:apex_API_version'|				force.com API version to use when create new files, ex: 25.0
-|'g:apex_pollWaitMillis'|			number of milliseconds to wait between each poll of Salesforce to retrieve the results
+|'g:apex_syntax_case_sensitive'|    defines whether Apex syntax highlighting is case sensitive 
+|'g:apex_API_version'|              force.com API version to use when create new files, ex: 25.0
+|'g:apex_pollWaitMillis'|           number of milliseconds to wait between each poll of Salesforce to retrieve the results
+|'g:apex_test_logType'|             The debug logging level for tests. 
 
 |apex-config-example|             .vimrc config example
 
@@ -536,6 +543,12 @@ results. The smaller the value defined by 'g:apex_pollWaitMillis' the quicker
 deploy will finish, but on slow connections larger values, like 10000 may be
 necessary.
 See ant-salesforce.jar documentation for 'pollWaitMillis' parameter.
+
+                                                       *'g:apex_test_logType'*
+Optional. 
+Defaults to 'None'. The debug logging level for tests. 
+Valid options are 'None', 'Debugonly', 'Db', 'Profiling', 'Callout', and 'Detail'.
+See ant-salesforce.jar documentation for 'logType' parameter.
 
                                                            *apex-config-example*
 
