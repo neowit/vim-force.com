@@ -83,6 +83,10 @@ endfunction
 "Param: classNameList - list of class names without extension, 
 "	e.g. ['MyTestClass', 'class2'...]
 function! apexAnt#generateTestsXml(projectFolder, classNameList)
+	let logType = 'None' "Valid options are 'None', 'Debugonly', 'Db', 'Profiling', 'Callout', and 'Detail'
+	if exists('g:apex_test_logType')
+		let logType = g:apex_test_logType
+	endif
 	let nestedHead = [
 				\ '<project xmlns:sf="antlib:com.salesforce">',
 				\ '<target name="deployAndRunTest"  >',
@@ -91,7 +95,7 @@ function! apexAnt#generateTestsXml(projectFolder, classNameList)
 				\ '	 <echo message="Source files folder=${srcDir}" />',
 				\ '  <sf:deploy checkOnly="${checkOnly}" username="${dest.sf.username}" password="${dest.sf.password}" ',
 				\ '           serverurl="${dest.sf.serverurl}" deployRoot="${srcDir}" maxPoll="1000" allowMissingFiles="true" ',
-				\ '           pollWaitMillis="${pollWaitMillis}"> '
+				\ '           pollWaitMillis="${pollWaitMillis}" logType="'.logType.'"> '
 				\ ]
 	let nestedTail = [
 				\ '  </sf:deploy>',
