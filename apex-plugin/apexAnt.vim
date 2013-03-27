@@ -52,8 +52,6 @@ endfunction
 "Args:
 "Param: classNames - ['MyTestClass', 'class2'...]
 function! apexAnt#runTests(projectName, projectFolder, classNames)
-	echo "classNames=" 
-	echo a:classNames
 	return apexAnt#execute("runTest", a:projectName, a:projectFolder, a:classNames)
 endfunction
 
@@ -117,7 +115,6 @@ function! apexAnt#generateTestsXml(projectFolder, classNameList)
 		let fullPath = apexOs#joinPath([a:projectFolder, fileName])
 		echo "fullPath=".fullPath
 		let res = writefile(fileContent, fullPath)
-		echo "res=".res
 	endif
 
 endfunction
@@ -161,7 +158,6 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(projectFolder) . " retrieveSource"
 		endif
 	elseif "runTest" == a:command
-		echo "a:0=" . a:0
 		if a:0 < 1 || len(a:1) < 1
 			echoerr "missing class names list parameter"
 			return ""
