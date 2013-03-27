@@ -231,7 +231,7 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexDeployOpen|                    deploy all open files
 |ApexDeployAll|                     deploy all files in current project
 |ApexDeployStaged|                  deploy all files listed in Stage cache
-|ApexDeployAndTest|                 deploy current file and run its Unit Tests
+|ApexDeployAndTest|                 deploy modified files and run Unit Tests
 
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
@@ -328,7 +328,7 @@ exist in SFDC.
 Deploy all files previously added by :ApexStageAdd command
 
                                                             *ApexDeployAndTest*
-Deploy class in current buffer and run unit tests contained in this class.
+Deploy modified files and run unit tests in all classes we have just deployed.
 By default no debug log is generated. Log level can be configured via
 |'g:apex_test_logType'| variable.
 
