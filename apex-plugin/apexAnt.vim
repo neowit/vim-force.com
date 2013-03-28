@@ -117,7 +117,6 @@ function! apexAnt#generateTestsXml(projectFolder, classNameList)
 	
 	if len(fileContent) > 0
 		let fullPath = apexOs#joinPath([a:projectFolder, fileName])
-		echo "fullPath=".fullPath
 		let res = writefile(fileContent, fullPath)
 	endif
 

@@ -194,3 +194,18 @@ endfunction
 function! apexUtil#trim(str)
     return substitute(a:str, '^\s*\(.\{-}\)\s*$', '\1', '')
 endfunction
+
+" check if file contains given regualr expression
+" Param: expr - regular expression
+" Return: 1 if found, -1 otherwise
+function! apexUtil#grepFile(fileName, expr)
+	try
+		exe "noautocmd 1vimgrep /".a:expr."/j ".escape(a:fileName, ' \')
+		"echomsg "expression found" 
+		return 1
+	"catch  /^Vim\%((\a\+)\)\=:E480/
+	catch  /.*/
+		"echomsg "expression NOT found" 
+	endtry
+	return -1
+endfunction

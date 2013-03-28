@@ -133,35 +133,39 @@ function! apex#MakeProject(...)
 		call apexOs#createTempDir('wipe')
 	endif
 	
+	let result = -1
 	if l:runTest
 		let ANT_ERROR_LOG = apex#deployAndRunTests(projectDescriptor)
-		let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
+		if filereadable(ANT_ERROR_LOG)
+			let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
+		endif
 	else
 		let ANT_ERROR_LOG = apexAnt#deploy(projectName, preparedTempProjectPath)
 		if len(ANT_ERROR_LOG) > 0
 			" check if BUILD FAILED
 			let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
-			if result == 0 && 'all' != l:mode
-				" no errors found, mark files as deployed
-				for metaFilePath in keys(projectDescriptor.timeMap)
-					call apexOs#setftime(metaFilePath, projectDescriptor.timeMap[metaFilePath])
-					" show what files we have just deployed
-					"echo metaFilePath
-				endfor	
-				if 'staged' == l:mode
-					"clear stage cache
-					let response = input('Clear Stage : [Y/n]? ')
-					if 'n' != response && 'N' != response
-						call apexStage#clear(filePath)
-					endif	
-				endif	
-			endif
 		else
 			"looks like we did not get to execute ant. error should have been
 			"displayed by now
 			return -1
 		endif
 
+	endif
+
+	if result == 0 && 'all' != l:mode
+		" no errors found, mark files as deployed
+		for metaFilePath in keys(projectDescriptor.timeMap)
+			call apexOs#setftime(metaFilePath, projectDescriptor.timeMap[metaFilePath])
+			" show what files we have just deployed
+			"echo metaFilePath
+		endfor	
+		if 'staged' == l:mode
+			"clear stage cache
+			let response = input('Clear Stage : [Y/n]? ')
+			if 'n' != response && 'N' != response
+				call apexStage#clear(filePath)
+			endif	
+		endif	
 	endif
 
 
@@ -177,12 +181,20 @@ function! apex#deployAndRunTests(projectDescriptor)
 	let classNames = []
 	for fClassFullPath in files
 		let fClassName = apexOs#splitPath(fClassFullPath).tail
-		"remove .cls
-		let fClassName = strpart(fClassName, 0, len(fClassName) - len('.cls'))
-		let classNames = add(classNames, fClassName)
+		" check if this file contains testMethod
+		if apexUtil#grepFile(fClassFullPath, 'testmethod') > 0
+			"prepare just file name, without extension
+			"remove .cls
+			let fClassName = strpart(fClassName, 0, len(fClassName) - len('.cls'))
+			let classNames = add(classNames, fClassName)
+		else
+			"echomsg "  ".fClassName." does not contain test methods. SKIP"
+		endif
 	endfor
 	if len(classNames) >0
 		return apexAnt#runTests(projectName, projectPath, classNames)
+	else
+		call apexUtil#warning("No test methods in files scheduled for deployment. Use :ApexDeploy to deploy without tests.")
 	endif
 	return ''
 
