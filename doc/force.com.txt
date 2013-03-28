@@ -331,27 +331,26 @@ exist in SFDC.
 Deploy all files previously added by :|ApexStageAdd| command
 
                                                             *ApexDeployAndTest*
-Deploy modified files and run unit tests in all classes that contain 'testMethod'.
+Very basic function that deploys modified files and run unit tests in 
+all classes that contain 'testMethod'.
 By default no debug log is generated. Log level can be configured via
 |'g:apex_test_logType'| variable.
 
                                                             *ApexGitInit*
 If git is available then :|ApexGitInit| can be used to initialise new git
 repository in current force.com project and add (with confirmation) existing
-source files
-See apexUtil#gitInit() for the list of supported force.com project resources
-
+source files.
+See apexUtil#gitInit() for the list of supported force.com project resources.
                                                             
                                                             *ApexPrintChanged*
-Display changed files, i.e. candidates for deployment to SFDC
+Display changed files, i.e. candidates for deployment to SFDC.
 
-                                                            
                                                             *ApexRefreshFile*
-Refresh current (single) file and replace it with its version from SFDC
+Refresh current (single) file and replace it with its version from SFDC.
 
                                                             *ApexRefreshProject*
 Refresh current project and download new/modified files from SFDC replacing
-all local files
+all local files.
 
                                                             *ApexTListToggle*
 Helper for 'Tagist' plugin (http://vim-taglist.sourceforge.ne)
@@ -359,12 +358,12 @@ Taglist plugin does not support mixed filetypes like: apexcode.java
 so we have to trick it like if &filetype was = 'apexcode'
 i.e. every time when Taglist is called set filetype=apexcode temporarely
 and then revert back to what it was 
-See apexcode.vim s:Apex_TList_Toggle() method for more details
+See apexcode.vim s:Apex_TList_Toggle() method for more details.
 
                                                             *ApexNewFile*
 Invoke file types menu and create Apex file (class, trigger, etc). 
 Not all files currently supported.
-File will be created with API version defined by |g:apex_API_version| variable
+File will be created with API version defined by |g:apex_API_version| variable.
 
                                                             *ApexRetrieve*
 Invoke metadata types list "menu" and load data of specified types.  
