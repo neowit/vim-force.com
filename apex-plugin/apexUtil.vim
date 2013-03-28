@@ -209,3 +209,54 @@ function! apexUtil#grepFile(fileName, expr)
 	endtry
 	return -1
 endfunction
+
+" display menu and return value of selected option
+" Param: prompt - e.g. "Select one of following:"
+" Param: options - 
+"		- list of lists, each sub-list is one menu item
+"			each sub-list represents: ['return value', 'display value']
+"			[["a","option a"], ["b","option B"], ["default","something else"]]
+"		OR
+"		- list of values, where each value represents both "value" and "label"
+"		   e.g. ['apple', 'orange', 'banana']
+" Return: if valid element was selected then "return value" of that element,
+"			otherwise value of "default"
+function! apexUtil#menu(prompt, options, default)
+
+	call apexUtil#info(a:prompt)
+
+	let i = 1
+	for elem in a:options
+		let item = []
+		let isList = (3 == type(elem))
+		if !isList
+			" this is a string value, so use it as 'value' and as 'label'
+			let item = [elem, elem]
+		else
+			let item = elem
+		endif	
+		let itemText = item[1]
+		if item[0] == a:default
+			let itemText .= ' *'
+		endif
+		echo i.". ".itemText
+		let i += 1
+	endfor
+
+
+	let res = 'nothing'
+	while len(res) > 0
+		let res = input('Type number and <Enter> (empty defaults to "'.a:default.'"): ')
+		if res > 0 && res <= len(a:options)
+			echo ""
+			if isList
+				return a:options[res-1][0]
+			else
+				return a:options[res-1]
+			endif	
+		endif
+	endwhile
+	echo ""
+	return a:default
+endfunction	
+
