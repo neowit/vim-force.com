@@ -135,7 +135,7 @@ function! apex#MakeProject(...)
 	
 	let result = -1
 	if l:runTest
-		let ANT_ERROR_LOG = apex#deployAndRunTests(projectDescriptor)
+		let ANT_ERROR_LOG = s:deployAndRunTests(projectDescriptor)
 		if filereadable(ANT_ERROR_LOG)
 			let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
 		endif
@@ -172,7 +172,7 @@ function! apex#MakeProject(...)
 	return result
 endfun
 
-function! apex#deployAndRunTests(projectDescriptor)
+function! s:deployAndRunTests(projectDescriptor)
 	let projectName = a:projectDescriptor.project
 	let preparedSrcPath = a:projectDescriptor.preparedSrcPath
 	let projectPath = apexOs#splitPath(preparedSrcPath).head
@@ -192,6 +192,7 @@ function! apex#deployAndRunTests(projectDescriptor)
 		endif
 	endfor
 	if len(classNames) >0
+		call s:askLogType()
 		return apexAnt#runTests(projectName, projectPath, classNames)
 	else
 		call apexUtil#warning("No test methods in files scheduled for deployment. Use :ApexDeploy to deploy without tests.")
@@ -200,6 +201,15 @@ function! apex#deployAndRunTests(projectDescriptor)
 
 endfunction
 
+" ask user which log type to use for running unit tests 
+" result is assigned value of g:apex_test_logType variable
+function! s:askLogType()
+	let logType = 'None'
+	if exists('g:apex_test_logType')
+		let logType = g:apex_test_logType
+	endif
+	let g:apex_test_logType = apexUtil#menu('Select Log Type', ['None', 'Debugonly', 'Db', 'Profiling', 'Callout', 'Detail'], logType)
+endfunction
 
 " use this method to validate existance of .properties file for specified
 " project name
