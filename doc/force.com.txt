@@ -285,6 +285,9 @@ switch from Stage to another file/buffer, Stage content will be autimatically
 written to a disk file.
 See also :|ApexRemoveStaged| and :|ApexDeployStaged|.
 
+                                                                  *ApexStageAdd*
+Add current file to |ApexStage|.
+
                                                                   *ApexDeploy*
 Use :|ApexDeploy| to upload/deploy/save all modified files of current project
 to SFDC
@@ -304,7 +307,7 @@ For instance, using project names from the example above >
  :ApexDeploy My<Tab>
 < will offer "My Sandbox 1" and "My Sandbox 2"
                                                             *force.com-F11*
-Plugin also defines keyboard shortcut F11 which calls :ApexDeploy and works
+Plugin also defines keyboard shortcut F11 which calls :|ApexDeploy| and works
 in 'normal' and 'insert' modes
 
                                                             *ApexDeployConfirm*
@@ -325,15 +328,15 @@ that Objects have to be created before workflows, even if all objects already
 exist in SFDC.
 
                                                             *ApexDeployStaged*
-Deploy all files previously added by :ApexStageAdd command
+Deploy all files previously added by :|ApexStageAdd| command
 
                                                             *ApexDeployAndTest*
-Deploy modified files and run unit tests in all classes we have just deployed.
+Deploy modified files and run unit tests in all classes that contain 'testMethod'.
 By default no debug log is generated. Log level can be configured via
 |'g:apex_test_logType'| variable.
 
                                                             *ApexGitInit*
-If git is available then :ApexGitInit can be used to initialise new git
+If git is available then :|ApexGitInit| can be used to initialise new git
 repository in current force.com project and add (with confirmation) existing
 source files
 See apexUtil#gitInit() for the list of supported force.com project resources
@@ -365,15 +368,15 @@ File will be created with API version defined by |g:apex_API_version| variable
 
                                                             *ApexRetrieve*
 Invoke metadata types list "menu" and load data of specified types.  
-Usually :ApexRefreshProject will retrieve all types defined in package.xml.
-:ApexRetrieve can be used to load types which are not part of current package.xml
+Usually :|ApexRefreshProject| will retrieve all types defined in package.xml.
+:|ApexRetrieve| can be used to load types which are not part of current package.xml
 Use this command when package.xml does not yet contain necessary metadata type(s).
 If retrieved type is not part of the package.xml system will offer to
 update package.xml accordingly. 
-*WARNING* :ApexRetrieve command is Experimental. You may want to backup your
-project before running :ApexRetrieve.
+*WARNING* :|ApexRetrieve| command is Experimental. You may want to backup your
+project before running :|ApexRetrieve|.
 
-There are 2 potential scenarios which may involve :ApexReteieve
+There are 2 potential scenarios which may involve :|ApexReteieve|
 1. Load all members of given metadata type
    e.g. to load all Custom Objects you will do something like this >
 	:ApexRetrieve
