@@ -182,7 +182,7 @@ function! s:deployAndRunTests(projectDescriptor)
 	for fClassFullPath in files
 		let fClassName = apexOs#splitPath(fClassFullPath).tail
 		" check if this file contains testMethod
-		if apexUtil#grepFile(fClassFullPath, 'testmethod') > 0
+		if apexOs#grepFile(fClassFullPath, 'testmethod') > 0
 			"prepare just file name, without extension
 			"remove .cls
 			let fClassName = strpart(fClassName, 0, len(fClassName) - len('.cls'))
@@ -799,43 +799,27 @@ function! s:parseErrorLog(logFilePath, srcPath)
 		" kill buffer with ant log file, otherwise vimgrep uses its buffer instead
 		" updated file
 		try
-			exe "bdelete! ".fileName
+			exe "bdelete! ".fnameescape(fileName)
 		catch /^Vim\%((\a\+)\)\=:E94/
 			" ignore
 		endtry	 	
 	endif	
-	try
-		exe "noautocmd 1vimgrep /BUILD SUCCESSFUL/j ".fileName
+	if apexOs#grepFile(fileName, 'BUILD SUCCESSFUL')
 		echomsg "No errors found" 
 		return 0
-	catch  /^Vim\%((\a\+)\)\=:E480/
-		" will process below, nested try/catch work strange
-	"catch  /.*/
-	endtry	
+	endif
 
-	try
-		echo "Build failed" 
-		"exe 'noautocmd vimgrep /BUILD FAILED/j '.fileName
-		"clear quickfix
-		"call setqflist([])
-
-		exe "noautocmd vimgrep 'Error: \\|Test failure' ".fileName
-		"exe "noautocmd vimgrep 'Error: ' ".fileName
-
+	echo "Build failed" 
+	if apexOs#grepFile(fileName, 'Error: \|Test failure')
 		" if we are still here then the above line did not fail and found the
 		" key
 		call s:processQuickfix(a:srcPath)
-
-	catch  /^Vim\%((\a\+)\)\=:E480/
+	else
 		" display errors in a new tab for review
 		:tabnew
-		exe "e ".fileName
-		echohl ErrorMsg
-		echomsg "Build failed, but No usual errors identified" 
-		echohl None
-	finally
-
-	endtry	
+		exe "e ".fnameescape(fileName)
+		call apexUtil#error("Build failed, but No usual errors identified")
+	endif
 	return 1 " error found in the log file
 endfunction	
 

@@ -315,3 +315,20 @@ function! apexOs#joinPath(filePathList)
 	return resPath
 endfunction	
 
+" check if file contains given regualr expression
+" Param: expr - regular expression
+" Return: 1 if found, 0 otherwise
+function! apexOs#grepFile(fileName, expr)
+
+	try
+		let exprStr =  "noautocmd 1vimgrep /\\c".a:expr."/j ".fnameescape(a:fileName)
+		"echo "exprStr=".exprStr
+		exe exprStr
+		"echomsg "expression found" 
+		return 1
+	"catch  /^Vim\%((\a\+)\)\=:E480/
+	catch  /.*/
+		"echomsg "expression NOT found" 
+	endtry
+	return 0
+endfunction

@@ -253,13 +253,11 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	"BUILD FAILED
 	".../apex-plugin/build.xml:59: FAILURES:
 	"
-	try
-		exe 'noautocmd 1vimgrep /BUILD FAILED\_.*FAILURES\|BUILD SUCCESSFUL/j '.ANT_ERROR_LOG
-	catch /^Vim\%((\a\+)\)\=:E480/
+	if !apexOs#grepFile(ANT_ERROR_LOG, 'BUILD FAILED\_.*FAILURES\|BUILD SUCCESSFUL\|BUILD FAILED')	
 		"if we are here then build failed for a reason which we do not
 		"process nicely
 		throw "OPERATION FAILED. Check error log. ".ANT_ERROR_LOG
-	endtry	
+	endif
 	return ANT_ERROR_LOG
 endfunction
 
