@@ -261,8 +261,14 @@ function! apexMetaXml#packageXmlGenerate(projectName, projectPath, packageXmlPat
 		if isdirectory(path)
 			let folderName = apexOs#splitPath(path).tail
 			let addMissing = 0
-			if !has_key(metaTypes, folderName)
+
+			if has_key(metaTypes, folderName) 
 				let typeName = metaTypes[folderName]
+				call s:showTypeWarning(typeName)
+
+				if has_key(package, typeName)
+					continue
+				endif	
 				let addMissing = 1
 				
 				if showPrompt
@@ -290,6 +296,16 @@ function! apexMetaXml#packageXmlGenerate(projectName, projectPath, packageXmlPat
 	endif
 	return ""
 endfunction
+
+" some types require special treatment in order to deploy successfully
+" e.g. API v27 - in order to deploy Country & State picklist changes one has
+" to DISABLE "State and Country Picklists" feature, deploy, and then enable it
+" back
+function! s:showTypeWarning(typeName)
+	if a:typeName ==? 'settings'
+		call apexUtil#warning('If you are deploying "State and Country Picklists" changes then make sure that this function is DISABLED in SFDC UI (Setup->Data Management) before deployment and RE-ENABLED afterwards. Otherwise your picklist changes will not be reflected in SFDC.')
+	endif
+endfunction	
 
 function! s:getHeader()
 	let lines = ['<?xml version="1.0" encoding="UTF-8"?>',
