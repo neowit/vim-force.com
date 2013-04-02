@@ -71,7 +71,7 @@ endfunction
 " 1 - ant operation failed
 function! apexAnt#logHasFailure(logFilePath)
 	try
-		exe "noautocmd 1vimgrep /BUILD SUCCESSFUL/j ".a:logFilePath
+		exe "noautocmd 1vimgrep /BUILD SUCCESSFUL/j ".fnameescape(a:logFilePath)
 	catch  /.*/
 		return 1 " log does not contain BUILD SUCCESSFUL
 	endtry	
