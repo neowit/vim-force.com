@@ -100,8 +100,9 @@ syn keyword apexcodeStandardInterface	Comparable Iterator Iterable InstallHandle
 syn match apexcodeStandardInterface	"Auth\.RegistrationHandler\|Messaging\.InboundEmailHandler\|Process\.Plugin\|Site\.UrlRewriter"
 syn match apexcodeStandardInterface	"Database\.\(Stateful\|BatchableContext\|Batchable\)"
 
-syn keyword apexcodeVisualforceClasses	apexcodePages Message PageReference SelectOption StandardController StandardSetController Savepoint
+syn keyword apexcodeVisualforceClasses	PageReference SelectOption Savepoint
 syn match 	apexcodeVisualforceClasses	"Database\.\(SaveResult\|Error\|UpsertResult\|DeleteResult\)"
+syn match 	apexcodeVisualforceClasses	"ApexPages\.\(StandardController\|StandardSetController\|Message\)"
 " apexcode System methods
 syn match 	apexcodeSystemKeywords	"Database\.\(insert\|update\|delete\|undelete\|upsert\)"
 syn match 	apexcodeSystemKeywords	"Database\.\(convertLead\|countQuery\|emptyRecycleBin\|executeBatch\|getQueryLocator\|query\|rollback\|setSavepoint\)"
