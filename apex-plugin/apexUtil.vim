@@ -253,15 +253,18 @@ function! apexUtil#menu(prompt, options, default)
 endfunction	
 
 " check if file contains given regualr expression
+" Param: filePath - full path to the file
 " Param: expr - regular expression
+" Param: options - string which contains modifiers
+"		'Q' - do not preserve quickfix, i.e. populate it with search result
 " Return: list of line numbers where 'expr' was found
 "		if nothing found then empty list []
-function! apexUtil#grepFile(fileName, expr)
+function! apexUtil#grepFile(filePath, expr, ...)
 	let currentQuickFix = getqflist()
 	let res = []
 	
 	try
-		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:fileName)
+		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
 		exe exprStr
 		"expression found
 		"get line numbers from quickfix
@@ -275,7 +278,9 @@ function! apexUtil#grepFile(fileName, expr)
 	endtry
 	
 	" restore quickfix
-	call setqflist(currentQuickFix)
+	if a:0 < 1 || a:1 !~# 'Q'
+		call setqflist(currentQuickFix)
+	endif
 	
 	return res
 endfunction

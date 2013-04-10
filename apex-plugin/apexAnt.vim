@@ -49,10 +49,11 @@ function! apexAnt#bulkRetrieve(projectName, projectFolder, metadataType)
 endfunction
 
 " run Unit Tests using provided class names
-"Args:
-"Param: classNames - ['MyTestClass', 'class2'...]
-function! apexAnt#runTests(projectName, projectFolder, classNames)
-	return apexAnt#execute("runTest", a:projectName, a:projectFolder, a:classNames)
+" Args:
+" Param: classNames - ['MyTestClass', 'class2'...]
+" Paran: checkOnly - 'checkOnly' = run with 'checkOnly' flag = true
+function! apexAnt#runTests(projectName, projectFolder, classNames, checkOnly)
+	return apexAnt#execute("runTest", a:projectName, a:projectFolder, a:classNames, a:checkOnly)
 endfunction
 
 
@@ -168,6 +169,9 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		let classNameList = a:1
 		call apexAnt#generateTestsXml(projectFolder, classNameList)
 		" run tests on all classes included in the package
+		if a:0 > 1 && a:2 == 'checkOnly'
+			let antCommand = antCommand . " -DcheckOnly=true "
+		endif	
 		let antCommand = antCommand . " -Dproject.Folder=" . shellescape(projectFolder) . " deployAndRunTest"
 	elseif "describeMetadata" == a:command
 		" get detail information of the metadata types currently being
@@ -262,3 +266,12 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 endfunction
 
 
+" ask user which log type to use for running unit tests 
+" result is assigned value of g:apex_test_logType variable
+function! apexAnt#askLogType()
+	let logType = 'None'
+	if exists('g:apex_test_logType')
+		let logType = g:apex_test_logType
+	endif
+	let g:apex_test_logType = apexUtil#menu('Select Log Type', ['None', 'Debugonly', 'Db', 'Profiling', 'Callout', 'Detail'], logType)
+endfunction

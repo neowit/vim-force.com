@@ -17,6 +17,35 @@ if exists("g:loaded_apexTest") || &compatible
 endif
 let g:loaded_apexTest = 1
 
+let s:ALL = '*ALL*'
+" Params:
+" Param 1: [optional] mode name: ['testAndDeploy', 'checkOnly']
+" Param 2: [optional] class name
+" Param 3: [optional] method name
+" Param 4: [optional] destination project name, must match one of .properties file with
+"		login details
+function! apexTest#runTest(...)
+	let modeName = a:0 > 0? a:1 : 'testAndDeploy'
+	let className = a:0 > 1? a:2 : ''
+	let methodName = a:0 > 2? a:3 : ''
+	let projectName = a:0 > 3? a:4 : ''
+
+	let projectSrcPath = apex#getApexProjectSrcPath()
+
+	let filePath = ''
+	if strlen(className) > 0
+		let filePath = apexOs#joinPath([projectSrcPath, 'classes', className.'.cls'])
+	endif
+
+	if strlen(methodName) > 0 && s:ALL != methodName
+		call apex#MakeProject(filePath, 'onefile', ['checkOnly', className, methodName], projectName)
+	elseif strlen(className) > 0
+		call apex#MakeProject(filePath, 'onefile', [modeName, className], projectName)
+	else 
+		call apex#MakeProject(filePath, 'modified', [modeName], projectName)
+	endif
+
+endfunction
 " Args:
 " arg: ArgLead - the leading portion of the argument currently being
 "			   completed on
@@ -27,7 +56,7 @@ function! ApexTestCompleteParams(arg, line, pos)
 	let l = split(a:line[:a:pos-1], '\%(\%(\%(^\|[^\\]\)\\\)\@<!\s\)\+', 1)
 	let n = len(l) - index(l, 'ApexTest') - 2
 	"echomsg 'arg='.a:arg.'; n='.n.'; pos='.a:pos.'; line='.a:line
-	let funcs = ['s:listClassNames', 's:listMethodNames', 'ListProjectNames']
+	let funcs = ['s:listModeNames', 's:listClassNames', 's:listMethodNames', 'ListProjectNames']
 	return call(funcs[n], [a:arg, a:line, a:pos])
 endfunction	
 
@@ -61,10 +90,10 @@ endfunction
 function! s:listMethodNames(arg, line, pos)
 	"figure out current class name
 	let l = split(a:line[:a:pos-1], '\%(\%(\%(^\|[^\\]\)\\\)\@<!\s\)\+', 1)
-	let className = l[1]
+	let className = l[2] " class name is second parameter
 	let projectSrcPath = apex#getApexProjectSrcPath()
 	let filePath = apexOs#joinPath([projectSrcPath, 'classes', className.'.cls'])
-	let res = []
+	let res = [s:ALL]
 	for lineNum in apexUtil#grepFile(filePath, '\<testmethod\>')
 		let methodName = s:getMethodName(filePath, lineNum - 1)
 		if len(methodName) > 0
@@ -75,14 +104,15 @@ function! s:listMethodNames(arg, line, pos)
 	return res
 endfunction	
 
+function! s:listModeNames(arg, line, pos)
+	return ['testAndDeploy', 'checkOnly']
+endfunction	
+
 " Using given file name and starting from lineNum try to identify method name
 " assuming that this is the last word before '('
 " Args:
 " filePath - full class file path
 " lineNum - start search from given line
-function! TEST(lineNum)
-	echo s:getMethodName('/Users/andrey/eclipse.workspace/Sforce - SFDC Experiments/vim-force.com/src/classes/MyClassTest.cls', a:lineNum)
-endfunction
 function! s:getMethodName(filePath, lineNum)
 	"echoerr "filePath=".a:filePath."; .lineNum=".a:lineNum
 	let methodName = ''
@@ -118,28 +148,165 @@ function! s:getMethodName(filePath, lineNum)
 	return methodName
 endfunction
 
-" Return: list of line numbers where 'expr' was found
-"		if nothing found then empty list []
-function! s:grepFile(fileName, expr)
-	let currentQuickFix = getqflist()
-	let res = []
-	
-	try
-		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:fileName)
-		exe exprStr
-		"expression found
-		"get line numbers from quickfix
-		for qfLine in getqflist()
-			call add(res, qfLine.lnum)
-		endfor	
+" check if current line is a unit test failure report line
+"
+" Unit Test falure looks like this:
+" Test failure, method: x1.MyClassTest.test1 -- System.AssertException: Assertion Failed: expected this test to fail stack Class.x1.MyClassTest.test1: line 4, column 1
+" or, without namespace
+" Test failure, method: MyClassTest.test1 -- System.AssertException: Assertion Failed: expected this test to fail stack Class.MyClassTest.test1: line 4, column 1
+"
+" Return:  dictionary: see :help setqflist()
+"         {
+"			filename: file name relatively project/src folder, 
+"				e.g. "classes/MyClass.cls"
+"			lnum: line number in the file
+"			col:  column number
+"			text: description of the error
+"         }
+"
+function! apexTest#parseUnitTestFailure(text)
+	let text = a:text
+	let errLine = {}
+	let lineAndColumnPair = []
+	let className = ''
+	if text =~ 'Test failure'
+		" try to find line/col like this ": line 4, column 1"
+		let lineNumIndex = match(text, ': line ')
+		if lineNumIndex > 0
+			let coordinateText = strpart(text, lineNumIndex + len(': line '))
+			"coordinateText = "4, column 1"
+			let lineAndColumnPair = split(coordinateText, ", column ")
+		endif
+		" extract class name from part which looks like this:
+		" stack Class.MyClassTest.test1: line 4, column 1 
+		let classNameStart = match(text, 'stack Class.')
+		if classNameStart > 0
+			let classNameStart = classNameStart + len('stack Class.')
+			let classNameEnd = match(text, ':', classNameStart)
+			let classNamePart = strpart(text, classNameStart, classNameEnd-classNameStart)
+			let classNameParts = split(classNamePart, '\.')
+			if len(classNameParts) >2
+				" ['x1', 'MyClassTest', 'test1'], i.e. with namespace
+				let className = classNameParts[1]
+			else
+				" ['MyClassTest', 'test1']
+				let className = classNameParts[0]
+			endif
+		endif
 		
-	"catch  /^Vim\%((\a\+)\)\=:E480/
-	catch  /.*/
-		"echomsg "expression NOT found" 
-	endtry
+	endif
+	if len(lineAndColumnPair) >1 && len(className) > 0
+		let errLine.lnum = lineAndColumnPair[0] " line
+		let errLine.col = lineAndColumnPair[1] " column
+		let errLine.filename = 'classes/'.className. '.cls'
+		let errLine.text = text
+	endif
+
+	return errLine
+
+endfunction	
+
+"
+" 
+" Return: path to ant error log
+" Param 1: project descriptor
+" Param 2: list [] of other params
+"		0:
+"		  'testAndDeploy' - run tests in all files that contain 'testMethod' and if
+"					successful then deploy
+"		  'runTestOnly' - run tests but do not deploy
+"		1: 
+"		  className - if provided then only run tests in the specified class
+"		2:
+"		  methodName - if provided then only run specified method in the class
+"		  provided as 1:
+function! apexTest#prepareFilesAndRunTests(projectDescriptor, params)
+	let projectName = a:projectDescriptor.project
+	let preparedSrcPath = a:projectDescriptor.preparedSrcPath
+	let projectPath = apexOs#splitPath(preparedSrcPath).head
 	
-	" restore quickfix
-	call setqflist(currentQuickFix)
+	let params = a:params
+	let checkOnly = params[0] " testAndDeploy | checkOnly
+	let classNames = []
+	if len(params) > 1
+		" need to run tests only in the specified class
+		let classNames = [ params[1] ]
+		if len(params) > 2 "looks like we need to run only specific method name
+			let methodName = params[2]
+			let fClassPath = apexOs#joinPath([preparedSrcPath, 'classes', classNames[0].'.cls'])
+			call s:disableAllTestMethodsExceptOne(fClassPath, methodName)
+			let checkOnly = 'checkOnly' " when we mess with class code we can not afford actual deployment
+		endif
+	else
+		let files = apexOs#glob(projectPath . "**/*.cls")
+		for fClassFullPath in files
+			let fClassName = apexOs#splitPath(fClassFullPath).tail
+			" check if this file contains testMethod
+			if len(apexUtil#grepFile(fClassFullPath, 'testmethod')) > 0
+				"prepare just file name, without extension
+				"remove .cls
+				let fClassName = strpart(fClassName, 0, len(fClassName) - len('.cls'))
+				let classNames = add(classNames, fClassName)
+			else
+				"echomsg "  ".fClassName." does not contain test methods. SKIP"
+			endif
+		endfor
+	endif
+	if len(classNames) >0
+		call apexAnt#askLogType()
+		return apexAnt#runTests(projectName, projectPath, classNames, checkOnly)
+	else
+		call apexUtil#warning("No test methods in files scheduled for deployment. Use :ApexDeploy to deploy without tests.")
+	endif
+	return ''
+
+endfunction
+
+" in the class specified by given path put 'return;' at the beginning of all
+" methods except the one specified
+" Args:
+" fClassPath - full path to class file
+" methodName - name of testMethod - the only methid which needs to stay
+" enabled
+function! s:disableAllTestMethodsExceptOne(fClassPath, methodName)
+	let fClassPath = a:fClassPath
+	let methodName = a:methodName
 	
-	return res
+	let lineNumbers = apexUtil#grepFile(fClassPath, 'testmethod')
+
+	if len(lineNumbers) > 0
+
+		let outputLines = []
+		let rangeStart = -1
+		let lineNum = -1
+		for line in readfile(fClassPath) 
+			let lineNum += 1
+			if rangeStart < 0
+				let rangeStart = match(line, '\c\<testmethod\>')
+			endif
+			if rangeStart >=0 
+				"check if this is the method which we need to leave enabled
+				if methodName == s:getMethodName(fClassPath, lineNum)
+					let rangeStart = -1
+					call add(outputLines, line)
+					continue " skip this method
+				endif
+				"try to find first {
+				let bracketPos = match(line, '{', rangeStart)
+				if bracketPos >= 0
+					"echo "was=".line
+					let line = strpart(line, 0, bracketPos+1) . 'return;'. strpart(line, bracketPos + 1)
+					"echo "now=".line
+					let rangeStart = -1 " assuming that there is just one method definition per line
+				else
+					let rangeStart = 0 " in the next line need to start from the beginning of the line
+				endif
+			endif
+
+			call add(outputLines, line)
+		endfor	
+	endif
+	"finally write resulting file
+	call writefile(outputLines, fClassPath)
+	
 endfunction
