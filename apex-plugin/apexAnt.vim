@@ -253,7 +253,7 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	"BUILD FAILED
 	".../apex-plugin/build.xml:59: FAILURES:
 	"
-	if !apexOs#grepFile(ANT_ERROR_LOG, 'BUILD FAILED\_.*FAILURES\|BUILD SUCCESSFUL\|BUILD FAILED')	
+	if len(apexUtil#grepFile(ANT_ERROR_LOG, 'BUILD FAILED\_.*FAILURES\|BUILD SUCCESSFUL\|BUILD FAILED')) < 1
 		"if we are here then build failed for a reason which we do not
 		"process nicely
 		throw "OPERATION FAILED. Check error log. ".ANT_ERROR_LOG
