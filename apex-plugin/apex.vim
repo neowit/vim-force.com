@@ -54,7 +54,8 @@ let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "
 "			'staged' - all files listed in stage-list.txt file
 "			'onefile' - single file specified in param 1
 "Param3: (optional) - list [] of other params
-"		'runTest' - deploy single file specified in param 1 and run 
+"		'runTest' - run tests in all files that contain 'testMethod' and if
+"					successful then deploy
 "Param4: destination project name, must match one of .properties file with
 "		login details
 function! apex#MakeProject(...)
@@ -182,7 +183,7 @@ function! s:deployAndRunTests(projectDescriptor)
 	for fClassFullPath in files
 		let fClassName = apexOs#splitPath(fClassFullPath).tail
 		" check if this file contains testMethod
-		if apexOs#grepFile(fClassFullPath, 'testmethod') > 0
+		if len(apexUtil#grepFile(fClassFullPath, 'testmethod')) > 0
 			"prepare just file name, without extension
 			"remove .cls
 			let fClassName = strpart(fClassName, 0, len(fClassName) - len('.cls'))
@@ -283,8 +284,15 @@ endfun
 
 " return full path to SRC folder
 " ex: "/path/to/project-name/src"
-function! apex#getApexProjectSrcPath(filePath)
-	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+" Args:
+" filePath - [optional] if provided then this fiel is used to determine src
+" path, otherwise expand("%:p") is used
+function! apex#getApexProjectSrcPath(...)
+	let filePath = expand("%:p")
+	if a:0 >0
+		let filePath = a:1
+	endif	
+	let projectPair = apex#getSFDCProjectPathAndName(filePath)
 	return apexOs#joinPath([projectPair.path, s:SRC_DIR_NAME])
 endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""
@@ -804,13 +812,13 @@ function! s:parseErrorLog(logFilePath, srcPath)
 			" ignore
 		endtry	 	
 	endif	
-	if apexOs#grepFile(fileName, 'BUILD SUCCESSFUL')
+	if len(apexUtil#grepFile(fileName, 'BUILD SUCCESSFUL')) > 0
 		echomsg "No errors found" 
 		return 0
 	endif
 
 	echo "Build failed" 
-	if apexOs#grepFile(fileName, 'Error: \|Test failure')
+	if len(apexUtil#grepFile(fileName, 'Error: \|Test failure')) > 0
 		" if we are still here then the above line did not fail and found the
 		" key
 		call s:processQuickfix(a:srcPath)
