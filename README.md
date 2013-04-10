@@ -29,7 +29,12 @@ Other vim plugins recommended for use alongside vim-force.com plugin
 
 * Build/Save to SFDC
 	- with error reporting
-	- "Run test" - basic support
+	- "Run test"
+	<ul>
+	* Execute unit tests in all modified files
+	* Execute unit tests in a specific Class
+	* Execute *specific* test method in a specific Class
+	</ul>
 
 * Deploy from one Org to Another
 

@@ -231,7 +231,7 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexDeployOpen|                    deploy all open files
 |ApexDeployAll|                     deploy all files in current project
 |ApexDeployStaged|                  deploy all files listed in Stage cache
-|ApexTestAndDeploy|                 run Unit Tests before deploying modified files
+|ApexTest|                          run Unit Tests 
 
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
@@ -330,14 +330,23 @@ exist in SFDC.
                                                             *ApexDeployStaged*
 Deploy all files previously added by :|ApexStageAdd| command
 
-                                                            *ApexTestAndDeploy*
+                                                            *ApexTest*
 Very basic function that is similar to :|ApexDeploy| but runs unit tests in all
 modified classes that contain 'testMethod' prior to actual deployment.
 By default no debug log is generated. Log level can be configured via
 |'g:apex_test_logType'| variable.
-NOTE: unlike :|ApexDeploy| if you run :|ApexTestAndDeploy| and get unit tests
+NOTE: unlike :|ApexDeploy| if you run :|ApexTest| and get unit tests
 failure(s) or insifficient overall code coverage then SFDC rejects changes and
 you files are NOT saved in SFDC.
+:|ApexTest| supports command line parameters (and their completion)
+Param: 1 - mode: 'testAndDeploy' or 'checkOnly', default 'testAndDeploy'
+Param: 2 - class name - use this parameter to run only unit tests in a specific
+           class
+Param: 3 - method name - if test class contains several 'testMethod'-s then
+           this parameter allows to specify single method to run. Body of all other
+           methods will be skipped. This is particularly useful when you want to see log
+           file from specific test and do not want other tests to pollute the log.
+Param: 4 - target Org/project name. See :|ApexDeploy| for more details
 
                                                             *ApexGitInit*
 If git is available then :|ApexGitInit| can be used to initialise new git

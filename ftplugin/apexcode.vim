@@ -147,8 +147,8 @@ command! -nargs=? -complete=customlist,ListProjectNames ApexDeployAll :call apex
 command! -nargs=? -complete=customlist,ListProjectNames ApexDeployStaged :call apexStage#write() | :call apex#MakeProject('', 'staged', [], <f-args>)
 
 "Unit testing
-command! -nargs=? -complete=customlist,ListProjectNames ApexTestAndDeploy :call apex#MakeProject('', 'modified', ['runTest'], <f-args>)
-command! -nargs=* -complete=customlist,ApexTestCompleteParams ApexTest :call apex#MakeProject('', 'modified', ['runTest'], <f-args>)
+"command! -nargs=? -complete=customlist,ListProjectNames ApexTestModifiedCheckOnly :call apex#MakeProject('', 'modified', ['checkOnly'], <f-args>)
+command! -nargs=* -complete=customlist,ApexTestCompleteParams ApexTest :call apexTest#runTest(<f-args>)
 
 "delete Staged files from specified Org
 "Examples:

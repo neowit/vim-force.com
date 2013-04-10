@@ -266,10 +266,10 @@ function! apexOs#exe(...)
 	if s:is_windows
 		let result = '"'.result.'"'
 	elseif a:0 > 1 
-		if a:2 =~ "b"
+		if a:2 =~# "b"
 			let result .= ' &'
 		endif
-		let disableMore = a:2 =~ "M"
+		let disableMore = a:2 =~# "M"
 	endif
 
 	"temporarily disable more if enabled

@@ -54,8 +54,15 @@ let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "
 "			'staged' - all files listed in stage-list.txt file
 "			'onefile' - single file specified in param 1
 "Param3: (optional) - list [] of other params
-"		'runTest' - run tests in all files that contain 'testMethod' and if
+"		0:
+"		  'testAndDeploy' - run tests in all files that contain 'testMethod' and if
 "					successful then deploy
+"		  'checkOnly' - run tests but do not deploy
+"		1: 
+"		  className - if provided then only run tests in the specified class
+"		2:
+"		  methodName - if provided then only run specified method in the class
+"		  provided as 1:
 "Param4: destination project name, must match one of .properties file with
 "		login details
 function! apex#MakeProject(...)
@@ -65,20 +72,23 @@ function! apex#MakeProject(...)
 		let filePath = a:1
 	endif
 
+	let providedProjectName = ''
+
 	if a:0 >1 && index(s:MAKE_MODES, a:2) >= 0
 		let l:mode = a:2
 	endif
 
-	"process list of optional params ['runTest',...]
+	"process list of optional params ['testAndDeploy',...]
 	let l:runTest = 0
+	let l:checkOnly = 0
+	let params = []
 	if a:0 >2
-		if index(a:3, 'runTest') >=0
-			let l:runTest = 1
-		endif
+		let params = a:3
+		let l:runTest = index(params, 'testAndDeploy') >=0
+		let l:checkOnly = index(params, 'checkOnly') >=0
 	endif
 
-	let providedProjectName = ''
-	if a:0 >3 
+	if a:0 >3 && strlen(providedProjectName) < 1
 		let providedProjectName = a:4
 	endif
 
@@ -135,8 +145,8 @@ function! apex#MakeProject(...)
 	endif
 	
 	let result = -1
-	if l:runTest
-		let ANT_ERROR_LOG = s:deployAndRunTests(projectDescriptor)
+	if l:runTest || l:checkOnly
+		let ANT_ERROR_LOG = apexTest#prepareFilesAndRunTests(projectDescriptor, params)
 		if filereadable(ANT_ERROR_LOG)
 			let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
 		endif
@@ -173,44 +183,35 @@ function! apex#MakeProject(...)
 	return result
 endfun
 
-function! s:deployAndRunTests(projectDescriptor)
-	let projectName = a:projectDescriptor.project
-	let preparedSrcPath = a:projectDescriptor.preparedSrcPath
-	let projectPath = apexOs#splitPath(preparedSrcPath).head
-	
-	let files = apexOs#glob(projectPath . "**/*.cls")
-	let classNames = []
-	for fClassFullPath in files
-		let fClassName = apexOs#splitPath(fClassFullPath).tail
-		" check if this file contains testMethod
-		if len(apexUtil#grepFile(fClassFullPath, 'testmethod')) > 0
-			"prepare just file name, without extension
-			"remove .cls
-			let fClassName = strpart(fClassName, 0, len(fClassName) - len('.cls'))
-			let classNames = add(classNames, fClassName)
-		else
-			"echomsg "  ".fClassName." does not contain test methods. SKIP"
-		endif
-	endfor
-	if len(classNames) >0
-		call s:askLogType()
-		return apexAnt#runTests(projectName, projectPath, classNames)
-	else
-		call apexUtil#warning("No test methods in files scheduled for deployment. Use :ApexDeploy to deploy without tests.")
-	endif
-	return ''
+"function! s:deployAndRunTests(projectDescriptor)
+"	let projectName = a:projectDescriptor.project
+"	let preparedSrcPath = a:projectDescriptor.preparedSrcPath
+"	let projectPath = apexOs#splitPath(preparedSrcPath).head
+"	
+"	let files = apexOs#glob(projectPath . "**/*.cls")
+"	let classNames = []
+"	for fClassFullPath in files
+"		let fClassName = apexOs#splitPath(fClassFullPath).tail
+"		" check if this file contains testMethod
+"		if len(apexUtil#grepFile(fClassFullPath, 'testmethod')) > 0
+"			"prepare just file name, without extension
+"			"remove .cls
+"			let fClassName = strpart(fClassName, 0, len(fClassName) - len('.cls'))
+"			let classNames = add(classNames, fClassName)
+"		else
+"			"echomsg "  ".fClassName." does not contain test methods. SKIP"
+"		endif
+"	endfor
+"	if len(classNames) >0
+"		call apexAnt#askLogType()
+"		return apexAnt#runTests(projectName, projectPath, classNames)
+"	else
+"		call apexUtil#warning("No test methods in files scheduled for deployment. Use :ApexDeploy to deploy without tests.")
+"	endif
+"	return ''
+"
+"endfunction
 
-endfunction
-
-" ask user which log type to use for running unit tests 
-" result is assigned value of g:apex_test_logType variable
-function! s:askLogType()
-	let logType = 'None'
-	if exists('g:apex_test_logType')
-		let logType = g:apex_test_logType
-	endif
-	let g:apex_test_logType = apexUtil#menu('Select Log Type', ['None', 'Debugonly', 'Db', 'Profiling', 'Callout', 'Detail'], logType)
-endfunction
 
 " use this method to validate existance of .properties file for specified
 " project name
@@ -818,7 +819,7 @@ function! s:parseErrorLog(logFilePath, srcPath)
 	endif
 
 	echo "Build failed" 
-	if len(apexUtil#grepFile(fileName, 'Error: \|Test failure')) > 0
+	if len(apexUtil#grepFile(fileName, 'Error: \|Test failure', 'Q')) > 0
 		" if we are still here then the above line did not fail and found the
 		" key
 		call s:processQuickfix(a:srcPath)
@@ -850,7 +851,7 @@ function! s:processQuickfix(srcPath)
 
 		if len(errLine) < 3
 			"check if this was unit test failure
-			let errLine = s:parseUnitTestFailure(text)
+			let errLine = apexTest#parseUnitTestFailure(text)
 		endif
 
 		if len(errLine) > 0
@@ -926,63 +927,6 @@ function! s:processCompileError(text)
 	return errLine
 endfunction
 
-" check if current line is a unit test failure report line
-"
-" Unit Test falure looks like this:
-" Test failure, method: x1.MyClassTest.test1 -- System.AssertException: Assertion Failed: expected this test to fail stack Class.x1.MyClassTest.test1: line 4, column 1
-" or, without namespace
-" Test failure, method: MyClassTest.test1 -- System.AssertException: Assertion Failed: expected this test to fail stack Class.MyClassTest.test1: line 4, column 1
-"
-" Return:  dictionary: see :help setqflist()
-"         {
-"			filename: file name relatively project/src folder, 
-"				e.g. "classes/MyClass.cls"
-"			lnum: line number in the file
-"			col:  column number
-"			text: description of the error
-"         }
-"
-function! s:parseUnitTestFailure(text)
-	let text = a:text
-	let errLine = {}
-	let lineAndColumnPair = []
-	let className = ''
-	if text =~ 'Test failure'
-		" try to find line/col like this ": line 4, column 1"
-		let lineNumIndex = match(text, ': line ')
-		if lineNumIndex > 0
-			let coordinateText = strpart(text, lineNumIndex + len(': line '))
-			"coordinateText = "4, column 1"
-			let lineAndColumnPair = split(coordinateText, ", column ")
-		endif
-		" extract class name from part which looks like this:
-		" stack Class.MyClassTest.test1: line 4, column 1 
-		let classNameStart = match(text, 'stack Class.')
-		if classNameStart > 0
-			let classNameStart = classNameStart + len('stack Class.')
-			let classNameEnd = match(text, ':', classNameStart)
-			let classNamePart = strpart(text, classNameStart, classNameEnd-classNameStart)
-			let classNameParts = split(classNamePart, '\.')
-			if len(classNameParts) >2
-				" ['x1', 'MyClassTest', 'test1'], i.e. with namespace
-				let className = classNameParts[1]
-			else
-				" ['MyClassTest', 'test1']
-				let className = classNameParts[0]
-			endif
-		endif
-		
-	endif
-	if len(lineAndColumnPair) >1 && len(className) > 0
-		let errLine.lnum = lineAndColumnPair[0] " line
-		let errLine.col = lineAndColumnPair[1] " column
-		let errLine.filename = 'classes/'.className. '.cls'
-		let errLine.text = text
-	endif
-
-	return errLine
-
-endfunction	
 """""""""""""""""""""""""""""""""""""""""""""""""""
 " Utility methods
 """""""""""""""""""""""""""""""""""""""""""""""""""
