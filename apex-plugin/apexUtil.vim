@@ -284,3 +284,8 @@ function! apexUtil#grepFile(filePath, expr, ...)
 	
 	return res
 endfunction
+
+function! apexUtil#unescapeFileName(fileName)
+	return substitute(a:fileName, '\\\(\\\|[^\\]\)', '\1', 'g')
+endfunction
+	

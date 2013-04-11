@@ -89,7 +89,10 @@ function! apex#MakeProject(...)
 	endif
 
 	if a:0 >3 && strlen(providedProjectName) < 1
-		let providedProjectName = a:4
+		" if project name is provided via tab completion then spaces in it
+		" will be escaped, so have to unescape otherwise funcions like
+		" filereadable() do not understand such path name
+		let providedProjectName = apexUtil#unescapeFileName(a:4)
 	endif
 
 	let propertiesFolder = apexOs#removeTrailingPathSeparator(g:apex_properties_folder)
@@ -226,7 +229,6 @@ function! apex#getPropertiesFilePath(projectName)
 	"check if we need to append .properties
 	"echo "providedProjectName=".l:providedProjectName
 	"echo "propFilePath=".l:propFilePath
-
 	if !filereadable(l:propFilePath)
 		echoerr l:propFilePath." with login details does not exist or not readable."
 		return
