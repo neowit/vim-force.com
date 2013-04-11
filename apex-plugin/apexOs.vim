@@ -225,8 +225,9 @@ endfun
 
 " "foo/bar/buz/hoge" -> { head: "foo/bar/buz/", tail: "hoge" }
 " current version is taken from fuzzy finder plugin
-" alterntive version of this function can be done with 
+" alterntive version of this function can NOT be done with 
 " fnamemodify(path, ':h') && fnamemodify(path, ':t')
+" because fnamemodify('foo/bar/buz/hoge/', ':t') results in blank value
 function! apexOs#splitPath(path)
 	let path = apexOs#removeTrailingPathSeparator(a:path)
 	let head = matchstr(path, '^.*[/\\]')
