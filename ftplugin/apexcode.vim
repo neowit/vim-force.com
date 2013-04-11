@@ -213,7 +213,7 @@ function! ListProjectNames(A, L, P)
 		let fName = fnamemodify(fName, ":r") " remove .properties
 		"take into account file prefix which user have already entered
 		if 0 == len(a:A) || match(fName, a:A) >= 0 
-			call add(res, fName)
+			call add(res, fnameescape(fName))
 		endif	
 	endfor
 	return res
