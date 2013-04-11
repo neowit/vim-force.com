@@ -126,8 +126,8 @@ function! apex#MakeProject(...)
 
 
 		" copy current package XML into the work folder
-		let tempPackXmlPath = apexOs#joinPath([projectDescriptor.preparedSrcPath, 'package.xml'])
-		call apexOs#copyFile(apexOs#joinPath([projectPath, s:SRC_DIR_NAME, "package.xml"]),  tempPackXmlPath)
+		let tempPackXmlPath = apexOs#joinPath(projectDescriptor.preparedSrcPath, 'package.xml')
+		call apexOs#copyFile(apexOs#joinPath(projectPath, s:SRC_DIR_NAME, "package.xml"),  tempPackXmlPath)
 
 		" check if package.xml contains all files prepared for deployment
 		" and add missing components if necessary

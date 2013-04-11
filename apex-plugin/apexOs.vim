@@ -300,9 +300,26 @@ function! apexOs#hasTrailingPathSeparator(filePath)
 	return 0
 endfunction	
 
-function! apexOs#joinPath(filePathList)
+" 
+" concatenate file path components
+" Args: supports two versions of arguments
+"	- single argument of type List
+"	  e.g. apexOs#joinPath(['/path', 'to' , 'file']) - '/path/to/file'
+"	- separate arguments 
+"	  e.g. apexOs#joinPath('/path', 'to' , 'file') - '/path/to/file'
+"
+function! apexOs#joinPath(...)
+	if a:0 < 1
+		throw "Argument required."
+	endif	
+	let filePathList = []
+	if 3 == type(a:1) " first argument is a List
+		let filePathList = a:1
+	else "path components are passed as separate arguments
+		let filePathList = a:000
+	endif
 	let resPath = ''
-	for path in a:filePathList
+	for path in filePathList
 		if len(resPath)>0 
 			if apexOs#hasTrailingPathSeparator(resPath)
 				let resPath .= path
