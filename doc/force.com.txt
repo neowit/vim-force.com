@@ -746,6 +746,7 @@ There is a number of great Vim plugins which you may want to consider
 - Session - save/restore open files like IDE Project
 - SnipMate - implements some of TextMate's snippets features in Vim
 - Taglist - a source code browser plugin for Vim
+- TagBar - another source code browser plugin for Vim
 
 
 ==============================================================================
