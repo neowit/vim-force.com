@@ -79,6 +79,20 @@ endif
 let tlist_apexcode_settings = 'java;p:package;c:class;i:interface;f:field;m:method'
 
 """"""""""""""""""""""""""""""""""""""""""""""""
+" TagBar plugin settings
+""""""""""""""""""""""""""""""""""""""""""""""""
+let g:tagbar_type_apexcode = {
+  \ 'ctagstype' : 'java',
+  \ 'kinds'     : [
+    \ 'p:package;',
+    \ 'c:class',
+    \ 'i:interface'
+    \ 'f:field',
+    \ 'm:method'
+  \ ]
+\ }
+
+""""""""""""""""""""""""""""""""""""""""""""""""
 " Fix Syntax highlighting problems
 " http://vim.wikia.com/wiki/Fix_syntax_highlighting
 """"""""""""""""""""""""""""""""""""""""""""""""
