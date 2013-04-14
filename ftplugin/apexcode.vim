@@ -84,9 +84,9 @@ let tlist_apexcode_settings = 'java;p:package;c:class;i:interface;f:field;m:meth
 let g:tagbar_type_apexcode = {
   \ 'ctagstype' : 'java',
   \ 'kinds'     : [
-    \ 'p:package;',
+    \ 'p:package',
     \ 'c:class',
-    \ 'i:interface'
+    \ 'i:interface',
     \ 'f:field',
     \ 'm:method'
   \ ]
