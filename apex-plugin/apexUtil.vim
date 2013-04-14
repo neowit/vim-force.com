@@ -252,6 +252,24 @@ function! apexUtil#menu(prompt, options, default)
 	return a:default
 endfunction	
 
+" Args:
+" prompt - text shown to user
+" options - string with the list of accepted answers
+"			e.g.: 'YynN'
+" default - if provided then this option is used instead of blank selection
+"			if Not provided then prompt will be repeated
+" Return: - selected option or default [if provided default is not blank]		
+function! apexUtil#input(prompt, options, default)
+	while 1
+		let res = input(a:prompt)
+		if len(res) < 1 && strlen(a:default) > 0
+			return a:default
+		elseif len(res) >0 && a:options =~# res " check if given answer is allowed
+			return res
+		endif
+	endwhile
+endfunction
+
 " check if file contains given regualr expression
 " Param: filePath - full path to the file
 " Param: expr - regular expression
