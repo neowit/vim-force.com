@@ -24,7 +24,7 @@ Other vim plugins recommended for use alongside vim-force.com plugin
 * SnipMate - http://www.youtube.com/watch?v=Ri_DP1sRn2o  
 * NERDTree - http://www.youtube.com/watch?v=d93o9qAqIhE  
 * TagList - http://www.youtube.com/watch?v=Suk45FHU6s8  
-* TagBar
+* TagBar (alternative to TagList) - [screenshot](https://f.cloud.github.com/assets/115889/378070/f8d241b0-a513-11e2-802e-d4419aac586d.png)
 
 ## FEATURES
 
