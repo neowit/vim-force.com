@@ -38,6 +38,12 @@ function! apexTest#runTest(...)
 	endif
 
 	if strlen(methodName) > 0 && s:ALL != methodName
+		if 'checkOnly' != modeName
+			call apexUtil#warning('Single method test is experimental and only supported in "checkOnly" mode.')
+			if 'y' !~# apexUtil#input('Switch to "checkOnly" and continue? [Y/n]: ', 'YyNn', 'y')
+				return
+			endif
+		endif
 		call apex#MakeProject(filePath, 'onefile', ['checkOnly', className, methodName], projectName)
 	elseif strlen(className) > 0
 		call apex#MakeProject(filePath, 'onefile', [modeName, className], projectName)
