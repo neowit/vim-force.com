@@ -46,6 +46,7 @@ syn keyword apexcodeConstant		null
 syn keyword apexcodeTypeDef			this super
 syn keyword apexcodeType			void
 syn keyword apexcodeStatement		return continue break
+syn keyword apexcodeAccessor        get set
 
 syn keyword apexcodeStorageClass	static final transient
 syn keyword apexcodeStructure		enum
@@ -93,7 +94,8 @@ syn match apexcodeDebug				"System\.debug\s*(.*);" fold contains=apexcodeString,
 syn match apexcodeAssert			"System\.assert"
 syn match apexcodeAssert			"System\.assert\(Equals\|NotEquals\)"
 
-syn keyword apexcodeSFDCCollection	Map Set List
+syn match apexcodeSFDCCollection	"\(Map\|Set\|List\)\(\s*<\)\@="
+	
 syn keyword apexcodeSFDCId			Id
 syn keyword apexcodeSFDCSObject		SObject
 syn keyword apexcodeStandardInterface	Comparable Iterator Iterable InstallHandler Schedulable UninstallHandler
@@ -127,6 +129,7 @@ hi def link apexcodeConstant		Constant
 hi def link apexcodeTypeDef			Typedef
 hi def link apexcodeType			Type
 hi def link apexcodeStatement		Statement	
+hi def link apexcodeAccessor		Statement	
 
 hi def link apexcodeStorageClass	StorageClass
 hi def link apexcodeStructure		Structure
