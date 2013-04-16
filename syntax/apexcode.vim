@@ -46,7 +46,7 @@ syn keyword apexcodeConstant		null
 syn keyword apexcodeTypeDef			this super
 syn keyword apexcodeType			void
 syn keyword apexcodeStatement		return continue break
-syn keyword apexcodeAccessor        get set
+syn match   apexcodeAccessor        "[^.]\<\(get\|set\)\>"
 
 syn keyword apexcodeStorageClass	static final transient
 syn keyword apexcodeStructure		enum
@@ -56,7 +56,7 @@ syn keyword apexcodeTypePrimitive	Blob Boolean Date Datetime DateTime Decimal Do
 syn keyword apexcodeConditional		if then else	
 syn keyword apexcodeRepeat			for while do	
 
-								" use \< .. \> to match the whole word
+                                    " use \< .. \> to match the whole word
 syn match 	apexcodePreProc			"\<\(with sharing\|without sharing\)\>"
 syn keyword apexcodePreProc			testMethod
 " apexcode annotations
