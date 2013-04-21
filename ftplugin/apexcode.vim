@@ -40,7 +40,7 @@ let Tlist_Show_One_File = 1
 " make sure s:Apex_TList_Toggle is defined only once otherwise 
 " there will be an error because system will call apexcode.vim every time when
 " filetype changes inside of s:Apex_TList_Toggle
-if !exists("b:Apex_TList_Toggle_Defined")
+if !exists("b:Apex_TList_Toggle_Defined") && exists('loaded_taglist')
 
     " http://stackoverflow.com/questions/1790623/how-can-i-make-vims-taglist-plugin-show-useful-information-for-javascript
     "
