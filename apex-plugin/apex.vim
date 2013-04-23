@@ -149,7 +149,7 @@ function! apex#MakeProject(...)
 	
 	let result = -1
 	if l:runTest || l:checkOnly
-		let ANT_ERROR_LOG = apexTest#prepareFilesAndRunTests(projectDescriptor, params)
+		let ANT_ERROR_LOG = apexTest#prepareFilesAndRunTests(projectName, projectDescriptor.preparedSrcPath, params)
 		if filereadable(ANT_ERROR_LOG)
 			let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
 		endif

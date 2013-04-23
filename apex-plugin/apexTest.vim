@@ -226,9 +226,9 @@ endfunction
 "		2:
 "		  methodName - if provided then only run specified method in the class
 "		  provided as 1:
-function! apexTest#prepareFilesAndRunTests(projectDescriptor, params)
-	let projectName = a:projectDescriptor.project
-	let preparedSrcPath = a:projectDescriptor.preparedSrcPath
+function! apexTest#prepareFilesAndRunTests(projectName, preparedSrcPath, params)
+	let projectName = a:projectName
+	let preparedSrcPath = a:preparedSrcPath
 	let projectPath = apexOs#splitPath(preparedSrcPath).head
 	
 	let params = a:params
