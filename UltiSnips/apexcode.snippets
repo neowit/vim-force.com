@@ -1,0 +1,150 @@
+snippet testMethod
+/**
+ * ${2}
+ */
+static testMethod void ${1} () {
+	${3}
+}
+endsnippet
+
+snippet head "Class/Trigger header"
+/**
+ *	@author: ${1}
+ *	@date: `!v strftime("%Y-%m-%d %X")` 
+ *	@description:
+ *	    ${2}
+ *	
+ *	Version History :   
+ *		
+ */
+endsnippet
+
+snippet dbg
+System.debug(${1});
+endsnippet
+
+snippet ass
+System.assert(${1}, '${2}');
+endsnippet
+
+snippet asse
+System.assertEquals(${1}, ${2}, '${3}');
+endsnippet
+
+snippet assne
+System.assertNotEquals(${1}, ${2}, '${3}');
+endsnippet
+
+snippet list
+List<${1}> ${2} = new List<$1>();
+endsnippet
+
+snippet set
+Set<${1}> ${2} = new Set<$1>();
+endsnippet
+
+snippet map 
+Map<${1}, ${2}> ${3} = new Map<$1, $2>();
+endsnippet
+
+snippet class
+public ${1:with} sharing class ${2:`!v Filename()`} {
+}
+endsnippet
+
+snippet class "extension class with Standard Controller"
+public with sharing class ${1:`!v Filename()`} {
+	private final ApexPages.StandardController $2;
+
+	public $1 (ApexPages.StandardController ${2:stdCon}) {
+		this.$2 = $2;
+	}
+}
+endsnippet
+
+snippet class "extension class with Standard Controller *extends* ControllerBase"
+public with sharing class ${1:`!v Filename()`} extends ControllerBase {
+	public $1 (ApexPages.StandardController ${2:stdCon}) {
+		super($2);
+	}
+
+	/////////// ControllerBase overrides  /////////////////
+	public override Boolean validate() {
+		return false;//not in use
+	}
+
+	public override Id cancelToObjectId() {
+		 return getStandardController().getId();
+	}
+	/////////// END ControllerBase overrides  /////////////////
+}
+endsnippet
+
+snippet handler "Trigger Handler class methods for all Before actions"
+private static ${1:`!v Filename()`} handler;
+
+public static $1 getHandler() {
+	if (null == handler) {
+		handler = new $1();
+	}
+	return handler;
+}
+
+public void beforeInsert () {
+}
+
+public void beforeUpdate () {
+}
+
+public void beforeDelete () {
+}
+
+public void afterInsert () {
+}
+
+public void afterUpdate () {
+}
+
+public void afterDelete () {
+}
+
+public void afterUnDelete () {
+}
+endsnippet
+
+snippet trigger "Before trigger with handler template"
+trigger ${1:`!v Filename()`} on ${2:object-name} (before insert, before update, before delete) {
+	$1Handler handler  = $1Handler.getHandler();
+	if (Trigger.isInsert) {
+		handler.beforeInsert();
+	} else if (Trigger.isUpdate) {
+		handler.beforeUpdate();
+	} else if (Trigger.isDelete) {
+		handler.beforeDelete();
+	}
+}
+endsnippet
+
+snippet trigger "After trigger with handler template"
+trigger ${1:`!v Filename()`} on ${2:object-name} (after insert, after update, after delete, after undelete) {
+	$1Handler handler  = $1Handler.getHandler();
+	if (Trigger.isInsert) {
+		handler.afterInsert();
+	} else if (Trigger.isUpdate) {
+		handler.afterUpdate();
+	} else if (Trigger.isUnDelete) {
+		handler.afterUnDelete();
+	}
+}
+endsnippet
+
+snippet ver "@version - new change in apex file"
+${1:`!v strftime("%Y-%m-%d")`} - ${2:feature-id} - ${3:initials}
+	${4}
+endsnippet
+
+snippet for "Apex For cycle"
+for(${1:ObjectType} ${2:varName} : ${3:Trigger.new}) {
+    ${4}
+}
+endsnippet
