@@ -22,8 +22,8 @@
 let s:PLUGIN_FOLDER = expand("<sfile>:h")
 let s:ANT_CMD = "ant"
 
-function! apexAnt#deploy(projectName, projectFolder)
-	return apexAnt#execute("deploy", a:projectName, a:projectFolder)
+function! apexAnt#deploy(projectName, projectFolder, checkOnly)
+	return apexAnt#execute("deploy", a:projectName, a:projectFolder, a:checkOnly)
 endfunction
 
 function! apexAnt#refresh(projectName, projectFolder)
@@ -157,6 +157,9 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 	endif
 	if "deploy" == a:command || "refresh" == a:command
 		if "deploy" == a:command
+			if a:0 > 0 && a:1 == 'checkOnly'
+				let antCommand = antCommand . " -DcheckOnly=true "
+			endif	
 			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(projectFolder) . " deployUnpackaged"
 		elseif "refresh" == a:command
 			let antCommand = antCommand . " -Dproject.Folder=" . shellescape(projectFolder) . " retrieveSource"

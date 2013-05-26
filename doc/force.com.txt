@@ -291,9 +291,10 @@ Add current file to |ApexStage|.
                                                                   *ApexDeploy*
 Use :|ApexDeploy| to upload/deploy/save all modified files of current project
 to SFDC
-All commands in :|ApexDeploy|* family support optional argument - 'project
-name' to deploy to.  This name should match file name part of .properties file
-which contains access details.
+All commands in :|ApexDeploy|* family support 2 optional arguments 
+- deployment mode: normal deploy or 'checkOnly'
+- 'project name' to deploy to.  This name should match file name part of
+  .properties file which contains access details.
 See |force.com-settings| for details about .properties files.
 For example if I am working in "My Sandbox1" project and have 2 .properties files:
 "My Sandbox 1.properties" and "My Sandbox 2.properties" then >
@@ -304,7 +305,7 @@ For example if I am working in "My Sandbox1" project and have 2 .properties file
 
 Project name argument of all commands in :|ApexDeploy|* family supports completion.
 For instance, using project names from the example above >
- :ApexDeploy My<Tab>
+ :ApexDeploy checkOnly My<Tab>
 < will offer "My Sandbox 1" and "My Sandbox 2"
                                                             *force.com-F11*
 Plugin also defines keyboard shortcut F11 which calls :|ApexDeploy| and works
