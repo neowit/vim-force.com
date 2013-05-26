@@ -154,15 +154,15 @@ augroup END
 """"""""""""""""""""""""""""""""""""""""""""""""
 
 "defined a command to run MakeApex
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeploy :call apex#MakeProject('', 'modified', [], <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeployOpen :call apex#MakeProject('', 'open', [], <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeployConfirm :call apex#MakeProject('', 'confirm', [], <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeployAll :call apex#MakeProject('', 'all', [], <f-args>)
-command! -nargs=? -complete=customlist,ListProjectNames ApexDeployStaged :call apexStage#write() | :call apex#MakeProject('', 'staged', [], <f-args>)
+command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apex#deploy('modified', <f-args>)
+command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOpen :call apex#deploy('open', <f-args>)
+command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployConfirm :call apex#deploy('confirm', <f-args>)
+command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAll :call apex#deploy('all', <f-args>)
+command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexStage#write() | :call apex#deploy('staged', <f-args>)
 
 "Unit testing
 "command! -nargs=? -complete=customlist,ListProjectNames ApexTestModifiedCheckOnly :call apex#MakeProject('', 'modified', ['checkOnly'], <f-args>)
-command! -nargs=* -complete=customlist,ApexTestCompleteParams ApexTest :call apexTest#runTest(<f-args>)
+command! -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest(<f-args>)
 
 "delete Staged files from specified Org
 "Examples:
@@ -213,23 +213,4 @@ let NERDTreeIgnore+=['.*\-meta\.xml$']
 
 " Change javascript highlighting color inside of visualforce pages from Special to Normal
 hi link javaScript Normal
-
-
-""""""""""""""""""""""""""""""""""""""""""""""""
-" ApexDeploy project name completion
-""""""""""""""""""""""""""""""""""""""""""""""""
-" list .properties file names without extension
-function! ListProjectNames(A, L, P)
-	let fullPaths = apexOs#glob(g:apex_properties_folder . "**/*.properties")
-	let res = []
-	for fullName in fullPaths
-		let fName = apexOs#splitPath(fullName).tail
-		let fName = fnamemodify(fName, ":r") " remove .properties
-		"take into account file prefix which user have already entered
-		if 0 == len(a:A) || match(fName, a:A) >= 0 
-			call add(res, fnameescape(fName))
-		endif	
-	endfor
-	return res
-endfunction	
 

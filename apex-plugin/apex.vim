@@ -58,6 +58,7 @@ let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "
 "		  'testAndDeploy' - run tests in all files that contain 'testMethod' and if
 "					successful then deploy
 "		  'checkOnly' - run tests but do not deploy
+"		  'checkOnlyDeploy' - as normal deployment but use 'checkOnly' ant flag
 "		1: 
 "		  className - if provided then only run tests in the specified class
 "		2:
@@ -81,11 +82,13 @@ function! apex#MakeProject(...)
 	"process list of optional params ['testAndDeploy',...]
 	let l:runTest = 0
 	let l:checkOnly = 0
+	let l:checkDeploy = 0
 	let params = []
 	if a:0 >2
 		let params = a:3
 		let l:runTest = index(params, 'testAndDeploy') >=0
 		let l:checkOnly = index(params, 'checkOnly') >=0
+		let l:checkDeploy = index(params, 'checkOnlyDeploy') >=0
 	endif
 
 	if a:0 >3 && strlen(providedProjectName) < 1
@@ -154,7 +157,8 @@ function! apex#MakeProject(...)
 			let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
 		endif
 	else
-		let ANT_ERROR_LOG = apexAnt#deploy(projectName, preparedTempProjectPath)
+		let useCheckOnly = l:checkDeploy ? 'checkOnly' : ''
+		let ANT_ERROR_LOG = apexAnt#deploy(projectName, preparedTempProjectPath, useCheckOnly)
 		if len(ANT_ERROR_LOG) > 0
 			" check if BUILD FAILED
 			let result = s:parseErrorLog(ANT_ERROR_LOG, apexOs#joinPath([projectPath, s:SRC_DIR_NAME]))
@@ -186,34 +190,72 @@ function! apex#MakeProject(...)
 	return result
 endfun
 
-"function! s:deployAndRunTests(projectDescriptor)
-"	let projectName = a:projectDescriptor.project
-"	let preparedSrcPath = a:projectDescriptor.preparedSrcPath
-"	let projectPath = apexOs#splitPath(preparedSrcPath).head
-"	
-"	let files = apexOs#glob(projectPath . "**/*.cls")
-"	let classNames = []
-"	for fClassFullPath in files
-"		let fClassName = apexOs#splitPath(fClassFullPath).tail
-"		" check if this file contains testMethod
-"		if len(apexUtil#grepFile(fClassFullPath, 'testmethod')) > 0
-"			"prepare just file name, without extension
-"			"remove .cls
-"			let fClassName = strpart(fClassName, 0, len(fClassName) - len('.cls'))
-"			let classNames = add(classNames, fClassName)
-"		else
-"			"echomsg "  ".fClassName." does not contain test methods. SKIP"
-"		endif
-"	endfor
-"	if len(classNames) >0
-"		call apexAnt#askLogType()
-"		return apexAnt#runTests(projectName, projectPath, classNames)
-"	else
-"		call apexUtil#warning("No test methods in files scheduled for deployment. Use :ApexDeploy to deploy without tests.")
-"	endif
-"	return ''
+""""""""""""""""""""""""""""""""""""""""""""""""
+" ApexDeploy 
+""""""""""""""""""""""""""""""""""""""""""""""""
+" Args:
+" method: 
+"			'open' - deploy only files from currently open Tabs or Buffers (if
+"					less than 2 tabs open)
+"			'confirm' - all changed files with confirmation for every file
+"			'modified' - all changed files
+"			'all' - all files under ./src folder
+"			'staged' - all files listed in stage-list.txt file
+"			'onefile' - single file specified in param 1
+" Param1: mode name: 'deploy' or 'checkOnly'
+"					if not specified then 'deploy' is used	
+" Param2: destination project name, must match one of .properties file with
+" "		login details
 "
-"endfunction
+function! apex#deploy(method, ...)
+	let modeName = a:0 > 0? a:1 : 'deploy'
+	if 'checkOnly' == modeName
+		let modeName = 'checkOnlyDeploy'
+	endif	
+	let projectName = a:0 > 1? a:2 : ''
+
+	call apex#MakeProject('', a:method, [modeName], projectName)
+endfunction
+" project name completion
+" list .properties file names without extension
+" Args:
+" arg: ArgLead - the leading portion of the argument currently being
+"			   completed on
+" line: CmdLine - the entire command line
+" pos: CursorPos - the cursor position in it (byte index)
+"
+function! apex#listProjectNames(arg, line, pos)
+	let fullPaths = apexOs#glob(g:apex_properties_folder . "**/*.properties")
+	let res = []
+	for fullName in fullPaths
+		let fName = apexOs#splitPath(fullName).tail
+		let fName = fnamemodify(fName, ":r") " remove .properties
+		"take into account file prefix which user have already entered
+		if 0 == len(a:arg) || match(fName, a:arg) >= 0 
+			call add(res, fnameescape(fName))
+		endif	
+	endfor
+	return res
+endfunction	
+
+function! s:listModeNames(arg, line, pos)
+	return ['deploy', 'checkOnly']
+endfunction	
+
+" Args:
+" arg: ArgLead - the leading portion of the argument currently being
+"			   completed on
+" line: CmdLine - the entire command line
+" pos: CursorPos - the cursor position in it (byte index)
+"
+function! apex#completeDeployParams(arg, line, pos)
+	let l = split(a:line[:a:pos-1], '\%(\%(\%(^\|[^\\]\)\\\)\@<!\s\)\+', 1)
+	"let n = len(l) - index(l, 'ApexDeploy') - 2
+	let n = len(l) - 0 - 2
+	"echomsg 'arg='.a:arg.'; n='.n.'; pos='.a:pos.'; line='.a:line
+	let funcs = ['s:listModeNames', 'apex#listProjectNames']
+	return call(funcs[n], [a:arg, a:line, a:pos])
+endfunction	
 
 
 " use this method to validate existance of .properties file for specified

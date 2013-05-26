@@ -58,11 +58,11 @@ endfunction
 " line: CmdLine - the entire command line
 " pos: CursorPos - the cursor position in it (byte index)
 "
-function! ApexTestCompleteParams(arg, line, pos)
+function! apexTest#completeParams(arg, line, pos)
 	let l = split(a:line[:a:pos-1], '\%(\%(\%(^\|[^\\]\)\\\)\@<!\s\)\+', 1)
 	let n = len(l) - index(l, 'ApexTest') - 2
 	"echomsg 'arg='.a:arg.'; n='.n.'; pos='.a:pos.'; line='.a:line
-	let funcs = ['s:listModeNames', 's:listClassNames', 's:listMethodNames', 'ListProjectNames']
+	let funcs = ['s:listModeNames', 's:listClassNames', 's:listMethodNames', 'apex#listProjectNames']
 	return call(funcs[n], [a:arg, a:line, a:pos])
 endfunction	
 
