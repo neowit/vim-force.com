@@ -9,17 +9,17 @@ endsnippet
 
 snippet head "Class/Trigger header"
 /**
- *	@author: ${1}
+ *	@author: `!v g:snips_author`
  *	@date: `!v strftime("%Y-%m-%d %X")` 
  *	@description:
- *	    ${2}
+ *	    ${1}
  *	
  *	Version History :   
  *		
  */
 endsnippet
 
-snippet dbg
+snippet dbg "System.debug('...');"
 System.debug(${1});
 endsnippet
 
@@ -36,18 +36,18 @@ System.assertNotEquals(${1}, ${2}, '${3}');
 endsnippet
 
 snippet list
-List<${1}> ${2} = new List<$1>();
+final List<${1}> ${2} = new List<$1>();
 endsnippet
 
 snippet set
-Set<${1}> ${2} = new Set<$1>();
+final Set<${1}> ${2} = new Set<$1>();
 endsnippet
 
 snippet map 
-Map<${1}, ${2}> ${3} = new Map<$1, $2>();
+final Map<${1}, ${2}> ${3} = new Map<$1, $2>();
 endsnippet
 
-snippet class
+snippet class "generic class"
 public ${1:with} sharing class ${2:`!v Filename()`} {
 }
 endsnippet
@@ -81,35 +81,42 @@ public with sharing class ${1:`!v Filename()`} extends ControllerBase {
 endsnippet
 
 snippet handler "Trigger Handler class methods for all Before actions"
-private static ${1:`!v Filename()`} handler;
+	private static ${1:`!v Filename()`} handler;
 
-public static $1 getHandler() {
-	if (null == handler) {
-		handler = new $1();
+	public static $1 getHandler() {
+		if (null == handler) {
+			handler = new $1();
+		}
+		return handler;
 	}
-	return handler;
-}
 
-public void beforeInsert () {
-}
+	public void beforeInsert () {
+		//nothing currently
+	}
 
-public void beforeUpdate () {
-}
+	public void beforeUpdate () {
+		//nothing currently
+	}
 
-public void beforeDelete () {
-}
+	public void beforeDelete () {
+		//nothing currently
+	}
 
-public void afterInsert () {
-}
+	public void afterInsert () {
+		//nothing currently
+	}
 
-public void afterUpdate () {
-}
+	public void afterUpdate () {
+		//nothing currently
+	}
 
-public void afterDelete () {
-}
+	public void afterDelete () {
+		//nothing currently
+	}
 
-public void afterUnDelete () {
-}
+	public void afterUnDelete () {
+		//nothing currently
+	}
 endsnippet
 
 snippet trigger "Before trigger with handler template"
