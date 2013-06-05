@@ -44,7 +44,13 @@ function! apexTest#runTest(...)
 				return
 			endif
 		endif
-		call apex#MakeProject(filePath, 'onefile', ['checkOnly', className, methodName], projectName)
+		" there is a chance that the test class has not been modified, lets
+		" touch it to make sure it is included in 'modified' list
+		" set last modified time 10 seconds in the past to make sure file is picked up for
+		" deplyment due to difference betwen -meta.xml and actual file time
+		call apexOs#setftime(filePath, localtime() -10 )
+
+		call apex#MakeProject(filePath, 'modified', ['checkOnly', className, methodName], projectName)
 	elseif strlen(className) > 0
 		call apex#MakeProject(filePath, 'onefile', [modeName, className], projectName)
 	else 
