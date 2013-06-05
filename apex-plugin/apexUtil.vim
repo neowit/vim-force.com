@@ -306,4 +306,22 @@ endfunction
 function! apexUtil#unescapeFileName(fileName)
 	return substitute(a:fileName, '\\\(\\\|[^\\]\)', '\1', 'g')
 endfunction
+
+" command line parameter completion
+" Args:
+" arg: ArgLead - the leading portion of the argument currently being
+"			   completed on
+" line: CmdLine - the entire command line
+" pos: CursorPos - the cursor position in it (byte index)
+" candidates list of completion candidate values, e.g. ['val1', 'anotherVal']
+"
+function! apexUtil#commandLineComplete(arg, line, pos, candidates)
+	let res = []
+	for val in a:candidates
+		if 0 == len(a:arg) || match(val, a:arg) >= 0 
+			call add(res, val)
+		endif	
+	endfor	
+	return res
+endfunction	
 	

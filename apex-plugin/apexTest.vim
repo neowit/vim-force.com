@@ -71,7 +71,7 @@ function! s:listClassNames(arg, line, pos)
 	let projectSrcPath = apex#getApexProjectSrcPath()
 	
 	let fullPaths = apexOs#glob(projectSrcPath . "**/*.cls")
-	let res = []
+	let candidates = []
 	for fullName in fullPaths
 		"check if this class contains testMethod
 		if len(apexUtil#grepFile(fullName, 'testmethod')) > 0
@@ -79,11 +79,11 @@ function! s:listClassNames(arg, line, pos)
 			let fName = fnamemodify(fName, ":r") " remove .cls
 			"take into account file prefix which user have already entered
 			if 0 == len(a:arg) || match(fName, a:arg) >= 0 
-				call add(res, fName)
+				call add(candidates, fName)
 			endif
 		endif
 	endfor
-	return res
+	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, candidates)
 endfunction	
 
 " using name of the class selected in previous argument list names of all
@@ -99,19 +99,19 @@ function! s:listMethodNames(arg, line, pos)
 	let className = l[2] " class name is second parameter
 	let projectSrcPath = apex#getApexProjectSrcPath()
 	let filePath = apexOs#joinPath([projectSrcPath, 'classes', className.'.cls'])
-	let res = [s:ALL]
+	let candidates = [s:ALL]
 	for lineNum in apexUtil#grepFile(filePath, '\<testmethod\>')
 		let methodName = s:getMethodName(filePath, lineNum - 1)
 		if len(methodName) > 0
-			call add(res, methodName)
+			call add(candidates, methodName)
 		endif	
 	endfor
-
-	return res
+	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, candidates)
 endfunction	
 
 function! s:listModeNames(arg, line, pos)
-	return ['testAndDeploy', 'checkOnly']
+	let candidates = ['testAndDeploy', 'checkOnly']
+	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, candidates)
 endfunction	
 
 " Using given file name and starting from lineNum try to identify method name
