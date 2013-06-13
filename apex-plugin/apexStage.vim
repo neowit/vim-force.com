@@ -46,7 +46,8 @@ function! apexStage#open(filePath)
 	if exists("g:APEX_STAGE_BUF_NUM") && bufloaded(g:APEX_STAGE_BUF_NUM)
 		execute 'b '.g:APEX_STAGE_BUF_NUM
 	else "load types list and create new buffer
-		let stageFilePath = apexOs#joinPath([apex#getCacheFolderPath(projectPath), s:STAGE_FILE])
+
+		let stageFilePath = apexStage#getStageFilePath(projectPath)
 		if !filereadable(stageFilePath) || len(readfile(stageFilePath, '', 1)) < 1
 			"file does not exist, and load was abandoned
 			call apexUtil#warning("Nothing staged. use :ApexStageAdd to add files(s) first")
@@ -67,18 +68,7 @@ function! apexStage#open(filePath)
 		let b:SRC_PATH = apex#getApexProjectSrcPath(a:filePath)
 		let g:APEX_STAGE_BUF_NUM = bufnr("%")
 
-		" load header and types list
-		let i = 0
-		while i < s:headerLineCount
-			call setline(i+1, s:header[i])
-			let i += 1
-		endwhile
-
-
-		for line in readfile(stageFilePath, '', 10000) " assuming stage file will never contain more than 10K lines
-			call setline(i+1, line)
-			let i += 1
-		endfor
+		call s:load() " load buffer content
 
 		" Set the buffer name if not already set
 		if bufname('%') != s:BUFFER_NAME
@@ -90,6 +80,8 @@ function! apexStage#open(filePath)
 
 		" write stage into a file every time before user leaving for another buffer 
 		autocmd BufLeave <buffer> call apexStage#write()
+		" reload stage from disk every time when entering buffer
+		autocmd BufEnter <buffer> call s:load()
 	endif
 
 	" syntax highlight
@@ -130,9 +122,16 @@ function! apexStage#write()
 	endif
 endfunction
 
+
 function! apexStage#getStageFilePath(projectPath)
 	return apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:STAGE_FILE])
 endfunction
+
+" local getStageFilePath, when project path is already known
+function s:getStageFilePath() 
+	return apexStage#getStageFilePath(b:PROJECT_PATH)
+endfunction
+
 
 " list staged files
 "Args:
@@ -225,6 +224,14 @@ function! apexStage#remove(filePath)
 
 endfunction	
 
+" delete Stage buffer if loaded and clear lobal variable
+function! apexStage#kill()
+	if exists("g:APEX_STAGE_BUF_NUM") && bufloaded(g:APEX_STAGE_BUF_NUM)
+		execute ":bd ".g:APEX_STAGE_BUF_NUM
+	endif
+	unlet g:APEX_STAGE_BUF_NUM
+endfunction	
+
 " Clear Stage buffer from user dded content
 function! s:clear()
 	" clear buffer first
@@ -238,6 +245,7 @@ function! s:clear()
 		exe firstLine.',$delete'
 		" delete stage buffer
 		execute 'bd ' . g:APEX_STAGE_BUF_NUM 
+
 		"switch back to current buffer
 		if currBuff != g:APEX_STAGE_BUF_NUM
 			execute 'buffer ' . currBuff
@@ -258,6 +266,7 @@ function! apexStage#clear(filePath)
 
 	if filereadable(stageFilePath)
 		if 0 == delete(stageFilePath)
+			call apexStage#kill()
 			echo "Cleared stage from disk"
 		else
 			call apexUtil#warning('failed to delete stage file '.stageFilePath)
@@ -270,3 +279,25 @@ function! apexStage#clear(filePath)
 endfunction	
 
 
+" initialise stage header and load stage file
+function! s:load()
+	let stageFilePath = s:getStageFilePath()
+	if !filereadable(stageFilePath) || len(readfile(stageFilePath, '', 1)) < 1
+		"file does not exist or empty
+		call apexUtil#warning("Nothing staged. use :ApexStageAdd to add files(s) first")
+		return
+	endif
+
+	" load header and types list
+	let i = 0
+	while i < s:headerLineCount
+		call setline(i+1, s:header[i])
+		let i += 1
+	endwhile
+
+
+	for line in readfile(stageFilePath, '', 10000) " assuming stage file will never contain more than 10K lines
+		call setline(i+1, line)
+		let i += 1
+	endfor
+endfunction
