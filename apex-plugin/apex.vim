@@ -45,7 +45,7 @@ let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "
 "Args:
 "Param1: (optional) path to file which belongs to apex project which needs
 "					to be deployed
-"Param2: (optional) - 
+"Param2: (optional) - Mode
 "			'open' - deploy only files from currently open Tabs or Buffers (if
 "					less than 2 tabs open)
 "			'confirm' - all changed files with confirmation for every file
@@ -646,6 +646,21 @@ function! s:prepareApexPackage(filePath, mode)
 	return {} " nothing to deploy
 endfun
 
+" with this method we can specify extra files to be added to deployment
+" package, in addition to files covered by 'modified' deployment mode
+let s:extra_files = []
+function! apex#cacheExtraFile(filePath)
+	if !s:isCachedExtraFile(a:filePath)
+		call add(s:extra_files, a:filePath)
+	endif
+
+endfunction	
+
+function! s:isCachedExtraFile(filePath)
+	return index(s:extra_files, a:filePath) >= 0
+endfunction	
+
+
 " prepares description (list and time) of files to be packed into deployment
 " package
 "Args:
@@ -705,7 +720,7 @@ function! s:prepareFileDescriptor(projectPath, mode, filePath )
 			let metaTime = getftime(fMetaFullPath) 
 			let srcTime = getftime(fSrcFullPath) 
 			"
-			if abs(srcTime - metaTime) > s:FILE_TIME_DIFF_TOLERANCE_SEC 
+			if abs(srcTime - metaTime) > s:FILE_TIME_DIFF_TOLERANCE_SEC || s:isCachedExtraFile(fSrcFullPath)
 				" get  src/classes/MyFile.cls-meta.xml fom /path/to/project/src/classes/MyFile.cls-meta.xml
 				"let fMeta = substitute(fMetaFullPath, projectPath, "", "") 
 				let fMeta = strpart(fMetaFullPath, len(projectPath))
@@ -830,6 +845,7 @@ function! s:prepareFileDescriptor(projectPath, mode, filePath )
 		echoerr 'unsupported type='.type
 		return {}
 	endif
+	let s:extra_files = [] " clear extra files cache
 	return {'filesByFolder':filesByFolder, 'timeMap':timeMap}
 endfunction	
 

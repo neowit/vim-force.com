@@ -35,6 +35,7 @@ function! apexTest#runTest(...)
 	let filePath = ''
 	if strlen(className) > 0
 		let filePath = apexOs#joinPath([projectSrcPath, 'classes', className.'.cls'])
+		call apex#cacheExtraFile(filePath) " make sure that specified class is definitely in the deployment package
 	endif
 
 	if strlen(methodName) > 0 && s:ALL != methodName
@@ -44,15 +45,10 @@ function! apexTest#runTest(...)
 				return
 			endif
 		endif
-		" there is a chance that the test class has not been modified, lets
-		" touch it to make sure it is included in 'modified' list
-		" set last modified time 10 seconds in the past to make sure file is picked up for
-		" deplyment due to difference betwen -meta.xml and actual file time
-		call apexOs#setftime(filePath, localtime() -10 )
 
 		call apex#MakeProject(filePath, 'modified', ['checkOnly', className, methodName], projectName)
 	elseif strlen(className) > 0
-		call apex#MakeProject(filePath, 'onefile', [modeName, className], projectName)
+		call apex#MakeProject(filePath, 'modified', [modeName, className], projectName)
 	else 
 		call apex#MakeProject(filePath, 'modified', [modeName], projectName)
 	endif
