@@ -183,6 +183,7 @@ command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
 "staging
 command! ApexStage :call apexStage#open(expand("%:p"))
 command! ApexStageAdd :call apexStage#add(expand("%:p"))
+command! ApexStageAddOpen :call apexStage#addOpen()
 command! ApexStageRemove :call apexStage#remove(expand("%:p"))
 command! ApexStageClear :call apexStage#clear(expand("%:p"))
 

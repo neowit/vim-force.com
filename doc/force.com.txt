@@ -223,6 +223,7 @@ Plugin exposes following commands:                              *apex-commands*
 
 |ApexStage|                         show/switch-to "Stage" buffer
 |ApexStageAdd|                      add to Stage file in the current buffer
+|ApexStageAddOpen|                  add to Stage files from all open buffers
 |ApexStageRemove|                   remove from Stage file in the current buffer
 |ApexStageClear|                    clear Stage buffer
 
@@ -287,6 +288,10 @@ See also :|ApexRemoveStaged| and :|ApexDeployStaged|.
 
                                                                   *ApexStageAdd*
 Add current file to |ApexStage|.
+
+                                                              *ApexStageAddOpen*
+Cycle through open buffers and add their files to |ApexStage|, provided that these
+are supported apex file types.
 
                                                                   *ApexDeploy*
 Use :|ApexDeploy| to upload/deploy/save all modified files of current project

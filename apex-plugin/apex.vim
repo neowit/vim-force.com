@@ -487,7 +487,7 @@ endfunction
 " in some cases we need to backup all open/modified files 
 " ex: before refresh from SFDC
 function! s:backupOpenFiles(projectPath, projectName)
-	let bufferList = s:getOpenBuffers(a:projectPath)
+	let bufferList = apex#getOpenBuffers(a:projectPath)
 	"
 	let timeStr = strftime(g:apex_backup_folder_time_format)	
 	let backupDir = apexOs#joinPath([apexOs#getBackupFolder(), a:projectName, timeStr])
@@ -540,12 +540,21 @@ endfunction
 " endfunction	
 
 " get all available buffers which have file path relative current project
+" Param1: projectPath - full path to project
+" Param2: [optional] deployable extensions only
 " return: [1, 5, 6, 7, 8] - list of buffer numbers with project files 
-function! s:getOpenBuffers(projectPath)
+function! apex#getOpenBuffers(projectPath, ...)
 	let last_buffer = bufnr('$')
 	let n = 1
 	let buffersMap = {}
 	let projectPathNormal = substitute(a:projectPath, '\', '/', 'g')
+	let extPattern = join(s:APEX_EXTENSIONS, "\\|\\.") 
+	let extPattern = "\\." .extPattern . "$"
+	let deployableOnly = 0
+	if a:0 > 0 && 'deployableOnly' == a:1
+		let deployableOnly = 1
+	endif
+
 	while n <= last_buffer
 		if buflisted(n) 
 			if getbufvar(n, '&modified')
@@ -555,6 +564,14 @@ function! s:getOpenBuffers(projectPath)
 			else
 				" check if buffer belongs to the project
 				let fullpath = expand('#'.n.':p')
+				if deployableOnly
+					" check if file is supported
+					if match(fullpath, extPattern) <= 0
+						"echo "skip file: " . fullpath
+						let n = n+1
+						continue
+					endif
+				endif
 				let fullpath = substitute(fullpath, '\', '/', 'g')
 				if len(fullpath) >0 && !has_key(buffersMap, fullpath) && 0 == match(fullpath, projectPathNormal)
 					let buffersMap[fullpath] = n
@@ -563,6 +580,7 @@ function! s:getOpenBuffers(projectPath)
 		endif
 		let n = n+1
 	endwhile
+
 	return values(buffersMap)
 endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -715,49 +733,41 @@ function! s:prepareFileDescriptor(projectPath, mode, filePath )
 			endif
 		endfor
 	elseif 'open' == type
-		let extPattern = join(s:APEX_EXTENSIONS, "\\|\\.") 
-		let extPattern = "\\." .extPattern . "$"
 		"
 		" get a list of all buffers in all tabs
-		let bufferList = s:getOpenBuffers(a:projectPath)
+		let bufferList = apex#getOpenBuffers(a:projectPath, 'deployableOnly')
 		echo bufferList
 		echohl WarningMsg | echo 'Following files will be deployed' | echohl None 
 		for n in bufferList
-			if buflisted(n)
-				"echo 'ft='.getbufvar(n, "&filetype")
-				let fullpath = expand('#'.n.':p')
-				" check if file is supported
-				if match(fullpath, extPattern) <= 0
-					"echo "skip file: " . fullpath
-					continue
-				endif	
+			"if buflisted(n)
 
-				" get  src/classes/MyFile.cls fom /path/to/project/src/classes/MyFile.cls
-				"let fSrc = substitute(fullpath, projectPath, "", "") 
-				let fSrc = strpart(fullpath, len(projectPath))
+			" get  src/classes/MyFile.cls fom /path/to/project/src/classes/MyFile.cls
+			"let fSrc = substitute(fullpath, projectPath, "", "") 
+			let fullpath = expand('#'.n.':p')
+			let fSrc = strpart(fullpath, len(projectPath))
 
-				let relativeFolderPathPair = apexOs#splitPath(fSrc)
-				let folder = relativeFolderPathPair.head
-				let filesToDeploy = []
-				if has_key(filesByFolder, folder)
-					let filesToDeploy = filesByFolder[folder]
-				endif	
-
-				echo '    '.fSrc
-				call add(filesToDeploy, fSrc)
-				let filesByFolder[folder] = filesToDeploy
-				"
-				"check if file has -meta.xml counterpart
-				let fMetaFullPath = fullpath.'-meta.xml'
-				if filewritable(fMetaFullPath)
-					" no need to set meta file time after deploy
-					let srcTime = getftime(fullpath) 
-					let timeMap[fMetaFullPath] = srcTime
-					call add(filesToDeploy, fSrc.'-meta.xml')
-				endif
-
-				"echo 'name='.expand('#'.n.':p')
+			let relativeFolderPathPair = apexOs#splitPath(fSrc)
+			let folder = relativeFolderPathPair.head
+			let filesToDeploy = []
+			if has_key(filesByFolder, folder)
+				let filesToDeploy = filesByFolder[folder]
 			endif	
+
+			echo '    '.fSrc
+			call add(filesToDeploy, fSrc)
+			let filesByFolder[folder] = filesToDeploy
+			"
+			"check if file has -meta.xml counterpart
+			let fMetaFullPath = fullpath.'-meta.xml'
+			if filewritable(fMetaFullPath)
+				" no need to set meta file time after deploy
+				let srcTime = getftime(fullpath) 
+				let timeMap[fMetaFullPath] = srcTime
+				call add(filesToDeploy, fSrc.'-meta.xml')
+			endif
+
+			"echo 'name='.expand('#'.n.':p')
+			"endif	
 		endfor	
 		" check if user is happy to deploy prepared files
 		let response = input('Deploy [y/N]? ')

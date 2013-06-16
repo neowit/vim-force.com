@@ -193,6 +193,16 @@ function! apexStage#add(...)
 
 endfunction	
 
+" add all open files to stage
+function! apexStage#addOpen()
+	let filePath = expand("%:p")
+	let projectPath = apex#getSFDCProjectPathAndName(filePath).path
+	let bufferList = apex#getOpenBuffers(projectPath, 'deployableOnly')
+	for n in bufferList
+		let fullpath = expand('#'.n.':p')
+		call apexStage#add(fullpath)
+	endfor
+endfunction
 "remove given file from stage cache
 function! apexStage#remove(filePath)
 
