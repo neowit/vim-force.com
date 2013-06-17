@@ -822,23 +822,25 @@ function! s:prepareFileDescriptor(projectPath, mode, filePath )
 		for relFileName in apexStage#list(projectPath)
 			"echo "staged relFileName=".relFileName
 			"relFileName = 'classes/MyClass.cls'
-			let folder = apexOs#joinPath([s:SRC_DIR_NAME, apexOs#splitPath(relFileName).head]) "src/classes/
-			let fSrc = apexOs#joinPath([s:SRC_DIR_NAME, relFileName ]) "src/classes/MyClass.cls
-			let fullPath = apexOs#joinPath([projectPath, fSrc ]) "/path/to/project/src/classes/MyClass.cls
-			let filesToDeploy = []
-			if has_key(filesByFolder, folder)
-				let filesToDeploy = filesByFolder[folder]
-			endif	
-			call add(filesToDeploy, fSrc)
-			"check if file has -meta.xml counterpart
-			let fMetaFullPath = fullPath.'-meta.xml'
-			if filewritable(fMetaFullPath)
-				let srcTime = getftime(fullPath) 
-				let timeMap[fMetaFullPath] = srcTime
-				call add(filesToDeploy, fSrc.'-meta.xml')
-			endif
+			if len(relFileName) > 0 && 0 != stridx(relFileName, '#') " skip blank lines
+				let folder = apexOs#joinPath([s:SRC_DIR_NAME, apexOs#splitPath(relFileName).head]) "src/classes/
+				let fSrc = apexOs#joinPath([s:SRC_DIR_NAME, relFileName ]) "src/classes/MyClass.cls
+				let fullPath = apexOs#joinPath([projectPath, fSrc ]) "/path/to/project/src/classes/MyClass.cls
+				let filesToDeploy = []
+				if has_key(filesByFolder, folder)
+					let filesToDeploy = filesByFolder[folder]
+				endif	
+				call add(filesToDeploy, fSrc)
+				"check if file has -meta.xml counterpart
+				let fMetaFullPath = fullPath.'-meta.xml'
+				if filewritable(fMetaFullPath)
+					let srcTime = getftime(fullPath) 
+					let timeMap[fMetaFullPath] = srcTime
+					call add(filesToDeploy, fSrc.'-meta.xml')
+				endif
 
-			let filesByFolder[folder] = filesToDeploy
+				let filesByFolder[folder] = filesToDeploy
+			endif
 
 		endfor	
 	else
