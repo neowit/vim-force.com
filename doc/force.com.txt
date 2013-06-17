@@ -272,18 +272,19 @@ Once refresh is complete it is possible to quickly open diff tool to compare
 current file with its pre-refresh version.
 Same as with |ApexCompare| you only have to pick top level folder of the
 relevant backup i.e. parent of ./src/ folder, no need to drill down into
-project subfolders
+project subfolders.
 
                                                                   *ApexStage*
 Stage is a temporary buffer which can be used as a stack to list files/metadata
 types which will be used in subsequent Deploy/Remove operations.
 
 Stage content can be manipulated either by commands like :|ApexStageAdd|,
-:|ApexStageRemove|, :|ApexStageClear| or directly like any other text buffer.
-Stage is persistent and retains its content between vim editing sessions unless
-explicitly cleared.  If you use :Write command while in Stage buffer, or just
-switch from Stage to another file/buffer, Stage content will be autimatically
-written to a disk file.
+:|ApexStageRemove|, :|ApexStageClear|, :|ApexStageAddOpen| or directly like any
+other text buffer.  
+Stage is persistent and retains its content between vim
+editing sessions unless explicitly cleared.  If you use :Write command while in
+Stage buffer, or just switch from Stage to another file/buffer, Stage content
+will be automatically written to a disk file.
 See also :|ApexRemoveStaged| and :|ApexDeployStaged|.
 
                                                                   *ApexStageAdd*
