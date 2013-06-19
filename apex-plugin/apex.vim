@@ -170,7 +170,7 @@ function! apex#MakeProject(...)
 
 	endif
 
-	if result == 0 && 'all' != l:mode
+	if result == 0 && 'all' != l:mode && !l:checkOnly && !l:checkDeploy
 		" no errors found, mark files as deployed
 		for metaFilePath in keys(projectDescriptor.timeMap)
 			call apexOs#setftime(metaFilePath, projectDescriptor.timeMap[metaFilePath])
