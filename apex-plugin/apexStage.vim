@@ -236,10 +236,12 @@ endfunction
 
 " delete Stage buffer if loaded and clear lobal variable
 function! apexStage#kill()
-	if exists("g:APEX_STAGE_BUF_NUM") && bufloaded(g:APEX_STAGE_BUF_NUM)
-		execute ":bd ".g:APEX_STAGE_BUF_NUM
+	if exists("g:APEX_STAGE_BUF_NUM")
+		if bufloaded(g:APEX_STAGE_BUF_NUM)
+			execute ":bd ".g:APEX_STAGE_BUF_NUM
+		endif	
+		unlet g:APEX_STAGE_BUF_NUM
 	endif
-	unlet g:APEX_STAGE_BUF_NUM
 endfunction	
 
 " Clear Stage buffer from user dded content
