@@ -141,6 +141,8 @@ trigger ${1:`!v Filename()`} on ${2:object-name} (after insert, after update, af
 		handler.afterUpdate();
 	} else if (Trigger.isUnDelete) {
 		handler.afterUnDelete();
+	} else if (Trigger.isDelete) {
+		handler.afterDelete();
 	}
 }
 endsnippet
