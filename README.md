@@ -17,7 +17,8 @@ platform using only web browser and Vim.
 It is designed for those who do not feel productive in Force.com IDE for Eclipse.
 
 General vim-force.com overview - http://www.youtube.com/watch?v=x5zKA6V__co  
-`:ApexRetrieve` command demo - http://youtu.be/umO86ji2Iqw
+`:ApexRetrieve` command demo - http://youtu.be/umO86ji2Iqw  
+`:ApexStage` command demo - http://youtu.be/zQg8LORh8uc
 
 Other vim plugins recommended for use alongside vim-force.com plugin  
 * FuzzyFinder - http://www.youtube.com/watch?v=EtiaXVnTA4g  
