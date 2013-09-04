@@ -138,7 +138,7 @@ function! s:getMethodName(filePath, lineNum)
 		" from here we can look for first '('
 		let bracketPos = match(text, '(', rangeStart)
 		if bracketPos > 2
-			let index = bracketPos - 2 
+			let index = bracketPos - 1
 			" found '(' now first word on the left will be method name
 			while 1
 				let chr = text[index]
@@ -153,7 +153,7 @@ function! s:getMethodName(filePath, lineNum)
 		endif	
 	endif
 		
-	return methodName
+	return apexUtil#trim(methodName)
 endfunction
 
 " check if current line is a unit test failure report line
