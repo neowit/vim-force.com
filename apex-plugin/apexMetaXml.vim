@@ -315,7 +315,7 @@ function! s:getHeader()
 endfunction
 
 function! s:getFooter()
-	let lines = [ "	<version>".g:apex_API_version."</version>",
+	let lines = [ "	<version>".s:stringify(g:apex_API_version)."</version>",
 				\ "</Package>",
 				\]
 	return lines
@@ -363,7 +363,7 @@ function s:getFilesContentApexClass(fName)
 	let metaContent = []
 	let metaContent = metaContent + ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>"]
 	let metaContent = metaContent + ["<ApexClass xmlns=\"http://soap.sforce.com/2006/04/metadata\">"]
-	let metaContent = metaContent + ["    <apiVersion>". g:apex_API_version . "</apiVersion>"]
+	let metaContent = metaContent + ["    <apiVersion>". s:stringify(g:apex_API_version) . "</apiVersion>"]
 	let metaContent = metaContent + ["    <status>Active</status>"]
 	let metaContent = metaContent + ["</ApexClass>"]
 
@@ -384,7 +384,7 @@ function s:getFilesContentApexPage(fName)
 	let metaContent = []
 	let metaContent = metaContent + ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>"]
 	let metaContent = metaContent + ["<ApexPage xmlns=\"http://soap.sforce.com/2006/04/metadata\">"]
-	let metaContent = metaContent + ["    <apiVersion>". g:apex_API_version . "</apiVersion>"]
+	let metaContent = metaContent + ["    <apiVersion>". s:stringify(g:apex_API_version) . "</apiVersion>"]
 	let metaContent = metaContent + ["    <label>".a:fName."</label>"]
 	let metaContent = metaContent + ["</ApexPage>"]
 
@@ -405,10 +405,23 @@ function s:getFilesContentApexTrigger(fName)
 	let metaContent = []
 	let metaContent = metaContent + ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>"]
 	let metaContent = metaContent + ["<ApexTrigger xmlns=\"http://soap.sforce.com/2006/04/metadata\">"]
-	let metaContent = metaContent + ["    <apiVersion>". g:apex_API_version . "</apiVersion>"]
+	let metaContent = metaContent + ["    <apiVersion>". s:stringify(g:apex_API_version) . "</apiVersion>"]
 	let metaContent = metaContent + ["    <status>Active</status>"]
 	let metaContent = metaContent + ["</ApexTrigger>"]
 
 	return {"mainFileContent": fileContent, "metaContent": metaContent, "fileExtension": "trigger", "folderName": "triggers"}
 
 endfun	
+
+" generate a string for the provided value without
+" additional surrounding quotes that string creates
+" @param: target value to be converted into a string
+" @return: string representation of the provided value
+"     without additional surrounding quotes
+function s:stringify(value)
+	if type(a:value) == type("")
+		return a:value
+	else
+		return string(a:value)
+	end
+endfun
