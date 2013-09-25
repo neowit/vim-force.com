@@ -82,7 +82,7 @@ if !executable(s:trim(g:apex_binary_tee))
 endif	
 
 "set desired API version
-call s:let('g:apex_API_version', '27.0')
+call s:let('g:apex_API_version', '28.0')
 
 " set pollWaitMillis for ant tasks. See ant-salesforce.jar
 " documentation for 'pollWaitMillis' parameter
