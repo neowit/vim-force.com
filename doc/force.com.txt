@@ -338,13 +338,13 @@ exist in SFDC.
 Deploy all files previously added by :|ApexStageAdd| command
 
                                                             *ApexTest*
-Very basic function that is similar to :|ApexDeploy| but runs unit tests in all
-modified classes that contain 'testMethod' prior to actual deployment.
-By default no debug log is generated. Log level can be configured via
+Very basic function that is similar to :|ApexDeploy| but runs unit tests.  
+If no class name specified then will run tests in all modified classes that
+contain 'testMethod'.
+
+By default no debug log is generated. Default Log level can be configured via
 |'g:apex_test_logType'| variable.
-NOTE: unlike :|ApexDeploy| if you run :|ApexTest| and get unit tests
-failure(s) or insifficient overall code coverage then SFDC rejects changes and
-you files are NOT saved in SFDC.
+
 :|ApexTest| supports command line parameters (and their completion)
 Param: 1 - mode: 'testAndDeploy' or 'checkOnly', default 'testAndDeploy'
 Param: 2 - class name - use this parameter to run only unit tests in a specific
@@ -354,6 +354,10 @@ Param: 3 - method name - if test class contains several 'testMethod'-s then
            methods will be skipped. This is particularly useful when you want to see log
            file from specific test and do not want other tests to pollute the log.
 Param: 4 - target Org/project name. See :|ApexDeploy| for more details
+
+Differences to :|ApexDeploy| 
+- if you run :|ApexTest| and get unit tests failure(s) or insifficient overall
+  code coverage then SFDC rejects changes and you files are NOT saved in SFDC.
 
                                                             *ApexGitInit*
 If git is available then :|ApexGitInit| can be used to initialise new git
@@ -554,7 +558,10 @@ ex: >
 Optional.
 When commands like |ApexNewFile| generate new *-meta.xml file the 
 <apiVersion>25.0</apiVersion> value is taken from 'g:apex_API_version' variable.
-Set this variable to desired value if default does not meet your needs.
+Set this variable to the necessary value if default does not meet your needs.
+ex: >
+	let g:apex_API_version="25.0"
+<
 
                                                        *'g:apex_pollWaitMillis'*
 Optional. 
