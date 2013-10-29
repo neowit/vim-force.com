@@ -199,6 +199,8 @@ command! ApexCompare :call ApexCompare()
 " initialise Git repository and add files
 command! ApexGitInit :call apexUtil#gitInit()
 
+" display last ANT log
+command! ApexLog :call apexAnt#openLastLog()
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Apex Code - compare current file with its own in another Apex Project
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

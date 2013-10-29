@@ -265,9 +265,19 @@ function! apexAnt#execute(command, projectName, projectFolder, ...)
 		"process nicely
 		throw "OPERATION FAILED. Check error log. ".ANT_ERROR_LOG
 	endif
+	" init s:apex_last_log to use it subsequently in :ApexLog command
+	let s:apex_last_log=ANT_ERROR_LOG
+
 	return ANT_ERROR_LOG
 endfunction
 
+function! apexAnt#openLastLog()
+	if exists("s:apex_last_log")
+		:execute "e " . fnameescape(s:apex_last_log)
+	else
+		call apexUtil#info('Log has not been created in the current session.')
+	endif
+endfunction
 
 " ask user which log type to use for running unit tests 
 " result is assigned value of g:apex_test_logType variable
