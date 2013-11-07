@@ -60,7 +60,8 @@ syn keyword apexcodeRepeat			for while do
 syn match 	apexcodePreProc			"\<\(with sharing\|without sharing\)\>"
 syn keyword apexcodePreProc			testMethod
 " apexcode annotations
-syn match	apexcodePreProc			"@\(isTest\|future\|RemoteAction\)"
+syn match	apexcodePreProc			"@\(isTest\|future\|RemoteAction\|TestVisible\|RestResource\)"
+syn match	apexcodePreProc			"@Http\(Delete\|Get\|Post\|Patch\|Put\)"
 
 syn keyword	apexcodeException		try catch finally throw Exception
 syn keyword	apexcodeOperator		new instanceof	
