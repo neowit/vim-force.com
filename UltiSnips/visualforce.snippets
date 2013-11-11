@@ -1,0 +1,272 @@
+extends html
+
+snippet actionFunction
+<apex:actionFunction name="$1" action="{!$2}" rerender="$3" status="$4" />
+endsnippet
+
+snippet actionStatus
+<apex:actionStatus ${1:id="$2"} onStart="${3:startFunc()}" onStop="${4:stopFunc()}" />
+endsnippet
+
+snippet attribute
+<apex:attribute name="$1" description="$2" type="$3" required="$4" />
+endsnippet
+
+snippet column
+<apex:column headerValue="{!$1}" value="{!$2}" />
+endsnippet
+
+snippet commandButton
+<apex:commandButton action="{!$1}" value="${2:Submit}" ${3:id="$4"} />
+endsnippet
+
+snippet commandLink
+<apex:commandLink action="{!$1}" value="${2:Link text}" ${3:id="$4"} />
+endsnippet
+
+snippet component
+<apex:component controller="${1:`!v Filename()`}" allowDML="$2">
+	$3
+</apex:component>
+endsnippet
+
+snippet composition
+<apex:composition template="$1">
+	$2
+</apex:composition>
+endsnippet
+
+snippet dataList
+<apex:dataList value="{!$1}" var="$2">
+	$3
+</apex:dataList>
+endsnippet
+
+snippet dataTable
+<apex:dataTable value="{!$1}" var="$2">
+	$3
+</apex:dataTable>
+endsnippet
+
+snippet define
+<apex:define name="$1">
+	$2
+</apex:define>
+endsnippet
+
+snippet form
+<apex:form${1: id="$2"}>
+	$3
+</apex:form>
+endsnippet
+
+snippet include
+<apex:include pageName="$1" />
+endsnippet
+
+snippet includeScript "standalone static resource"
+<apex:includeScript value="{!$Resource.${1:resource_name}}" />
+endsnippet
+
+snippet includeScript "ZIP file static resource"
+<apex:includeScript value="{!URLFor($Resource.${1:resource_name}, '${2:path/to/script}.js')}" />
+endsnippet
+
+snippet input
+<apex:input value={!$1}" ${2:id="$3" }${4:type="$5" }/>
+endsnippet
+
+snippet inputField
+<apex:inputField value="$1" ${2:type="$3" }/>
+endsnippet
+
+snippet inputFile
+<apex:inputFile value="{!$1}" filename="{!$2}" />
+endsnippet
+
+snippet inputHidden
+<apex:inputHidden value="{!$1}" ${2:id="{!$3}" }/>
+endsnippet
+
+snippet inputSecret
+<apex:inputSecret value="{!$1}" ${2:id="{!$3}" }/>
+endsnippet
+
+snippet inputText
+<apex:inputText value="{!$1}" ${2:id="{!$3}" }/>
+endsnippet
+
+snippet inputTextarea
+<apex:inputTextarea value="{!$1}" ${2:id="{!$3}" }/>
+endsnippet
+
+snippet insert
+<apex:insert name="$1" />
+endsnippet
+
+snippet message
+<apex:message for="${1:id}" ${2:styleClass="$3" }/>
+endsnippet
+
+snippet messages
+<apex:messages ${1:styleClass="$2" }/>
+endsnippet
+
+snippet outputField
+<apex:outputField value="{!$1}" />
+endsnippet
+
+snippet outputLabel
+<apex:outputLabel value="$1" for="$2" />
+endsnippet
+
+snippet outputLink
+<apex:outputLink value="$1" ${2:id="$3"}
+endsnippet
+
+snippet outputPanel
+<apex:outputPanel${1: id="$2"}${3: layout="${4:block}"}>
+	$5
+</apex:outputPanel>
+endsnippet
+
+snippet outputText
+<apex:outputText value="$1" />
+endsnippet
+
+snippet page
+<apex:page${1:${2: controller}="$3"}${4: extensions="$5"}${6: docType="${7:html-5.0}"}${8: title="$9"}${10: action="$11"}${12: showHeader="false" sidebar="false" standardStylesheets="false"}>
+	$13
+</apex:page>
+endsnippet
+
+snippet pageBlock
+<apex:pageBlock${1: title="$2"}${3: id="$4"}>
+	$5
+</apex:pageBlock>
+endsnippet
+
+snippet pageBlockButtons
+<apex:pageBlockButtons${1: id="$2"}>
+	$3
+</apex:pageBlockButtons>
+endsnippet
+
+snippet pageBlockSection
+<apex:pageBlockSection title="$1" columns="$2" collapsible="$3"${4: id="$5"}>
+	$6
+</apex:pageBlockSection>
+endsnippet
+
+snippet pageBlockSectionItem
+<apex:pageBlockSectionItem$2>
+	$2
+</apex:pageBlockSectionItem>
+endsnippet
+
+snippet pageBlockTable
+<apex:pageBlockTable value="{!$1}" var="$2">
+	$3
+</apex:pageBlockTable>
+endsnippet
+
+snippet pageMessage
+<apex:pageMessage severity="${1:error}"${2: summary="$3"}${4: strength="${5:0}"} />
+endsnippet
+
+snippet pageMessages
+<apex:pageMessages />
+endsnippet
+
+snippet panelBar
+<apex:panelBar${1: id="$2"}$3>
+	$4
+</apex:panelBar>
+endsnippet
+
+snippet panelBarItem
+<apex:panelBarItem label="$1"${2: id="$3"}$4>
+	$5
+</apex:panelBarItem>
+endsnippet
+
+snippet panelGrid
+<apex:panelGrid columns="$1"${2: id="$3"}>
+	$6
+</apex:panelGrid>
+endsnippet
+
+snippet panelGroup
+<apex:panelGroup${1: id="$2"}>
+	$3
+</apex:panelGroup>
+endsnippet
+
+snippet param
+<apex:param name="$1" value="{!$2}" $3/>
+endsnippet
+
+snippet relatedList
+<apex:relatedList list="$1" />
+endsnippet
+
+snippet repeat
+<apex:repeat value="{!$1}" var="$2"${3: id="$4"}>
+	$5
+</apex:repeat>
+endsnippet
+
+snippet sectionHeader
+<apex:sectionHeader title="$1"${2: subtitle="$3"}${4: id="$5"} />
+endsnippet
+
+snippet selectCheckboxes
+<apex:selectCheckboxes value="{!$1}">
+	${2:<apex:selectOptions value="{!$3}" />}
+</apex:selectCheckboxes>
+endsnippet
+
+snippet selectList
+<apex:selectList value="{!$1}">
+	${2:<apex:selectOptions value="{!$3}" />}
+</apex:selectList>
+endsnippet
+
+snippet selectOption
+<apex:selectOption itemValue="$1" itemLabel="$2" />
+endsnippet
+
+snippet selectOptions
+<apex:selectOptions value="$1" />
+endsnippet
+
+snippet selectRadio
+<apex:selectRadio value="$1">
+	${2:<apex:selectOptions value="{!$3}" />}
+</apex:selectRadio>
+endsnippet
+
+snippet stylesheet "standalone static resource"
+<apex:stylesheet value="$1" />
+endsnippet
+
+snippet stylesheet "ZIP file static resource"
+<apex:stylesheet value="{!URLFor($Resource.${1:resource_name}, '${2:path/to/stylesheet}.css')}" />
+endsnippet
+
+snippet tab
+<apex:tab label="$1"${2: name="$3"}${4: id="$5"}>
+	$6
+</apex:tab>
+endsnippet
+
+snippet tabPanel
+<apex:tabPanel selectedTab="$1" switchType="${2:server}"${3: id="$4"}>
+	$5
+</apex:tabPanel>
+endsnippet
+
+snippet variable
+<apex:variable value="{!$1}" var="$2" />
+endsnippet
+
