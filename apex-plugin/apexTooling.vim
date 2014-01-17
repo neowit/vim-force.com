@@ -110,6 +110,106 @@ function apexTooling#refreshProject(filePath)
 	call apexTooling#execute("refresh", projectName, projectPath)
 endfunction	
 
+" parses result file and
+" displays errors (if any) in quickfix window
+" returns 
+" 0 - no errors found
+" value > 0 - number of errors found
+function! s:parseErrorLog(logFilePath, projectPath)
+	"clear quickfix
+	call setqflist([])
+	call CloseEmptyQuickfixes()
+
+	let fileName = a:logFilePath
+	if bufexists(fileName)
+		" kill buffer with ant log file, otherwise vimgrep uses its buffer instead
+		" updated file
+		try
+			exe "bdelete! ".fnameescape(fileName)
+		catch /^Vim\%((\a\+)\)\=:E94/
+			" ignore
+		endtry	 	
+	endif	
+
+	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
+		call apexUtil#info("No errors found")
+		return 0
+	endif
+
+	echo "Build failed" 
+	call s:fillQuickfix(a:logFilePath, a:projectPath)
+
+endfunction
+
+" Process Compile and Unit Test errors and populate quickfix
+"
+" http://vim.1045645.n5.nabble.com/execute-command-in-vim-grep-results-td3236900.html
+" http://vim.wikia.com/wiki/Automatically_sort_Quickfix_list
+" 
+" Param: logFilePath - full path to the response file
+" Param: projectPath - full path to the project folder which contains
+"		package.xml and 'src'
+function! s:fillQuickfix(logFilePath, projectPath)
+	" error is reported like so
+	" ERROR: {"line" : 3, "column" : 10, "filePath" : "src/classes/A_Fake_Class.cls", "text" : "Invalid identifier: test22."}
+	let l:lines = s:grepFile(a:logFilePath, 'ERROR: ')
+	let l:errorList = []
+
+	let index = 0
+	while index < len(l:lines)
+		let line = substitute(l:lines[index], 'ERROR: ', "", "")
+		let err = eval(line)
+		let errLine = {}
+		if has_key(err, "line")
+			let errLine.lnum = err["line"]
+		endif
+		if has_key(err, "column")
+			let errLine.col = err["column"] 
+		endif
+		if has_key(err, "text")
+			let errLine.text = err["text"]
+		endif
+		if has_key(err, "filePath")
+			let errLine.filename = apexOs#joinPath(a:projectPath, err["filePath"])
+		endif
+
+		call add(l:errorList, errLine)
+		let index = index + 1
+	endwhile
+
+
+	call setqflist(l:errorList)
+	copen
+
+
+endfunction	
+
+" grep file and return found lines
+function! s:grepFile(filePath, expr)
+	let currentQuickFix = getqflist()
+	let res = []
+	
+	try
+		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
+		exe exprStr
+		"expression found
+		"get line numbers from quickfix
+		for qfLine in getqflist()
+			call add(res, qfLine.text)
+		endfor	
+		
+	"catch  /^Vim\%((\a\+)\)\=:E480/
+	catch  /.*/
+		"echomsg "expression NOT found" 
+	endtry
+	
+	" restore quickfix
+	call setqflist(currentQuickFix)
+	
+	return res
+endfunction
+
+
 function! apexTooling#execute(action, projectName, projectPath, ...)
 	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
 	let responseFilePath = apexOs#joinPath(a:projectPath, ".vim-force.com", "response_" . a:action)
@@ -125,6 +225,8 @@ function! apexTooling#execute(action, projectName, projectPath, ...)
 	let l:command = l:command  . " --responseFilePath=" . shellescape(responseFilePath)
 	
 	call apexOs#exe(l:command, 'M') "disable --more--
+
+	call s:parseErrorLog(responseFilePath, a:projectPath)
 
 endfunction
 
