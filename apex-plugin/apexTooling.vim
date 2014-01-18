@@ -83,22 +83,44 @@ function apexTooling#deploy(...)
 
 endfunction
 
+"run unit tests
+"Args:
+"filePath:  path to file which belongs to apex project
+"Param1: - mode
+"			'checkOnly' - dry-run deployment or tests
+"			'testAndDeploy' - deploy if tests successful
+"							only relevant when mode:"test"
+"
+"Param2: - className: (optional) - if provided then only run tests in the specified class
+"
+"Param3: - methodName:(optional) - if provided then only run specified method in the class
+"
+"Param4: - orgName:(optional) if provided then given project name will be used as
+"						target Org name.
+"						must match one of .properties file with	login details
+function s:runTest(...)
+endfunction
+
 "Args:
 "Param1: path to file which belongs to apex project
 function apexTooling#printChangedFiles(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let projectPath = projectPair.path
-	let projectName = projectPair.name
-	call apexTooling#execute("listModified", projectName, projectPath)
+	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {})
 endfunction	
 
 "Args:
 "Param1: path to file which belongs to apex project
 function apexTooling#refreshProject(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let projectPath = projectPair.path
-	let projectName = projectPair.name
-	call apexTooling#execute("refresh", projectName, projectPath)
+	call apexTooling#execute("refresh", projectPair.name, projectPair.path, {})
+endfunction	
+
+"list potential conflicts between local and remote
+"Args:
+"Param1: path to file which belongs to apex project
+function apexTooling#listConflicts(filePath)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	call apexTooling#execute("listConflicts", projectPair.name, projectPair.path, {})
 endfunction	
 
 " parses result file and
@@ -231,4 +253,5 @@ command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployModified
 command! -nargs=0 ARefreshProject :call apexTooling#refreshProject(expand("%:p"))
 
 command! APrintChanged :call apexTooling#printChangedFiles(expand("%:p"))
+command! AListConflicts :call apexTooling#listConflicts(expand("%:p"))
 
