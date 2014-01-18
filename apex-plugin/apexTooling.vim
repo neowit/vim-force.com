@@ -57,7 +57,7 @@ function apexTooling#deploy(...)
 		return
 	endif
 	
-	
+
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
 	let projectPath = projectPair.path
 	let projectName = projectPair.name
@@ -145,13 +145,35 @@ function! s:parseErrorLog(logFilePath, projectPath)
 	endif	
 
 	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
-		call apexUtil#info("No errors found")
+		" check if we have messages
+		if s:displayMessages(a:logFilePath, a:projectPath, 'MESSAGE: ') > 0
+			call s:displayMessages(a:logFilePath, a:projectPath, 'MESSAGE DETAIL: ')
+		else
+			call apexUtil#info("No errors found")
+		endif
 		return 0
 	endif
 
 	echo "Build failed" 
+	" check if we have messages
+	call s:displayMessages(a:logFilePath, a:projectPath, 'MESSAGE: ')
+	call s:displayMessages(a:logFilePath, a:projectPath, 'MESSAGE DETAIL: ')
+	
 	call s:fillQuickfix(a:logFilePath, a:projectPath)
 
+endfunction
+
+"Returns: number of messages satisfying provided prefix
+function! s:displayMessages(logFilePath, projectPath, prefix)
+	let l:lines = s:grepFile(a:logFilePath, a:prefix)
+	let index = 0
+	while index < len(l:lines)
+		let line = substitute(l:lines[index], a:prefix, "", "")
+		let message = eval(line)
+		call apexUtil#warning(message["text"])
+		let index = index + 1
+	endwhile
+	return index
 endfunction
 
 " Process Compile and Unit Test errors and populate quickfix
@@ -190,11 +212,10 @@ function! s:fillQuickfix(logFilePath, projectPath)
 		let index = index + 1
 	endwhile
 
-
 	call setqflist(l:errorList)
-	copen
-
-
+	if len(l:errorList) > 0
+		copen
+	endif
 endfunction	
 
 " grep file and return found lines
@@ -236,7 +257,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	let l:command = l:command  . " --config=" . shellescape(projectPropertiesPath)
 	let l:command = l:command  . " --projectPath=" . shellescape(a:projectPath)
 	let l:command = l:command  . " --responseFilePath=" . shellescape(responseFilePath)
-	
+
 	if len(a:extraParams) > 0
 		for key in keys(a:extraParams)
 			let l:command = l:command  . " --" . key . "=" . a:extraParams[key]
