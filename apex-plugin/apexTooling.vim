@@ -31,64 +31,55 @@ endfor
 
 "let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
 let s:MAKE_MODES = ['Modified'] "supported Deploy modes
+
 "Args:
-"Param2: (optional) - Mode
-"			'open' - deploy only files from currently open Tabs or Buffers (if
+"Param1: mode:
+"			'Modified' - all changed files
+"			'Open' - deploy only files from currently open Tabs or Buffers (if
 "					less than 2 tabs open)
-"			'confirm' - all changed files with confirmation for every file
-"			'modified' - all changed files
-"			'all' - all files under ./src folder
-"			'staged' - all files listed in stage-list.txt file
-"			'onefile' - single file specified in param 1
-"Param3: (optional) - list [] of other params
-"		0:
-"		  'testAndDeploy' - run tests in all files that contain 'testMethod' and if
-"					successful then deploy
-"		  'checkOnly' - run tests but do not deploy
-"		  'checkOnlyDeploy' - as normal deployment but use 'checkOnly' ant flag
-"		1: 
-"		  className - if provided then only run tests in the specified class
-"		2:
-"		  methodName - if provided then only run specified method in the class
-"		  provided as 1:
-"Param4: destination project name, must match one of .properties file with
-"		login details
+"			'Confirm' - all changed files with confirmation for every file
+"			'All' - all files under ./src folder
+"			'Staged' - all files listed in stage-list.txt file
+"			'Onefile' - single file specified in param 1
+"Param2: subMode: (optional), allowed values:
+"			'deploy' (default) - normal deployment
+"			'checkOnly' - dry-run deployment or tests
+"Param3: orgName:(optional) if provided then given project name will be used as
+"						target Org name.
+"						must match one of .properties file with	login details
 function apexTooling#deploy(...)
 	let filePath = expand("%:p")
+	let l:mode = a:0 > 0? a:1 : 'Modified'
+	let l:subMode = a:0 > 1? a:2 : 'deploy'
 
-	if a:0 >= 1 && index(s:MAKE_MODES, a:1) >= 0
-		let l:mode = a:1
-	else
+	if index(s:MAKE_MODES, l:mode) < 0
 		call apexUtil#error("Unsupported deployment mode: " . a:1)
 		return
 	endif
 	
-	"process list of optional params ['testAndDeploy',...]
-	let l:runTest = 0
-	let l:checkOnly = 0
-	let l:checkDeploy = 0
-	let params = []
-	if a:0 >1
-		let params = a:2
-		let l:runTest = index(params, 'testAndDeploy') >=0
-		let l:checkOnly = index(params, 'checkOnly') >=0
-		let l:checkDeploy = index(params, 'checkOnlyDeploy') >=0
-	endif
 	
+	let projectPair = apex#getSFDCProjectPathAndName(filePath)
+	let projectPath = projectPair.path
+	let projectName = projectPair.name
 	if a:0 >2
 		" if project name is provided via tab completion then spaces in it
 		" will be escaped, so have to unescape otherwise funcions like
 		" filereadable() do not understand such path name
-		let providedProjectName = apexUtil#unescapeFileName(a:3)
+		let projectName = apexUtil#unescapeFileName(a:3)
 	endif
 
-	let projectPair = apex#getSFDCProjectPathAndName(filePath)
-	let projectPath = projectPair.path
-	let projectName = projectPair.name
-
 	let l:action = "deploy" . l:mode
+	let l:extraParams = {}
+	"checkOnly ?
+	if l:subMode == 'checkOnly'
+		let l:extraParams["checkOnly"] = "true"
+	endif
+	" another org?
+	if projectPair.name != projectName
+		let l:extraParams["callingAnotherOrg"] = "true"
+	endif
 
-	call apexTooling#execute(l:action, projectName, projectPath)
+	call apexTooling#execute(l:action, projectName, projectPath, l:extraParams)
 
 endfunction
 
@@ -210,7 +201,7 @@ function! s:grepFile(filePath, expr)
 endfunction
 
 
-function! apexTooling#execute(action, projectName, projectPath, ...)
+function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
 	let responseFilePath = apexOs#joinPath(a:projectPath, ".vim-force.com", "response_" . a:action)
 
@@ -223,6 +214,12 @@ function! apexTooling#execute(action, projectName, projectPath, ...)
 	let l:command = l:command  . " --config=" . shellescape(projectPropertiesPath)
 	let l:command = l:command  . " --projectPath=" . shellescape(a:projectPath)
 	let l:command = l:command  . " --responseFilePath=" . shellescape(responseFilePath)
+	
+	if len(a:extraParams) > 0
+		for key in keys(a:extraParams)
+			let l:command = l:command  . " --" . key . "=" . a:extraParams[key]
+		endfor
+	endif
 	
 	call apexOs#exe(l:command, 'M') "disable --more--
 
