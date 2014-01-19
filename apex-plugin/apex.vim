@@ -359,7 +359,7 @@ function! apex#refreshProject()
 	if apex#hasChangedFiles(filePath)
 		" display changed files
 		echohl WarningMsg
-		echomsg "There are modified and not synchronised file(s)?"
+		echomsg "There are modified and not synchronised file(s)"
 		echohl None 
 		call apex#printChangedFiles(filePath)
 

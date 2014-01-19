@@ -196,7 +196,7 @@ function! apexOs#copyFile(srcPath, destPath)
 	endif
 	"check if copy succeeded
 	if !filereadable(a:destPath)
-		echoerr 'failed to copy '.a:destPath
+		echoerr 'failed to copy '. a:srcPath . " to " . a:destPath
 	endif	
 endfunction
 
