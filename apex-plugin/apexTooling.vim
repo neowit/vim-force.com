@@ -112,10 +112,63 @@ endfunction
 "Param1: path to file which belongs to apex project
 function apexTooling#refreshProject(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	" first check if there are locally modified files
-	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {})
-	
-	call apexTooling#execute("refresh", projectPair.name, projectPair.path, {})
+	let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {})
+	let logFilePath = resMap["responseFilePath"]
+	" check if SFDC client reported modified files
+	let modifiedFiles = s:grepValues(logFilePath, "MODIFIED_FILE=")
+	if len(modifiedFiles) > 0
+		" modified files detected, record them
+		echohl WarningMsg
+		let response = input('Are you sure you want to lose local changes [y/N]? ')
+		echohl None 
+		if 'y' !=? response
+			return 
+		endif
+		" force refresh
+		let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {"skipModifiedFilesCheck":"true"})
+		if "true" == resMap["success"]
+			" backup files
+			"if len(modifiedFiles) > 0
+			"	call s:backupFiles(projectPair.name, projectPair.path, modifiedFiles)
+			"endif
+
+			" copy files from temp folder into project folder
+			let logFilePath = resMap["responseFilePath"]
+			let l:lines = s:grepValues(logFilePath, "RESULT_FOLDER=")
+			if len(l:lines) > 0
+				let resultFolder = apexOs#removeTrailingPathSeparator(l:lines[0])
+				let resultFolderPathLen = len(resultFolder)
+
+				let l:files = apexOs#glob(resultFolder . "/**/*")
+
+				" backup all files we are about to overwrite
+				let relativePathsOfFilesToBeOverwritten = []
+				for path in l:files
+					if !isdirectory(path)
+						let relativePath = strpart(path, resultFolderPathLen)
+						let relativePath = substitute(relativePath, "^/unpackaged/", "src/", "")
+						call add(relativePathsOfFilesToBeOverwritten, relativePath)
+					endif
+
+				endfor
+				if len(relativePathsOfFilesToBeOverwritten) > 0
+					call s:backupFiles(projectPair.name, projectPair.path, relativePathsOfFilesToBeOverwritten)
+				endif
+
+				" finally move files from temp dir into project dir
+				for sourcePath in l:files
+					if !isdirectory(sourcePath)
+						let relativePath = strpart(sourcePath, resultFolderPathLen)
+						let relativePath = substitute(relativePath, "^/unpackaged/", "src/", "")
+						let destinationPath = apexOs#joinPath([projectPair.path, relativePath])
+						"echo "FROM= " .sourcePath
+						"echo "TO= " .destinationPath
+						call apexOs#copyFile(sourcePath, destinationPath)
+					endif
+				endfor
+			endif
+		endif
+	endif
 endfunction	
 
 "list potential conflicts between local and remote
@@ -126,11 +179,31 @@ function apexTooling#listConflicts(filePath)
 	call apexTooling#execute("listConflicts", projectPair.name, projectPair.path, {})
 endfunction	
 
-" parses result file and
-" displays errors (if any) in quickfix window
-" returns 
-" 0 - no errors found
-" value > 0 - number of errors found
+" Backup files using provided relative paths
+" all file paths are relative to projectPath
+function! s:backupFiles(projectName, projectPath, filePaths)
+	let timeStr = strftime(g:apex_backup_folder_time_format)	
+	let backupDir = apexOs#joinPath([apexOs#getBackupFolder(), a:projectName, timeStr])
+	if !isdirectory(backupDir)
+		call mkdir(backupDir, "p")
+	endif	
+	for relativePath in a:filePaths
+		let fullPath = apexOs#joinPath(a:projectPath, relativePath)
+		let destinationPath = apexOs#joinPath([backupDir, relativePath])
+
+		let destinationDirPath = apexOs#splitPath(destinationPath).head
+		if !isdirectory(destinationDirPath)
+			call mkdir(destinationDirPath, "p")
+		endif
+		call apexOs#copyFile(fullPath, destinationPath)
+	endfor
+
+endfunction
+
+" parses result file and displays errors (if any) in quickfix window
+" returns: 
+" 0 - if RESULT=SUCCESS
+" any value > 0 - if RESULT <> SUCCESS
 function! s:parseErrorLog(logFilePath, projectPath)
 	"clear quickfix
 	call setqflist([])
@@ -160,6 +233,7 @@ function! s:parseErrorLog(logFilePath, projectPath)
 	call s:displayMessages(a:logFilePath, a:projectPath)
 	
 	call s:fillQuickfix(a:logFilePath, a:projectPath)
+	return 1
 
 endfunction
 
@@ -167,27 +241,31 @@ endfunction
 function! s:displayMessages(logFilePath, projectPath)
 	let prefix = 'MESSAGE: '
 	let l:lines = s:grepFile(a:logFilePath, prefix)
-	let index = 0
-	while index < len(l:lines)
-		let line = substitute(l:lines[index], prefix, "", "")
+	let l:index = 0
+	while l:index < len(l:lines)
+		let line = substitute(l:lines[l:index], prefix, "", "")
 		let message = eval(line)
-		let msgType = has_key(message, "type")? message.type : "info"
-		let text = message.text
-		if "error" == msgType
+		let msgType = has_key(message, "type")? message["type"] : "INFO"
+		let text = message["text"]
+		if "ERROR" == msgType
 			call apexUtil#error(text)
-		elseif "warning" == msgType
+		elseif "WARN" == msgType
 			call apexUtil#warning(text)
-		else
+		elseif "INFO" == msgType
 			call apexUtil#info(text)
+		elseif "DEBUG" == msgType
+			echo text
+		else
+			echo text
 		endif
 		call s:displayMessageDetails(a:logFilePath, a:projectPath, message)
-		let index = index + 1
+		let l:index = l:index + 1
 	endwhile
-	if index > 0
+	if l:index > 0
 		" blank line before next message
 		echo ""
 	endif	
-	return index
+	return l:index
 endfunction
 
 " using Id of specific message check if log file has details and display if
@@ -195,24 +273,28 @@ endfunction
 function! s:displayMessageDetails(logFilePath, projectPath, message)
 	let prefix = 'MESSAGE DETAIL: '
 	let l:lines = s:grepFile(a:logFilePath, prefix)
-	let index = 0
-	while index < len(l:lines)
-		let line = substitute(l:lines[index], prefix, "", "")
+	let l:index = 0
+	while l:index < len(l:lines)
+		let line = substitute(l:lines[l:index], prefix, "", "")
 		let detail = eval(line)
 		if detail["messageId"] == a:message["id"]
-			let text = "  " . detail.text
-			let msgType = has_key(detail, "type")? detail.type : a:message.type
-			if "error" == msgType
+			let text = "  " . detail["text"]
+			let msgType = has_key(detail, "type")? detail.type : a:message["type"]
+			if "ERROR" == msgType
 				call apexUtil#error(text)
-			elseif "warning" == msgType
+			elseif "WARN" == msgType
 				call apexUtil#warning(text)
-			else
+			elseif "INFO" == msgType
 				call apexUtil#info(text)
+			elseif "DEBUG" == msgType
+				echo text
+			else
+				echo text
 			endif
 		endif
-		let index = index + 1
+		let l:index = l:index + 1
 	endwhile
-	return index
+	return l:index
 endfunction
 
 " Process Compile and Unit Test errors and populate quickfix
@@ -266,7 +348,7 @@ function! s:grepFile(filePath, expr)
 		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
 		exe exprStr
 		"expression found
-		"get line numbers from quickfix
+		"get lines from quickfix
 		for qfLine in getqflist()
 			call add(res, qfLine.text)
 		endfor	
@@ -282,7 +364,35 @@ function! s:grepFile(filePath, expr)
 	return res
 endfunction
 
+" similar s:grepFile() function s:grepValues()
+" greps all lines starting with given prefix
+" and returns list of values on the right side of the prefix
+" Example:
+" source file: 
+" MODIFIED_FILE=file1.txt
+" MODIFIED_FILE=file1.txt
+" result: 
+" ['file1.txt', 'file1.txt']
+"
+function! s:grepValues(filePath, prefix)
+	let l:lines = s:grepFile(a:filePath, a:prefix)
+	let l:index = 0
+	let l:resultLines = []
+	while l:index < len(l:lines)
+		let l:line = substitute(l:lines[l:index], a:prefix, "", "")
+		call add(l:resultLines, l:line)
+		let l:index = l:index + 1
+	endwhile
 
+	return l:resultLines
+endfunction
+
+"Returns: dictionary/pair: 
+"	{
+"	"success": "true" if RESULT=SUCCESS
+"	"responseFilePath" : "path to current response/log file"
+"	}
+"
 function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
 	let responseFilePath = apexOs#joinPath(a:projectPath, ".vim-force.com", "response_" . a:action)
@@ -305,7 +415,8 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	
 	call apexOs#exe(l:command, 'M') "disable --more--
 
-	call s:parseErrorLog(responseFilePath, a:projectPath)
+	let errCount = s:parseErrorLog(responseFilePath, a:projectPath)
+	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
 
 endfunction
 
