@@ -188,6 +188,10 @@ function apexTooling#refreshProject(filePath)
 					"echo "FROM= " .sourcePath
 					"echo "TO= " .destinationPath
 					if sourcePath !~ "package.xml$" || overwrite
+						let destinationDirPath = apexOs#splitPath(destinationPath).head
+						if !isdirectory(destinationDirPath)
+							call mkdir(destinationDirPath, "p")
+						endif
 						call apexOs#copyFile(sourcePath, destinationPath)
 					endif
 				endif
