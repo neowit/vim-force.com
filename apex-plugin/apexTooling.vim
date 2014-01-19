@@ -112,6 +112,9 @@ endfunction
 "Param1: path to file which belongs to apex project
 function apexTooling#refreshProject(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	" first check if there are locally modified files
+	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {})
+	
 	call apexTooling#execute("refresh", projectPair.name, projectPair.path, {})
 endfunction	
 
@@ -146,31 +149,67 @@ function! s:parseErrorLog(logFilePath, projectPath)
 
 	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
 		" check if we have messages
-		if s:displayMessages(a:logFilePath, a:projectPath, 'MESSAGE: ') > 0
-			call s:displayMessages(a:logFilePath, a:projectPath, 'MESSAGE DETAIL: ')
-		else
+		if s:displayMessages(a:logFilePath, a:projectPath) < 1
 			call apexUtil#info("No errors found")
 		endif
 		return 0
 	endif
 
-	echo "Build failed" 
+	call apexUtil#error("Operation failed")
 	" check if we have messages
-	call s:displayMessages(a:logFilePath, a:projectPath, 'MESSAGE: ')
-	call s:displayMessages(a:logFilePath, a:projectPath, 'MESSAGE DETAIL: ')
+	call s:displayMessages(a:logFilePath, a:projectPath)
 	
 	call s:fillQuickfix(a:logFilePath, a:projectPath)
 
 endfunction
 
-"Returns: number of messages satisfying provided prefix
-function! s:displayMessages(logFilePath, projectPath, prefix)
-	let l:lines = s:grepFile(a:logFilePath, a:prefix)
+"Returns: number of messages displayed
+function! s:displayMessages(logFilePath, projectPath)
+	let prefix = 'MESSAGE: '
+	let l:lines = s:grepFile(a:logFilePath, prefix)
 	let index = 0
 	while index < len(l:lines)
-		let line = substitute(l:lines[index], a:prefix, "", "")
+		let line = substitute(l:lines[index], prefix, "", "")
 		let message = eval(line)
-		call apexUtil#warning(message["text"])
+		let msgType = has_key(message, "type")? message.type : "info"
+		let text = message.text
+		if "error" == msgType
+			call apexUtil#error(text)
+		elseif "warning" == msgType
+			call apexUtil#warning(text)
+		else
+			call apexUtil#info(text)
+		endif
+		call s:displayMessageDetails(a:logFilePath, a:projectPath, message)
+		let index = index + 1
+	endwhile
+	if index > 0
+		" blank line before next message
+		echo ""
+	endif	
+	return index
+endfunction
+
+" using Id of specific message check if log file has details and display if
+" details found
+function! s:displayMessageDetails(logFilePath, projectPath, message)
+	let prefix = 'MESSAGE DETAIL: '
+	let l:lines = s:grepFile(a:logFilePath, prefix)
+	let index = 0
+	while index < len(l:lines)
+		let line = substitute(l:lines[index], prefix, "", "")
+		let detail = eval(line)
+		if detail["messageId"] == a:message["id"]
+			let text = "  " . detail.text
+			let msgType = has_key(detail, "type")? detail.type : a:message.type
+			if "error" == msgType
+				call apexUtil#error(text)
+			elseif "warning" == msgType
+				call apexUtil#warning(text)
+			else
+				call apexUtil#info(text)
+			endif
+		endif
 		let index = index + 1
 	endwhile
 	return index
