@@ -261,7 +261,9 @@ endfunction
 " Return: - selected option or default [if provided default is not blank]		
 function! apexUtil#input(prompt, options, default)
 	while 1
+		echohl WarningMsg
 		let res = input(a:prompt)
+		echohl None 
 		if len(res) < 1 && strlen(a:default) > 0
 			return a:default
 		elseif len(res) >0 && a:options =~# res " check if given answer is allowed
