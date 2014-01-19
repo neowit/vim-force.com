@@ -124,49 +124,74 @@ function apexTooling#refreshProject(filePath)
 		if 'y' !=? response
 			return 
 		endif
-		" force refresh
+		" forced refresh when there are modified files
 		let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {"skipModifiedFilesCheck":"true"})
-		if "true" == resMap["success"]
-			" backup files
-			"if len(modifiedFiles) > 0
-			"	call s:backupFiles(projectPair.name, projectPair.path, modifiedFiles)
-			"endif
+	endif
 
-			" copy files from temp folder into project folder
-			let logFilePath = resMap["responseFilePath"]
-			let l:lines = s:grepValues(logFilePath, "RESULT_FOLDER=")
-			if len(l:lines) > 0
-				let resultFolder = apexOs#removeTrailingPathSeparator(l:lines[0])
-				let resultFolderPathLen = len(resultFolder)
+	if "true" == resMap["success"]
+		" TODO add a setting so user could chose whether they want
+		" backup of all files received in Refresh or only modified ones
+		"
+		" backup modified files
+		"if len(modifiedFiles) > 0
+		"	call s:backupFiles(projectPair.name, projectPair.path, modifiedFiles)
+		"endif
 
-				let l:files = apexOs#glob(resultFolder . "/**/*")
+		" copy files from temp folder into project folder
+		let logFilePath = resMap["responseFilePath"]
+		let l:lines = s:grepValues(logFilePath, "RESULT_FOLDER=")
+		if len(l:lines) > 0
+			let resultFolder = apexOs#removeTrailingPathSeparator(l:lines[0])
+			let resultFolderPathLen = len(resultFolder)
 
-				" backup all files we are about to overwrite
-				let relativePathsOfFilesToBeOverwritten = []
-				for path in l:files
-					if !isdirectory(path)
-						let relativePath = strpart(path, resultFolderPathLen)
-						let relativePath = substitute(relativePath, "^/unpackaged/", "src/", "")
-						call add(relativePathsOfFilesToBeOverwritten, relativePath)
+			let l:files = apexOs#glob(resultFolder . "/**/*")
+
+			" backup files we are about to overwrite
+			" if they new and old differ in size
+			let relativePathsOfFilesToBeOverwritten = []
+			let packageXmlDifferent = 0
+			for path in l:files
+				if !isdirectory(path)
+					let relativePath = strpart(path, resultFolderPathLen)
+					let relativePath = substitute(relativePath, "^/unpackaged/", "src/", "")
+					"check if local file exists adn sizes are different
+					let localFilePath = apexOs#joinPath([projectPair.path, relativePath])
+					if filereadable(localFilePath)
+						let currentSize = getfsize(localFilePath)
+						let newSize = getfsize(path)
+						if currentSize != newSize
+							call add(relativePathsOfFilesToBeOverwritten, relativePath)
+							if path =~ "package.xml$"
+								let packageXmlDifferent = 1
+							endif
+						endif
 					endif
-
-				endfor
-				if len(relativePathsOfFilesToBeOverwritten) > 0
-					call s:backupFiles(projectPair.name, projectPair.path, relativePathsOfFilesToBeOverwritten)
 				endif
 
-				" finally move files from temp dir into project dir
-				for sourcePath in l:files
-					if !isdirectory(sourcePath)
-						let relativePath = strpart(sourcePath, resultFolderPathLen)
-						let relativePath = substitute(relativePath, "^/unpackaged/", "src/", "")
-						let destinationPath = apexOs#joinPath([projectPair.path, relativePath])
-						"echo "FROM= " .sourcePath
-						"echo "TO= " .destinationPath
+			endfor
+			if len(relativePathsOfFilesToBeOverwritten) > 0
+				let backupDir = s:backupFiles(projectPair.name, projectPair.path, relativePathsOfFilesToBeOverwritten)
+				echo "Project files with size different to remote ones have been preserved in: " . backupDir
+			endif
+
+			" finally move files from temp dir into project dir
+			for sourcePath in l:files
+				if !isdirectory(sourcePath)
+
+					let relativePath = strpart(sourcePath, resultFolderPathLen)
+					let relativePath = substitute(relativePath, "^/unpackaged/", "src/", "")
+					let destinationPath = apexOs#joinPath([projectPair.path, relativePath])
+					let overwrite = 1
+					if sourcePath =~ "package.xml$" && packageXmlDifferent
+						let overwrite = apexUtil#input("Overwrite package.xml [y/N]? ", "YynN", "N") ==? 'y'
+					endif
+					"echo "FROM= " .sourcePath
+					"echo "TO= " .destinationPath
+					if sourcePath !~ "package.xml$" || overwrite
 						call apexOs#copyFile(sourcePath, destinationPath)
 					endif
-				endfor
-			endif
+				endif
+			endfor
 		endif
 	endif
 endfunction	
@@ -181,6 +206,7 @@ endfunction
 
 " Backup files using provided relative paths
 " all file paths are relative to projectPath
+"Returns: backupDir path
 function! s:backupFiles(projectName, projectPath, filePaths)
 	let timeStr = strftime(g:apex_backup_folder_time_format)	
 	let backupDir = apexOs#joinPath([apexOs#getBackupFolder(), a:projectName, timeStr])
@@ -197,6 +223,7 @@ function! s:backupFiles(projectName, projectPath, filePaths)
 		endif
 		call apexOs#copyFile(fullPath, destinationPath)
 	endfor
+	return backupDir
 
 endfunction
 
