@@ -188,7 +188,7 @@ function! apexOs#copyFile(srcPath, destPath)
 	let destinationPath = apexOs#shellescape(a:destPath)
 	if has("unix")
 		"echo "cp " . sourcePath . " " . destinationPath
-		silent exe "!cp " . sourcePath . " " . destinationPath
+		silent exe "!cp -p " . sourcePath . " " . destinationPath
 	elseif s:is_windows
 		silent exe "!copy " . sourcePath . " " . destinationPath
 	else
