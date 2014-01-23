@@ -239,7 +239,7 @@ function! apex#listProjectNames(arg, line, pos)
 endfunction	
 
 function! s:listModeNames(arg, line, pos)
-	return ['deploy', 'checkOnly']
+	return ['deploy', 'checkOnly', 'deployIgnoreConflicts']
 endfunction	
 
 " Args:
@@ -257,7 +257,7 @@ function! apex#completeDeployParams(arg, line, pos)
 	if n >= len(funcs)
 		return ""
 	else
-	return call(funcs[n], [a:arg, a:line, a:pos])
+		return call(funcs[n], [a:arg, a:line, a:pos])
 endfunction	
 
 

@@ -44,6 +44,8 @@ let s:MAKE_MODES = ['Modified'] "supported Deploy modes
 "Param2: subMode: (optional), allowed values:
 "			'deploy' (default) - normal deployment
 "			'checkOnly' - dry-run deployment or tests
+"			'deployIgnoreConflicts' - do not run check if remote files has
+"			been modified
 "Param3: orgName:(optional) if provided then given project name will be used as
 "						target Org name.
 "						must match one of .properties file with	login details
@@ -73,6 +75,10 @@ function apexTooling#deploy(...)
 	"checkOnly ?
 	if l:subMode == 'checkOnly'
 		let l:extraParams["checkOnly"] = "true"
+	endif
+	"ignoreConflicts ?
+	if l:subMode == 'deployIgnoreConflicts'
+		let l:extraParams["ignoreConflicts"] = "true"
 	endif
 	" another org?
 	if projectPair.name != projectName
