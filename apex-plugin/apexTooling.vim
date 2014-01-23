@@ -30,7 +30,7 @@ for varName in s:requiredVariables
 endfor	
 
 "let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
-let s:MAKE_MODES = ['Modified'] "supported Deploy modes
+let s:MAKE_MODES = ['Modified', 'All'] "supported Deploy modes
 
 "Args:
 "Param1: mode:
@@ -458,6 +458,8 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 endfunction
 
 command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployModified :call apexTooling#deploy('Modified', <f-args>)
+command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployAll :call apexTooling#deploy('All', <f-args>)
+
 command! -nargs=0 ARefreshProject :call apexTooling#refreshProject(expand("%:p"))
 
 command! APrintChanged :call apexTooling#printChangedFiles(expand("%:p"))
