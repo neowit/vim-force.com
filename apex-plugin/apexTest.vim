@@ -65,7 +65,10 @@ function! apexTest#completeParams(arg, line, pos)
 	let n = len(l) - index(l, 'ApexTest') - 2
 	"echomsg 'arg='.a:arg.'; n='.n.'; pos='.a:pos.'; line='.a:line
 	let funcs = ['s:listModeNames', 's:listClassNames', 's:listMethodNames', 'apex#listProjectNames']
-	return call(funcs[n], [a:arg, a:line, a:pos])
+	if n >= len(funcs)
+		return ""
+	else
+		return call(funcs[n], [a:arg, a:line, a:pos])
 endfunction	
 
 " list classes that contain 'testMethod' token for argument auto-completion

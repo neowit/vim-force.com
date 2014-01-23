@@ -254,6 +254,9 @@ function! apex#completeDeployParams(arg, line, pos)
 	let n = len(l) - 0 - 2
 	"echomsg 'arg='.a:arg.'; n='.n.'; pos='.a:pos.'; line='.a:line
 	let funcs = ['s:listModeNames', 'apex#listProjectNames']
+	if n >= len(funcs)
+		return ""
+	else
 	return call(funcs[n], [a:arg, a:line, a:pos])
 endfunction	
 
