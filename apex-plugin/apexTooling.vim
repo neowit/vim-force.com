@@ -30,7 +30,7 @@ for varName in s:requiredVariables
 endfor	
 
 "let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
-let s:MAKE_MODES = ['Modified', 'All'] "supported Deploy modes
+let s:MAKE_MODES = ['Modified', 'All', 'Open'] "supported Deploy modes
 
 "Args:
 "Param1: mode:
@@ -79,6 +79,16 @@ function apexTooling#deploy(...)
 	"ignoreConflicts ?
 	if l:subMode == 'deployIgnoreConflicts'
 		let l:extraParams["ignoreConflicts"] = "true"
+	endif
+	if 'Open' == l:mode
+		let deployOpenParams = s:deployOpenPrepareParams(projectPath)
+		if len(deployOpenParams) < 1
+			"user cancelled
+			return
+		endif
+		call extend(l:extraParams, deployOpenParams)
+		let l:action = "deploySpecificFiles"
+
 	endif
 	" another org?
 	if projectPair.name != projectName
@@ -213,6 +223,21 @@ function apexTooling#listConflicts(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	call apexTooling#execute("listConflicts", projectPair.name, projectPair.path, {})
 endfunction	
+"
+"List relative (project root) paths of files in Open buffers
+function! apexTooling#listOpenFiles(projectPath)
+	let projectPath = apexOs#removeTrailingPathSeparator(a:projectPath)
+	let fileList = []
+	" collect open buffers, making sure they are inside current project
+	let bufferList = apex#getOpenBuffers(projectPath)
+	for n in bufferList
+		let fullpath = expand('#'.n.':p')
+		let relativePath = strpart(fullpath, len(projectPath) + 1) "+1 to remove turn '/src/' into 'src/'
+		call add(fileList, relativePath)
+	endfor	
+	return fileList
+endfunction
+
 
 " Backup files using provided relative paths
 " all file paths are relative to projectPath
@@ -424,6 +449,30 @@ function! s:grepValues(filePath, prefix)
 	return l:resultLines
 endfunction
 
+" prepare fiel list for "deployOpen"
+" and return dictionary with extra command line params for
+" apexTooling#execute()
+"Returns:
+" {"specificFiles": "/path/to/temp/file/with/relative/path/names"}
+function! s:deployOpenPrepareParams(projectPath)
+	let relativePaths = apexTooling#listOpenFiles(a:projectPath)
+	let l:params = {}
+	if len(relativePaths) > 0
+		call apexUtil#warning('Following files will be deployed')
+		for path in relativePaths
+			call apexUtil#warning('  ' . path)
+		endfor
+		if apexUtil#input('Deploy [y/N]? ', 'yYnN', 'N') !=? 'y'
+			return {} "user cancelled
+		endif
+		"dump file list into a temp file
+		let tempFile = tempname() . "-fileList.txt"
+		call writefile(relativePaths, tempFile)
+		let l:params["specificFiles"] = shellescape(tempFile)
+	endif
+	return l:params
+endfunction
+
 "Returns: dictionary/pair: 
 "	{
 "	"success": "true" if RESULT=SUCCESS
@@ -459,6 +508,7 @@ endfunction
 
 command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployModified :call apexTooling#deploy('Modified', <f-args>)
 command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployAll :call apexTooling#deploy('All', <f-args>)
+command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployOpen :call apexTooling#deploy('Open', <f-args>)
 
 command! -nargs=0 ARefreshProject :call apexTooling#refreshProject(expand("%:p"))
 
