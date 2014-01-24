@@ -30,7 +30,7 @@ for varName in s:requiredVariables
 endfor	
 
 "let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
-let s:MAKE_MODES = ['Modified', 'All', 'Open', 'Staged'] "supported Deploy modes
+let s:MAKE_MODES = ['Modified', 'All', 'Open', 'Staged', 'One'] "supported Deploy modes
 
 "Args:
 "Param1: mode:
@@ -40,7 +40,7 @@ let s:MAKE_MODES = ['Modified', 'All', 'Open', 'Staged'] "supported Deploy modes
 "			'Confirm' - all changed files with confirmation for every file
 "			'All' - all files under ./src folder
 "			'Staged' - all files listed in stage-list.txt file
-"			'Onefile' - single file specified in param 1
+"			'Onefile' - single file from current buffer
 "Param2: subMode: (optional), allowed values:
 "			'deploy' (default) - normal deployment
 "			'checkOnly' - dry-run deployment or tests
@@ -81,9 +81,9 @@ function apexTooling#deploy(...)
 		let l:extraParams["ignoreConflicts"] = "true"
 	endif
 
-	let funcs = {'Open': 's:deployOpenPrepareParams', 'Staged': 's:deployStagedPrepareParams'}
+	let funcs = {'Open': 's:deployOpenPrepareParams', 'Staged': 's:deployStagedPrepareParams', 'One': 's:deployOnePrepareParams'}
 	if has_key(funcs, l:mode)
-		let deployOpenParams = call(funcs[l:mode], [projectPath])
+		let deployOpenParams = call(funcs[l:mode], [apexOs#removeTrailingPathSeparator(projectPath)])
 
 		if len(deployOpenParams) < 1
 			"user cancelled
@@ -452,7 +452,7 @@ function! s:grepValues(filePath, prefix)
 	return l:resultLines
 endfunction
 
-" prepare fiel list for "deployOpen"
+" prepare file list for "deployOpen"
 " and return dictionary with extra command line params for
 " apexTooling#execute()
 "Returns:
@@ -462,7 +462,7 @@ function! s:deployOpenPrepareParams(projectPath)
 	return s:prepareSpecificFilesParams(relativePaths)
 endfunction
 
-" prepare fiel list for "deployStaged"
+" prepare file list for "deployStaged"
 " and return dictionary with extra command line params for
 " apexTooling#execute()
 "Returns:
@@ -480,6 +480,17 @@ function! s:deployStagedPrepareParams(projectPath)
 		return {}
 	endif	
 	return s:prepareSpecificFilesParams(relativePaths)
+endfunction
+
+" prepare file list for "deployOne"
+" and return dictionary with extra command line params for
+" apexTooling#execute()
+"Returns:
+" {"specificFiles": "/path/to/temp/file/with/relative/path/names"}
+function! s:deployOnePrepareParams(projectPath)
+	let fullpath = expand('%:p')
+	let relativePath = strpart(fullpath, len(a:projectPath) + 1) "+1 to remove turn '/src/' into 'src/'
+	return s:prepareSpecificFilesParams([relativePath])
 endfunction
 
 "Prepare command line param and file content for 'specificFiles' deployments
@@ -547,6 +558,7 @@ command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployModified
 command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployAll :call apexTooling#deploy('All', <f-args>)
 command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployOpen :call apexTooling#deploy('Open', <f-args>)
 command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployStaged :call apexTooling#deploy('Staged', <f-args>)
+command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployOne :call apexTooling#deploy('One', <f-args>)
 
 command! -nargs=0 ARefreshProject :call apexTooling#refreshProject(expand("%:p"))
 
