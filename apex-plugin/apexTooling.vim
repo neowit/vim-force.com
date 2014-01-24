@@ -30,7 +30,7 @@ for varName in s:requiredVariables
 endfor	
 
 "let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
-let s:MAKE_MODES = ['Modified', 'All', 'Open'] "supported Deploy modes
+let s:MAKE_MODES = ['Modified', 'All', 'Open', 'Staged'] "supported Deploy modes
 
 "Args:
 "Param1: mode:
@@ -80,8 +80,11 @@ function apexTooling#deploy(...)
 	if l:subMode == 'deployIgnoreConflicts'
 		let l:extraParams["ignoreConflicts"] = "true"
 	endif
-	if 'Open' == l:mode
-		let deployOpenParams = s:deployOpenPrepareParams(projectPath)
+
+	let funcs = {'Open': 's:deployOpenPrepareParams', 'Staged': 's:deployStagedPrepareParams'}
+	if has_key(funcs, l:mode)
+		let deployOpenParams = call(funcs[l:mode], [projectPath])
+
 		if len(deployOpenParams) < 1
 			"user cancelled
 			return
@@ -456,6 +459,38 @@ endfunction
 " {"specificFiles": "/path/to/temp/file/with/relative/path/names"}
 function! s:deployOpenPrepareParams(projectPath)
 	let relativePaths = apexTooling#listOpenFiles(a:projectPath)
+	return s:prepareSpecificFilesParams(relativePaths)
+endfunction
+
+" prepare fiel list for "deployStaged"
+" and return dictionary with extra command line params for
+" apexTooling#execute()
+"Returns:
+" {"specificFiles": "/path/to/temp/file/with/relative/path/names"}
+function! s:deployStagedPrepareParams(projectPath)
+	let relativePaths = apexStage#list(a:projectPath)
+	" all paths are relative to src/ folder, e.g.
+	"[classes/MyClass.cls,  pages/MyPage.page, ...]
+	"however we need [aths relative project folder
+	"so need to add src/ in front of each file
+	if len(relativePaths) > 0
+		let relativePaths = map(relativePaths, '"src/" . relativePaths[v:val]')
+	else
+		call apexUtil#warning('Stage is empty.')
+		return {}
+	endif	
+	return s:prepareSpecificFilesParams(relativePaths)
+endfunction
+
+"Prepare command line param and file content for 'specificFiles' deployments
+"Args:
+"Param1: relativePaths - list of files relative project folder
+"e.g.:
+"[src/classes/MyClass.cls,  src/pages/MyPage.page, ...]
+"Returns:
+" {"specificFiles": "/path/to/temp/file/with/relative/path/names"}
+function! s:prepareSpecificFilesParams(relativePaths)
+	let relativePaths = a:relativePaths
 	let l:params = {}
 	if len(relativePaths) > 0
 		call apexUtil#warning('Following files will be deployed')
@@ -472,6 +507,8 @@ function! s:deployOpenPrepareParams(projectPath)
 	endif
 	return l:params
 endfunction
+
+
 
 "Returns: dictionary/pair: 
 "	{
@@ -509,6 +546,7 @@ endfunction
 command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployModified :call apexTooling#deploy('Modified', <f-args>)
 command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployAll :call apexTooling#deploy('All', <f-args>)
 command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployOpen :call apexTooling#deploy('Open', <f-args>)
+command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployStaged :call apexTooling#deploy('Staged', <f-args>)
 
 command! -nargs=0 ARefreshProject :call apexTooling#refreshProject(expand("%:p"))
 
