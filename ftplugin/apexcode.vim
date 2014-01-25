@@ -149,62 +149,6 @@ endfun
 augroup END
 
 
-""""""""""""""""""""""""""""""""""""""""""""""""
-" Apex commands 
-""""""""""""""""""""""""""""""""""""""""""""""""
-
-"defined a command to run MakeApex
-command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apex#deploy('modified', <f-args>)
-command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOpen :call apex#deploy('open', <f-args>)
-command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployConfirm :call apex#deploy('confirm', <f-args>)
-command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAll :call apex#deploy('all', <f-args>)
-command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexStage#write() | :call apex#deploy('staged', <f-args>)
-
-"Unit testing
-"command! -nargs=? -complete=customlist,ListProjectNames ApexTestModifiedCheckOnly :call apex#MakeProject('', 'modified', ['checkOnly'], <f-args>)
-command! -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest(<f-args>)
-
-"delete Staged files from specified Org
-"Examples:
-"1. Delete Staged files from currect project
-"   :ApexDeleteStaged
-"2. delete files listed in Stage from Org defined by specified <project name>
-"	:ApexDeleteStaged 'My Project' 
-"3. do not delete, but test deletion
-"	:ApexDeleteStaged 'My Project' t
-command! -nargs=* -complete=customlist,ListProjectNames ApexRemoveStaged :call apexDelete#run(<f-args>)
-
-command! -nargs=0 ApexRefreshProject :call apex#refreshProject()
-command! RefreshSFDCProject :ApexRefreshProject
-command! ApexRefreshFile :call apex#refreshFile(expand("%:p"))
-command! ApexPrintChanged :call apex#printChangedFiles(expand("%:p"))
-command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
-
-"staging
-command! ApexStage :call apexStage#open(expand("%:p"))
-command! ApexStageAdd :call apexStage#add(expand("%:p"))
-command! ApexStageAddOpen :call apexStage#addOpen()
-command! ApexStageRemove :call apexStage#remove(expand("%:p"))
-command! ApexStageClear :call apexStage#clear(expand("%:p"))
-
-
-" select file type, create it and switch buffer
-command! ApexNewFile :call apexMetaXml#createFileAndSwitch(expand("%:p"))
-
-" before refresh all changed files are backed up, so we can compare refreshed
-" version with its pre-refresh condition
-command! ApexCompareWithPreRefreshVersion :call apexUtil#compareWithPreRefreshVersion(apexOs#getBackupFolder())
-command! ApexCompare :call ApexCompare()
-
-" initialise Git repository and add files
-command! ApexGitInit :call apexUtil#gitInit()
-
-" display last ANT log
-command! ApexLog :call apexAnt#openLastLog()
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Apex Code - compare current file with its own in another Apex Project
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-command! DiffUnderEclipse :ApexCompare
 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " NERDTree plugin settings

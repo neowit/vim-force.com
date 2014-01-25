@@ -37,10 +37,10 @@ let s:MAKE_MODES = ['Modified', 'All', 'Open', 'Staged', 'One'] "supported Deplo
 "			'Modified' - all changed files
 "			'Open' - deploy only files from currently open Tabs or Buffers (if
 "					less than 2 tabs open)
-"			'Confirm' - all changed files with confirmation for every file
+"			'Confirm' - TODO - all changed files with confirmation for every file
 "			'All' - all files under ./src folder
 "			'Staged' - all files listed in stage-list.txt file
-"			'Onefile' - single file from current buffer
+"			'One' - single file from current buffer
 "Param2: subMode: (optional), allowed values:
 "			'deploy' (default) - normal deployment
 "			'checkOnly' - dry-run deployment or tests
@@ -553,15 +553,4 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
 
 endfunction
-
-command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployModified :call apexTooling#deploy('Modified', <f-args>)
-command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployAll :call apexTooling#deploy('All', <f-args>)
-command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployOpen :call apexTooling#deploy('Open', <f-args>)
-command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployStaged :call apexTooling#deploy('Staged', <f-args>)
-command! -nargs=* -complete=customlist,apex#completeDeployParams ADeployOne :call apexTooling#deploy('One', <f-args>)
-
-command! -nargs=0 ARefreshProject :call apexTooling#refreshProject(expand("%:p"))
-
-command! APrintChanged :call apexTooling#printChangedFiles(expand("%:p"))
-command! AListConflicts :call apexTooling#listConflicts(expand("%:p"))
 
