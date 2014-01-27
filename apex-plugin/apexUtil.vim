@@ -294,7 +294,7 @@ function! apexUtil#grepFile(filePath, expr, ...)
 		
 	"catch  /^Vim\%((\a\+)\)\=:E480/
 	catch  /.*/
-		"echomsg "expression NOT found" 
+		"echomsg "apexUtil#grepFile: expression NOT found: ". exprStr
 	endtry
 	
 	" restore quickfix

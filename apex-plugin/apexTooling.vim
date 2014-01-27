@@ -242,6 +242,31 @@ function! apexTooling#listOpenFiles(projectPath)
 endfunction
 
 
+"load metadata description into a local file
+"Args:
+function apexTooling#loadMetadataList(projectName, projectPath, allMetaTypesFilePath)
+	return apexTooling#execute("describeMetadata", a:projectName, a:projectPath, {"allMetaTypesFilePath": shellescape(a:allMetaTypesFilePath)})
+endfunction	
+
+" retrieve members of specified metadata types
+"Args:
+"Param3: path to file which contains JSON description of required types
+"
+function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePath)
+	let resMap = apexTooling#execute("bulkRetrieve", a:projectName, a:projectPath, {"specificTypes": shellescape(a:specificTypesFilePath)})
+	if "true" == resMap["success"]
+		" check if SFDC client reported modified files
+		let logFilePath = resMap["responseFilePath"]
+		" for reason I can not explain s:grepValues does not work here
+		"let l:lines = s:grepValues(logFilePath, "RESULT_FOLDER=")
+		" so have to use slow: s:extractValue
+		let resultFolder = s:extractValue(logFilePath, "RESULT_FOLDER=")
+		"echo "resultFolder=" . resultFolder
+		let resMap["resultFolder"] = resultFolder
+	endif
+	return resMap
+endfunction	
+
 " Backup files using provided relative paths
 " all file paths are relative to projectPath
 "Returns: backupDir path
@@ -305,7 +330,7 @@ endfunction
 "Returns: number of messages displayed
 function! s:displayMessages(logFilePath, projectPath)
 	let prefix = 'MESSAGE: '
-	let l:lines = s:grepFile(a:logFilePath, prefix)
+	let l:lines = apexUtil#grepFile(a:logFilePath, prefix)
 	let l:index = 0
 	while l:index < len(l:lines)
 		let line = substitute(l:lines[l:index], prefix, "", "")
@@ -337,7 +362,7 @@ endfunction
 " details found
 function! s:displayMessageDetails(logFilePath, projectPath, message)
 	let prefix = 'MESSAGE DETAIL: '
-	let l:lines = s:grepFile(a:logFilePath, prefix)
+	let l:lines = apexUtil#grepFile(a:logFilePath, prefix)
 	let l:index = 0
 	while l:index < len(l:lines)
 		let line = substitute(l:lines[l:index], prefix, "", "")
@@ -373,7 +398,7 @@ endfunction
 function! s:fillQuickfix(logFilePath, projectPath)
 	" error is reported like so
 	" ERROR: {"line" : 3, "column" : 10, "filePath" : "src/classes/A_Fake_Class.cls", "text" : "Invalid identifier: test22."}
-	let l:lines = s:grepFile(a:logFilePath, 'ERROR: ')
+	let l:lines = apexUtil#grepFile(a:logFilePath, 'ERROR: ')
 	let l:errorList = []
 
 	let index = 0
@@ -404,32 +429,19 @@ function! s:fillQuickfix(logFilePath, projectPath)
 	endif
 endfunction	
 
-" grep file and return found lines
-function! s:grepFile(filePath, expr)
-	let currentQuickFix = getqflist()
-	let res = []
-	
-	try
-		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
-		exe exprStr
-		"expression found
-		"get lines from quickfix
-		for qfLine in getqflist()
-			call add(res, qfLine.text)
-		endfor	
-		
-	"catch  /^Vim\%((\a\+)\)\=:E480/
-	catch  /.*/
-		"echomsg "expression NOT found" 
-	endtry
-	
-	" restore quickfix
-	call setqflist(currentQuickFix)
-	
-	return res
+" this is a very slow alternative to s:grepValues(file, prefix)
+" use it only when expected value is close to the top of the file
+function s:extractValue(filePath, prefix)
+	let value = ''
+	for line in readfile(a:filePath)
+		if line =~ '^' . a:prefix
+			return substitute(line, '^' . a:prefix, "", "")
+		endif
+	endfor
+	return value
 endfunction
 
-" similar s:grepFile() function s:grepValues()
+" similar apexUtil#grepFile() function s:grepValues()
 " greps all lines starting with given prefix
 " and returns list of values on the right side of the prefix
 " Example:
@@ -440,7 +452,7 @@ endfunction
 " ['file1.txt', 'file1.txt']
 "
 function! s:grepValues(filePath, prefix)
-	let l:lines = s:grepFile(a:filePath, a:prefix)
+	let l:lines = apexUtil#grepFile(a:filePath, a:prefix)
 	let l:index = 0
 	let l:resultLines = []
 	while l:index < len(l:lines)
@@ -529,7 +541,6 @@ endfunction
 "
 function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
-	let responseFilePath = apexOs#joinPath(a:projectPath, ".vim-force.com", "response_" . a:action)
 
 	let l:command = "java "
 	let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
@@ -539,18 +550,24 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	let l:command = l:command  . " --tempFolderPath=" . shellescape(g:apex_temp_folder)
 	let l:command = l:command  . " --config=" . shellescape(projectPropertiesPath)
 	let l:command = l:command  . " --projectPath=" . shellescape(a:projectPath)
-	let l:command = l:command  . " --responseFilePath=" . shellescape(responseFilePath)
 
 	if len(a:extraParams) > 0
 		for key in keys(a:extraParams)
 			let l:command = l:command  . " --" . key . "=" . a:extraParams[key]
 		endfor
 	endif
+
+	if has_key(a:extraParams, 'responseFilePath')
+		let responseFilePath = a:extraParams["responseFilePath"]
+	else
+		" default responseFilePath
+		let responseFilePath = apexOs#joinPath(a:projectPath, ".vim-force.com", "response_" . a:action)
+		let l:command = l:command  . " --responseFilePath=" . shellescape(responseFilePath)
+	endif
 	
 	call apexOs#exe(l:command, 'M') "disable --more--
 
 	let errCount = s:parseErrorLog(responseFilePath, a:projectPath)
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
-
 endfunction
 

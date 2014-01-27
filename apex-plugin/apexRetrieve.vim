@@ -32,8 +32,6 @@ let s:HIERARCHY_SHIFT = "--"
 let s:CHILD_LINE_REGEX = '^\v(\s*)\V\('.s:HIERARCHY_SHIFT.'\)\v(\s*\w*.*)$'
 
 
-let s:ALL_METADATA_LIST_FILE = "describeMetadata-result.txt"
-
 let b:PROJECT_NAME = ""
 let b:PROJECT_PATH = ""
 let b:SRC_PATH = ""
@@ -387,7 +385,6 @@ function! s:retrieveOne(typeName, members)
 
 endfunction
 
-" retrieve components of all selected metadata types
 function! <SID>RetrieveSelected()
 	"echo "Retrieve all selected items"
 	"go through root meta types
@@ -395,6 +392,146 @@ function! <SID>RetrieveSelected()
 	"{'ApexClass': ['asasa.cls', 'adafsd.cls'], 'AnalyticSnapshot': ['*'], 'ApexComponent': ['*']}
 
 	echo selectedTypes
+	if g:apex_commands_current_mode =~? "ant"
+		call s:retrieveSelectedAnt(selectedTypes)
+	else
+		call s:retrieveSelectedToolingJar(selectedTypes)
+	endif
+endfunction
+"
+" retrieve components of all selected metadata types
+function! s:retrieveSelectedToolingJar(selectedTypes)
+	let selectedTypes = a:selectedTypes
+	" generate "specificTypes" file
+	let lines = []
+	for [key, value] in items(selectedTypes)
+		" {"XMLName": "Profile", "members": []}
+		" {"XMLName": "ApexClass", "members": ["A_Fake_Class"]}
+		let json = {"XMLName": key, "members" : value}
+		let jsonStr = substitute(string(json), "'", '"', "g")
+		call add(lines, jsonStr)
+	endfor	
+	
+	if !empty(lines)
+		let specificTypesFilePath = tempname()
+		call writefile(lines, specificTypesFilePath)
+		" call tooling jar
+		let reEnableMore = 0
+		try
+			let reEnableMore = &more
+			set nomore "disable --More-- prompt
+
+			let resMap = apexTooling#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, specificTypesFilePath)
+			if 'true' != resMap["success"]
+				return {}
+			endif
+		finally
+			if reEnableMore
+				set more
+			endif
+		endtry	
+		" extract outputDir from responseFilePath
+		let outputDir = resMap["resultFolder"]
+		let retrievedTypes = {}
+		
+		for l:type in keys(selectedTypes)
+			let typeDef = s:CACHED_META_TYPES[l:type]
+			let dirName = typeDef["DirName"]
+			let sourceFolder = apexOs#joinPath([outputDir, dirName])
+			let targetFolder = apexOs#joinPath([b:SRC_PATH, dirName])
+
+			let sourceFiles = apexOs#glob(sourceFolder . "/*")
+			let targetFiles = apexOs#glob(targetFolder . "/*")
+			if len(sourceFiles) < 1
+				call apexUtil#warning(l:type . " has no members. SKIP.")
+			else	
+				" copy files
+				" check that target folder exists
+				if !isdirectory(targetFolder)
+					call apexOs#createDir(targetFolder)
+				endif
+
+				let allConfirmed = 0
+				for fPath in sourceFiles
+					let fName = apexOs#splitPath(fPath).tail
+					let targetFilePath = apexOs#joinPath([targetFolder, fName])
+					"echo "check ".targetFilePath
+					if filereadable(targetFilePath)
+						" compare sizes
+						let sourceSize = getfsize(fPath)
+						let targetSize = getfsize(targetFilePath)
+						if !allConfirmed && sourceSize != targetSize
+							while 1
+								echo " "
+								call apexUtil#warning('File '.dirName.'/'.fName.' already exists.')
+								echo 'New file size=' . sourceSize . ', Existing file size=' . targetSize
+								let response = input('Overwrite (Y)es / (N)o / all / (A)bort / (C)ompare ? ')
+								if index(['a', 'A', 'y', 'Y', 'n', 'N', 'all'], response) >= 0
+									break " good answer, can continue with the main logic
+								else
+									if 'c' ==? response
+										"run file comparison tool
+										call ApexCompare(fPath, targetFilePath)
+									else
+										echo "\n"
+										call apexUtil#warning("Permitted answers are: Y/N/A/all")
+									endif
+								endif	
+							endwhile
+							if 'a' ==? response
+								"abort
+								break
+							elseif 'y' ==? response
+								" proceed with overwrite
+							elseif 'n' ==? response
+								continue
+							elseif 'all' ==? response
+								" proceed with overwrite of all files
+								let allConfirmed = 1
+							else
+								call apexUtil#warning("Something unexpected has happened. Aborting...")
+								return
+							endif	
+						endif
+					endif	
+					call apexOs#copyFile(fPath, targetFilePath)
+					" check if copy succeeded
+					if !filereadable(targetFilePath)
+						echoerr "Something went wrong, failed to write file ".targetFilePath.". Process aborted."
+						return 
+					else
+						"mark current type is retrieved
+						let members = selectedTypes[l:type]
+						let retrievedTypes[l:type] = members
+					endif
+
+				endfor
+			endif "len(sourceFiles) < 1
+		endfor
+		"update package.xml
+		let packageXml = apexMetaXml#packageXmlRead(b:SRC_PATH)
+		let changeCount = 0
+		for typeName in keys(retrievedTypes)
+			let changeCount += apexMetaXml#packageXmlAdd(packageXml, typeName, retrievedTypes[typeName])
+		endfor
+		"write updated package.xml
+		"echo packageXml
+		if changeCount >0
+			echohl WarningMsg
+			let response = input('Update package.xml with new types [y/N]? ')
+			echohl None
+			if 'y' == response || 'Y' == response
+				call apexMetaXml#packageWrite(packageXml, b:SRC_PATH)
+			endif
+		endif
+	endif "if !empty(lines)
+endfunction
+
+" retrieve components of all selected metadata types
+function! s:retrieveSelectedAnt(selectedTypes)
+	let selectedTypes = a:selectedTypes
+	"{'ApexClass': ['asasa.cls', 'adafsd.cls'], 'AnalyticSnapshot': ['*'], 'ApexComponent': ['*']}
+
 
 	let retrievedTypes = {} "type-name => 1  - means type has been retrieved
 	for l:type in keys(selectedTypes)
@@ -533,7 +670,69 @@ endfunction
 "
 "
 function! s:getMetaTypesMap(projectName, projectPath, forceLoad)
-	let allMetaTypesFilePath = apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:ALL_METADATA_LIST_FILE])
+	if g:apex_commands_current_mode =~? "ant"
+		return s:getMetaTypesMapAnt(a:projectName, a:projectPath, a:forceLoad)
+	else
+		return s:getMetaTypesMapToolingJar(a:projectName, a:projectPath, a:forceLoad)
+	endif
+endfunction
+
+"depending on the currenc command set metadata descrption can be in two
+"different formats
+function! s:getMetadataResultFile()
+	if g:apex_commands_current_mode =~? "ant"
+		return "describeMetadata-result.txt"
+	else
+		return "describeMetadata-result.js"
+	endif
+endfunction
+
+"load metadata description using toolingJar
+" parse metadata definition file and return result in following format
+"
+"{'CustomPageWebLink': {'InFolder': 'false', 'DirName': 'weblinks','ChildObjects': [], 'HasMetaFile': 'false', 'Suffix': 'weblink'}, 
+"'OpportunitySharingRules': {'InFolder': 'false', 'DirName': 'opportunitySharingRules', 
+"		'ChildObjects': ['OpportunityOwnerSharingRule', 'OpportunityCriteriaBasedSharingRule'], 
+"		'HasMetaFile': 'false', 'Suffix': 'sharingRules'}, 
+"'CustomLabels': {'InFolder': 'false', 'DirName': 'labels', 'ChildObjects':['CustomLabel'], 'HasMetaFile': 'false', 'Suffix': 'labels'}, 
+"…}
+function! s:getMetaTypesMapToolingJar(projectName, projectPath, forceLoad)
+	let allMetaTypesFilePath = apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:getMetadataResultFile()])
+
+	if !filereadable(allMetaTypesFilePath) || a:forceLoad
+		let res = apexTooling#loadMetadataList(a:projectName, a:projectPath, allMetaTypesFilePath)
+		if 'true' != res["success"]
+			return {}
+		endif
+	endif
+	let typesMap = {}
+	for line in readfile(allMetaTypesFilePath, '', 10000) " assuming metadata types file will never contain more than 10K lines
+		" replace all json false/true with 'false'/'true'
+		let lineFixed = substitute(line, ": true", ": 'true'", "g")
+		let lineFixed = substitute(lineFixed, ": false", ": 'false'", "g")
+
+		try
+			let lineMap = eval(lineFixed)
+		catch
+			" dump debug info
+			echo "before"
+			echo line
+			echo "after"
+			echo lineFixed
+
+			return {}
+		endtry
+		let typesMap[lineMap["XMLName"]] = lineMap
+	endfor
+	" store in cache
+	let s:CACHED_META_TYPES = typesMap
+	return typesMap
+
+endfunction
+
+"load metadata description using Ant
+function! s:getMetaTypesMapAnt(projectName, projectPath, forceLoad)
+	let allMetaTypesFilePath = apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:getMetadataResultFile()])
 
 	if !filereadable(allMetaTypesFilePath) || a:forceLoad
 		"cache file does not exist, need to load it first
@@ -849,7 +1048,7 @@ function! s:init(projectPath)
 				\ "|| :Retrieve = retrieve selected types into the project folder",
 				\ "|| ",
 				\ "|| NOTE: cached list of CORE metadata types is stored in: ",
-				\ "||		 '".apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:ALL_METADATA_LIST_FILE])."' file.",
+				\ "||		 '".apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:getMetadataResultFile()])."' file.",
 				\ "||		To clear cached types delete this file and run :ApexRetrieve to reload fresh version.",
 				\ "============================================================================="
 				\ ]

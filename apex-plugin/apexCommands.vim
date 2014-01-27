@@ -49,17 +49,25 @@ command! DiffUnderEclipse :ApexCompare
 " Apex commands 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " options are: '', 'antSpecific', 'toolingJarSpecific'
-let s:currentMappings = '' 
+let g:apex_commands_current_mode = '' 
 
 function! apexCommands#toggleMappings()
-	if '' == s:currentMappings || 'toolingJarSpecific' == s:currentMappings
+	" clean up commands which do not exist in both modes
+	try 
+		delcommand ApexRefreshFile
+		delcommand ApexRetrieve
+		delcommand ApexLog
+	catch 
+	endtry
+
+	if '' == g:apex_commands_current_mode || 'toolingJarSpecific' == g:apex_commands_current_mode
 		call s:antSpecific()
-		let s:currentMappings = 'antSpecific'
+		let g:apex_commands_current_mode = 'antSpecific'
 	else
 		call s:toolingJarSpecific()
-		let s:currentMappings = 'toolingJarSpecific'
+		let g:apex_commands_current_mode = 'toolingJarSpecific'
 	endif
-	echo "Current Command Mapping: " . s:currentMappings
+	echo "Current Command Mapping: " . g:apex_commands_current_mode
 endfunction
 
 command! ApexToggleCommandMappings :call apexCommands#toggleMappings()
@@ -139,7 +147,7 @@ function! s:toolingJarSpecific()
 
 	" TODO
 	"command! ApexRefreshFile :call apex#refreshFile(expand("%:p"))
-	"command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
+	command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
 
 	" display last log - TODO
 	"command! ApexLog :call apexAnt#openLastLog()
@@ -147,4 +155,5 @@ function! s:toolingJarSpecific()
 endfunction
 
 " finally, define default antSpecific/toolingJarSpecific mappings
+let g:apex_commands_current_mode = 'antSpecific' 
 call apexCommands#toggleMappings()
