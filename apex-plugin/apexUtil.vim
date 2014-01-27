@@ -291,6 +291,12 @@ function! apexUtil#grepFile(filePath, expr, ...)
 		for qfLine in getqflist()
 			call add(res, qfLine.lnum)
 		endfor	
+		if len(getqflist()) < 1
+			"if we are here and getqflist() == []
+			"then we hit a bug and vimgrep failed to populate getqflist
+			"use alternative (slow) 'grep'
+			let res = s:grepFileSlow(a:filePath, a:expr)
+		endif
 		
 	"catch  /^Vim\%((\a\+)\)\=:E480/
 	catch  /.*/
@@ -304,6 +310,18 @@ function! apexUtil#grepFile(filePath, expr, ...)
 	
 	return res
 endfunction
+
+" this is a very slow alternative to apexUtil#grepFile(file, expr)
+function s:grepFileSlow(filePath, expr)
+	let lines = []
+	for line in readfile(a:filePath)
+		if line =~ a:expr
+			call add(lines, line)
+		endif
+	endfor
+	return lines
+endfunction
+
 
 function! apexUtil#unescapeFileName(fileName)
 	return substitute(a:fileName, '\\\(\\\|[^\\]\)', '\1', 'g')

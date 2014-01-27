@@ -257,12 +257,9 @@ function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePat
 	if "true" == resMap["success"]
 		" check if SFDC client reported modified files
 		let logFilePath = resMap["responseFilePath"]
-		" for reason I can not explain s:grepValues does not work here
-		"let l:lines = s:grepValues(logFilePath, "RESULT_FOLDER=")
-		" so have to use slow: s:extractValue
-		let resultFolder = s:extractValue(logFilePath, "RESULT_FOLDER=")
-		"echo "resultFolder=" . resultFolder
-		let resMap["resultFolder"] = resultFolder
+		let resultFolder = s:grepValues(logFilePath, "RESULT_FOLDER=")
+		"echo "resultFolder=" . resultFolder[0]
+		let resMap["resultFolder"] = resultFolder[0]
 	endif
 	return resMap
 endfunction	
@@ -428,18 +425,6 @@ function! s:fillQuickfix(logFilePath, projectPath)
 		copen
 	endif
 endfunction	
-
-" this is a very slow alternative to s:grepValues(file, prefix)
-" use it only when expected value is close to the top of the file
-function s:extractValue(filePath, prefix)
-	let value = ''
-	for line in readfile(a:filePath)
-		if line =~ '^' . a:prefix
-			return substitute(line, '^' . a:prefix, "", "")
-		endif
-	endfor
-	return value
-endfunction
 
 " similar apexUtil#grepFile() function s:grepValues()
 " greps all lines starting with given prefix
