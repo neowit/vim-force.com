@@ -243,7 +243,6 @@ endfunction
 
 
 "load metadata description into a local file
-"Args:
 function apexTooling#loadMetadataList(projectName, projectPath, allMetaTypesFilePath)
 	return apexTooling#execute("describeMetadata", a:projectName, a:projectPath, {"allMetaTypesFilePath": shellescape(a:allMetaTypesFilePath)})
 endfunction	
@@ -255,11 +254,21 @@ endfunction
 function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePath)
 	let resMap = apexTooling#execute("bulkRetrieve", a:projectName, a:projectPath, {"specificTypes": shellescape(a:specificTypesFilePath)})
 	if "true" == resMap["success"]
-		" check if SFDC client reported modified files
 		let logFilePath = resMap["responseFilePath"]
 		let resultFolder = s:grepValues(logFilePath, "RESULT_FOLDER=")
 		"echo "resultFolder=" . resultFolder[0]
 		let resMap["resultFolder"] = resultFolder[0]
+	endif
+	return resMap
+endfunction	
+
+"load list of components of specified metadata types into a local file
+function apexTooling#listMetadata(projectName, projectPath, specificTypesFilePath)
+	let resMap = apexTooling#execute("listMetadata", a:projectName, a:projectPath, {"specificTypes": shellescape(a:specificTypesFilePath)})
+	if "true" == resMap["success"]
+		let logFilePath = resMap["responseFilePath"]
+		let resultFile = s:grepValues(logFilePath, "RESULT_FILE=")
+		let resMap["resultFile"] = resultFile[0]
 	endif
 	return resMap
 endfunction	

@@ -237,6 +237,9 @@ function! <SID>ExpandSelected()
 		let lineNum += 1
 	endwhile
 
+	" clear cache
+	let s:LOADED_CHILDREN_BY_ROOT_TYPE = {}
+
 	"load children of each selected root type
 	let lineNum = firstSelectedLineNum
 	let hasSelectedRootTypes = 0
@@ -261,6 +264,77 @@ function! <SID>ExpandSelected()
 	endif
 
 endfunction
+
+
+let s:LOADED_CHILDREN_BY_ROOT_TYPE = {}
+"Returns: dictionary {xmlTypeName: [child-components]}
+"e.g.: 
+"{"CustomTab" : ["Account_Edit", "My_Object__c"]}
+"{"CustomObject" : ["Account", "My_Object__c", ...]}
+function! s:getCachedChildrenOfSelectedTypes(xmlTypeName)
+	if g:apex_commands_current_mode =~? "ant"
+		" for ant this method is not supported
+		return {}
+	endif
+	if has_key(s:LOADED_CHILDREN_BY_ROOT_TYPE, a:xmlTypeName)
+		return s:LOADED_CHILDREN_BY_ROOT_TYPE[a:xmlTypeName]
+	endif
+
+	" cache seems to be empty, load it
+	let firstSelectedLineNum = s:getFirstSelected()
+	let selectedRootTypes = []
+	let lineNum = firstSelectedLineNum
+	let typeNames = []
+	while lineNum <= line("$")
+		let line = getline(lineNum)
+		if s:isSelected(line) && match(line, s:HIERARCHY_SHIFT) < 0
+			let lineStr = getline(lineNum)
+			"remove mark if exist
+			let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
+			let typeName = apexUtil#trim(lineStr)
+			call add(typeNames, typeName)
+		endif
+		let lineNum += 1
+	endwhile
+	
+	if !empty(typeNames)
+		let specificTypesFilePath = tempname()
+		call writefile(typeNames, specificTypesFilePath)
+		" call tooling jar
+		let resMap = {}
+		let reEnableMore = 0
+		try
+			let reEnableMore = &more
+			set nomore "disable --More-- prompt
+
+			let resMap = apexTooling#listMetadata(b:PROJECT_NAME, b:PROJECT_PATH, specificTypesFilePath)
+			if 'true' != resMap["success"]
+				return {}
+			endif
+		finally
+			if reEnableMore
+				set more
+			endif
+		endtry	
+	endif
+	" parse result file
+	let resultFile = resMap["resultFile"] " path to file with JSON lines
+	let membersByXmlType = {}
+	if filereadable(resultFile)
+		for line in readfile(resultFile, '', 10000) " assuming metadata types file will never contain more than 10K lines
+			let json = eval(line)
+			let xmlTypeName = keys(json)[0]
+			let membersByXmlType[xmlTypeName] = json[xmlTypeName]
+		endfor
+	endif
+	let s:LOADED_CHILDREN_BY_ROOT_TYPE = membersByXmlType
+	if has_key(membersByXmlType, a:xmlTypeName)
+		return membersByXmlType[a:xmlTypeName]
+	endif
+	call apexUtil#warning(a:xmlTypeName . " has no members. SKIP.")
+	return []
+endfunction
+
 
 "1delete
 "%delete
@@ -289,7 +363,18 @@ function! s:deleteChildren(lineNum)
 endfunction
 
 "load children of metadata type in given line
+"Returns: list of children
 function! s:expandOne(lineNum)
+	if g:apex_commands_current_mode =~? "ant"
+		return s:expandOneAnt(a:lineNum)
+	else
+		return s:expandOneToolingJar(a:lineNum)
+	endif
+endfunction
+
+"load children of metadata type in given line
+"Returns: list of children
+function! s:expandOneAnt(lineNum)
 	let lineNum = a:lineNum
 
 	let lineStr = getline(lineNum)
@@ -299,6 +384,7 @@ function! s:expandOne(lineNum)
 
 	" load children of given metadata type
 	let typesMap = s:loadChildrenOfType(typeName)
+	
 	if len(typesMap) > 0
 		let typesList = sort(keys(typesMap))
 		let shiftedList = []
@@ -307,8 +393,36 @@ function! s:expandOne(lineNum)
 			call add(shiftedList, s:HIERARCHY_SHIFT . curType)
 		endfor
 		call append(lineNum, shiftedList)
+		return typesList
 	endif
-	return typesMap
+	return []
+endfunction
+
+"load children of metadata type in given line
+"Returns: list of children
+"TODO: fix bug - when expanding already expanded type it deletes first root type
+"underneath
+function! s:expandOneToolingJar(lineNum)
+	let lineNum = a:lineNum
+
+	let lineStr = getline(lineNum)
+	"remove mark if exist
+	let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
+	let typeName = apexUtil#trim(lineStr)
+
+	" load children of given metadata type
+	let typesList = s:getCachedChildrenOfSelectedTypes(typeName)
+	
+	if len(typesList) > 0
+		let typesList = sort(typesList)
+		let shiftedList = []
+		" append types below current
+		for curType in typesList
+			call add(shiftedList, s:HIERARCHY_SHIFT . curType)
+		endfor
+		call append(lineNum, shiftedList)
+	endif
+	return typesList
 endfunction
 
 " for most types this method just calls apexAnt#bulkRetrieve
@@ -391,7 +505,6 @@ function! <SID>RetrieveSelected()
 	let selectedTypes = s:getSelectedTypes()
 	"{'ApexClass': ['asasa.cls', 'adafsd.cls'], 'AnalyticSnapshot': ['*'], 'ApexComponent': ['*']}
 
-	echo selectedTypes
 	if g:apex_commands_current_mode =~? "ant"
 		call s:retrieveSelectedAnt(selectedTypes)
 	else
