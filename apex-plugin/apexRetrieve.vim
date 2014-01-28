@@ -356,7 +356,7 @@ function! s:deleteChildren(lineNum)
 	endfor	
 	"echo "count=".l:count
 	if l:count > 0
-		exe firstLine.','.(firstLine + l:count).'delete'
+		exe firstLine.','.(firstLine + l:count -1).'delete'
 	endif
 	return l:count
 
