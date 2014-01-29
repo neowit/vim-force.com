@@ -338,7 +338,7 @@ function! s:getCachedChildrenOfSelectedTypes(xmlTypeName)
 	for typeName in typeNames
 		if !has_key(membersByXmlType, typeName)
 			let membersByXmlType[typeName] = []
-			call apexUtil#warning(typeName . " has no members. SKIP.")
+			call apexUtil#warning("[3] " . typeName . " has no members. SKIP.")
 		endif
 	endfor
 	" finally store loaded memebrs in cache
@@ -562,13 +562,17 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 		for l:type in keys(selectedTypes)
 			let typeDef = s:CACHED_META_TYPES[l:type]
 			let dirName = typeDef["DirName"]
-			let sourceFolder = apexOs#joinPath([outputDir, dirName])
-			let targetFolder = apexOs#joinPath([b:SRC_PATH, dirName])
+			let sourceFolder = apexOs#joinPath(outputDir, "unpackaged", dirName)
+			let targetFolder = apexOs#joinPath(b:SRC_PATH, dirName)
+			"echo "sourceFolder=" . sourceFolder
+			"echo "targetFolder=" . targetFolder
 
 			let sourceFiles = apexOs#glob(sourceFolder . "/*")
 			let targetFiles = apexOs#glob(targetFolder . "/*")
+			"echo "sourceFiles=" . string(sourceFiles)
+			"echo "targetFiles=" . string(targetFiles)
 			if len(sourceFiles) < 1
-				call apexUtil#warning(l:type . " has no members. SKIP.")
+				call apexUtil#warning("[1] " . l:type . " has no members. SKIP.")
 			else	
 				" copy files
 				" check that target folder exists
@@ -691,7 +695,7 @@ function! s:retrieveSelectedAnt(selectedTypes)
 		" that we do not overwrite anything without user's permission
 		
 		if len(sourceFiles) < 1
-			call apexUtil#warning(l:type . " has no members. SKIP.")
+			call apexUtil#warning("[2] " . l:type . " has no members. SKIP.")
 		else	
 			" check that target folder exists
 			if !isdirectory(targetFolder)
