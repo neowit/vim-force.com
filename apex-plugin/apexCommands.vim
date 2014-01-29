@@ -151,6 +151,8 @@ function! s:toolingJarSpecific()
 
 	" display last log - TODO
 	"command! ApexLog :call apexAnt#openLastLog()
+	" display last log
+	command! ApexLog :call apexTooling#openLastLog()
 
 endfunction
 

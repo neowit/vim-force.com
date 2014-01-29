@@ -21,6 +21,7 @@ endif
 let g:loaded_apexTooling = 1
 
 
+let s:LOG_LEVEL = 'None'
 " check that required global variables are defined
 let s:requiredVariables = ["g:apex_tooling_force_dot_com_path"]
 for varName in s:requiredVariables
@@ -273,6 +274,13 @@ function apexTooling#listMetadata(projectName, projectPath, specificTypesFilePat
 	return resMap
 endfunction	
 
+function! apexTooling#openLastLog()
+	if exists("s:apex_last_log")
+		:execute "e " . fnameescape(s:apex_last_log)
+	else
+		call apexUtil#info('No Log file available')
+	endif
+endfunction
 " Backup files using provided relative paths
 " all file paths are relative to projectPath
 "Returns: backupDir path
@@ -545,6 +553,10 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	let l:command = l:command  . " --config=" . shellescape(projectPropertiesPath)
 	let l:command = l:command  . " --projectPath=" . shellescape(a:projectPath)
 
+	if exists('g:apex_test_logType')
+		let l:command = l:command  . " --logLevel=" . g:apex_test_logType
+	endif
+
 	if len(a:extraParams) > 0
 		for key in keys(a:extraParams)
 			let l:command = l:command  . " --" . key . "=" . a:extraParams[key]
@@ -561,6 +573,12 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	
 	call apexOs#exe(l:command, 'M') "disable --more--
 
+	let logFileRes = s:grepValues(responseFilePath, "LOG_FILE=")
+	if !empty(logFileRes)
+		let s:apex_last_log = logFileRes[0]
+	elseif exists("s:apex_last_log")
+		unlet s:apex_last_log
+	endif
 	let errCount = s:parseErrorLog(responseFilePath, a:projectPath)
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
 endfunction
