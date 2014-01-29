@@ -309,7 +309,14 @@ function! s:getCachedChildrenOfSelectedTypes(xmlTypeName)
 
 			let resMap = apexTooling#listMetadata(b:PROJECT_NAME, b:PROJECT_PATH, specificTypesFilePath)
 			if 'true' != resMap["success"]
-				return {}
+				" stop from further attempts to repeat calls to jar in the
+				" current request
+				for typeName in typeNames
+					if !has_key(s:LOADED_CHILDREN_BY_ROOT_TYPE, typeName)
+						let s:LOADED_CHILDREN_BY_ROOT_TYPE[typeName] = []
+					endif
+				endfor
+				return []
 			endif
 		finally
 			if reEnableMore
@@ -327,11 +334,18 @@ function! s:getCachedChildrenOfSelectedTypes(xmlTypeName)
 			let membersByXmlType[xmlTypeName] = json[xmlTypeName]
 		endfor
 	endif
+	" make sure that we accounted for all requested type names
+	for typeName in typeNames
+		if !has_key(membersByXmlType, typeName)
+			let membersByXmlType[typeName] = []
+			call apexUtil#warning(typeName . " has no members. SKIP.")
+		endif
+	endfor
+	" finally store loaded memebrs in cache
 	let s:LOADED_CHILDREN_BY_ROOT_TYPE = membersByXmlType
-	if has_key(membersByXmlType, a:xmlTypeName)
+	if has_key(membersByXmlType, a:xmlTypeName) && !empty(membersByXmlType[a:xmlTypeName])
 		return membersByXmlType[a:xmlTypeName]
 	endif
-	call apexUtil#warning(a:xmlTypeName . " has no members. SKIP.")
 	return []
 endfunction
 
@@ -400,8 +414,6 @@ endfunction
 
 "load children of metadata type in given line
 "Returns: list of children
-"TODO: fix bug - when expanding already expanded type it deletes first root type
-"underneath
 function! s:expandOneToolingJar(lineNum)
 	let lineNum = a:lineNum
 
