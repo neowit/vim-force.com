@@ -105,7 +105,7 @@ function! s:listMethodNames(arg, line, pos)
 	let projectSrcPath = apex#getApexProjectSrcPath()
 	let filePath = apexOs#joinPath([projectSrcPath, 'classes', className.'.cls'])
 	let candidates = [s:ALL]
-	for lineNum in apexUtil#grepFile(filePath, '\<testmethod\>')
+	for lineNum in apexUtil#grepFileLineNums(filePath, '\<testmethod\>')
 		let methodName = s:getMethodName(filePath, lineNum - 1)
 		if len(methodName) > 0
 			call add(candidates, methodName)
@@ -283,7 +283,7 @@ function! s:disableAllTestMethodsExceptOne(fClassPath, methodName)
 	let fClassPath = a:fClassPath
 	let methodName = a:methodName
 	
-	let lineNumbers = apexUtil#grepFile(fClassPath, 'testmethod')
+	let lineNumbers = apexUtil#grepFileLineNums(fClassPath, 'testmethod')
 
 	if len(lineNumbers) > 0
 

@@ -272,16 +272,17 @@ function! apexUtil#input(prompt, options, default)
 	endwhile
 endfunction
 
-" check if file contains given regualr expression
+" check if file contains given regular expression and return Line Numbers
+" containing this expression
 " Param: filePath - full path to the file
 " Param: expr - regular expression
 " Param: options - string which contains modifiers
 "		'Q' - do not preserve quickfix, i.e. populate it with search result
 " Return: list of line numbers where 'expr' was found
 "		if nothing found then empty list []
-function! apexUtil#grepFile(filePath, expr, ...)
+function! apexUtil#grepFileLineNums(filePath, expr, ...)
 	let currentQuickFix = getqflist()
-	let res = []
+	let lines = []
 	
 	try
 		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
@@ -289,13 +290,47 @@ function! apexUtil#grepFile(filePath, expr, ...)
 		"expression found
 		"get line numbers from quickfix
 		for qfLine in getqflist()
-			call add(res, qfLine.lnum)
+			call add(lines, qfLine.lnum)
+			"call add(lines, qfLine.text)
+		endfor	
+	"catch  /^Vim\%((\a\+)\)\=:E480/
+	catch  /.*/
+		"echomsg "apexUtil#grepFileLineNums: expression NOT found: ". exprStr
+	endtry
+	
+	" restore quickfix
+	if a:0 < 1 || a:1 !~# 'Q'
+		call setqflist(currentQuickFix)
+	endif
+	
+	return lines
+endfunction
+
+" check if file contains given regualr expression
+" Param: filePath - full path to the file
+" Param: expr - regular expression
+" Param: options - string which contains modifiers
+"		'Q' - do not preserve quickfix, i.e. populate it with search result
+" Return: list of lines where 'expr' was found
+"		if nothing found then empty list []
+function! apexUtil#grepFile(filePath, expr, ...)
+	let currentQuickFix = getqflist()
+	let lines = []
+	
+	try
+		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
+		exe exprStr
+		"expression found
+		"get line numbers from quickfix
+		for qfLine in getqflist()
+			"call add(lineNums, qfLine.lnum)
+			call add(lines, qfLine.text)
 		endfor	
 		if len(getqflist()) < 1
 			"if we are here and getqflist() == []
 			"then we hit a bug and vimgrep failed to populate getqflist
 			"use alternative (slow) 'grep'
-			let res = s:grepFileSlow(a:filePath, a:expr)
+			let lines = s:grepFileSlow(a:filePath, a:expr)
 		endif
 		
 	"catch  /^Vim\%((\a\+)\)\=:E480/
@@ -308,7 +343,7 @@ function! apexUtil#grepFile(filePath, expr, ...)
 		call setqflist(currentQuickFix)
 	endif
 	
-	return res
+	return lines
 endfunction
 
 " this is a very slow alternative to apexUtil#grepFile(file, expr)
