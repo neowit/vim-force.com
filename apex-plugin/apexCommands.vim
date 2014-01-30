@@ -49,7 +49,7 @@ command! DiffUnderEclipse :ApexCompare
 " Apex commands 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " options are: '', 'antSpecific', 'toolingJarSpecific'
-let g:apex_commands_current_mode = '' 
+let s:CURRENT_MODE = '' 
 
 function! apexCommands#toggleMappings()
 	" clean up commands which do not exist in both modes
@@ -60,17 +60,21 @@ function! apexCommands#toggleMappings()
 	catch 
 	endtry
 
-	if '' == g:apex_commands_current_mode || 'toolingJarSpecific' == g:apex_commands_current_mode
+	if '' == s:CURRENT_MODE || 'toolingJarSpecific' == s:CURRENT_MODE
 		call s:antSpecific()
-		let g:apex_commands_current_mode = 'antSpecific'
+		let s:CURRENT_MODE = 'antSpecific'
 	else
 		call s:toolingJarSpecific()
-		let g:apex_commands_current_mode = 'toolingJarSpecific'
+		let s:CURRENT_MODE = 'toolingJarSpecific'
 	endif
-	echo "Current Command Mapping: " . g:apex_commands_current_mode
+	echo "Current Command Mapping: " . s:CURRENT_MODE
 endfunction
 
 command! ApexToggleCommandMappings :call apexCommands#toggleMappings()
+
+function! apexCommands#isAnt() 
+	return s:CURRENT_MODE =~? "ant"
+endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " ANT specific
@@ -157,5 +161,5 @@ function! s:toolingJarSpecific()
 endfunction
 
 " finally, define default antSpecific/toolingJarSpecific mappings
-let g:apex_commands_current_mode = 'antSpecific' 
+let s:CURRENT_MODE = 'antSpecific' 
 call apexCommands#toggleMappings()

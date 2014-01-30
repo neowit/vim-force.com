@@ -272,7 +272,7 @@ let s:LOADED_CHILDREN_BY_ROOT_TYPE = {}
 "{"CustomTab" : ["Account_Edit", "My_Object__c"]}
 "{"CustomObject" : ["Account", "My_Object__c", ...]}
 function! s:getCachedChildrenOfSelectedTypes(xmlTypeName)
-	if g:apex_commands_current_mode =~? "ant"
+	if apexCommands#isAnt()
 		" for ant this method is not supported
 		return {}
 	endif
@@ -379,7 +379,7 @@ endfunction
 "load children of metadata type in given line
 "Returns: list of children
 function! s:expandOne(lineNum)
-	if g:apex_commands_current_mode =~? "ant"
+	if apexCommands#isAnt()
 		return s:expandOneAnt(a:lineNum)
 	else
 		return s:expandOneToolingJar(a:lineNum)
@@ -517,7 +517,7 @@ function! <SID>RetrieveSelected()
 	let selectedTypes = s:getSelectedTypes()
 	"{'ApexClass': ['asasa.cls', 'adafsd.cls'], 'AnalyticSnapshot': ['*'], 'ApexComponent': ['*']}
 
-	if g:apex_commands_current_mode =~? "ant"
+	if apexCommands#isAnt()
 		call s:retrieveSelectedAnt(selectedTypes)
 	else
 		call s:retrieveSelectedToolingJar(selectedTypes)
@@ -799,7 +799,7 @@ endfunction
 "
 "
 function! s:getMetaTypesMap(projectName, projectPath, forceLoad)
-	if g:apex_commands_current_mode =~? "ant"
+	if apexCommands#isAnt()
 		return s:getMetaTypesMapAnt(a:projectName, a:projectPath, a:forceLoad)
 	else
 		return s:getMetaTypesMapToolingJar(a:projectName, a:projectPath, a:forceLoad)
@@ -809,7 +809,7 @@ endfunction
 "depending on the currenc command set metadata descrption can be in two
 "different formats
 function! s:getMetadataResultFile()
-	if g:apex_commands_current_mode =~? "ant"
+	if apexCommands#isAnt()
 		return "describeMetadata-result.txt"
 	else
 		return "describeMetadata-result.js"
