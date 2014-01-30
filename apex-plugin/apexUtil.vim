@@ -215,6 +215,9 @@ endfunction
 "			otherwise value of "default"
 function! apexUtil#menu(prompt, options, default)
 
+	" blank line before menu
+	echo "\n"
+
 	call apexUtil#info(a:prompt)
 
 	let i = 1

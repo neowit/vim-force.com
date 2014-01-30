@@ -148,6 +148,7 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName)
 		let l:extraParams["testsToRun"] = '*'
 	endif
 
+	call apexTooling#askLogLevel()
 	call apexTooling#execute("deployModified", projectName, projectPath, l:extraParams)
 
 endfunction
@@ -652,9 +653,13 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 		let l:command = l:command  . " --responseFilePath=" . shellescape(responseFilePath)
 	endif
 	
+	" make console output start from new line and do not mix with whatever was
+	" previously on the same line
+	echo "\n"
 	call apexOs#exe(l:command, 'M') "disable --more--
 
 	let logFileRes = s:grepValues(responseFilePath, "LOG_FILE=")
+	
 	if !empty(logFileRes)
 		let s:apex_last_log = logFileRes[0]
 	elseif exists("s:apex_last_log")
