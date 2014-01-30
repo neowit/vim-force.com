@@ -325,14 +325,18 @@ function! s:getCachedChildrenOfSelectedTypes(xmlTypeName)
 		endtry	
 	endif
 	" parse result file
-	let resultFile = resMap["resultFile"] " path to file with JSON lines
-	let membersByXmlType = {}
-	if filereadable(resultFile)
-		for line in readfile(resultFile, '', 10000) " assuming metadata types file will never contain more than 10K lines
-			let json = eval(line)
-			let xmlTypeName = keys(json)[0]
-			let membersByXmlType[xmlTypeName] = json[xmlTypeName]
-		endfor
+	if has_key(resMap, "resultFile")
+		let resultFile = resMap["resultFile"] " path to file with JSON lines
+		let membersByXmlType = {}
+		if filereadable(resultFile)
+			for line in readfile(resultFile, '', 10000) " assuming metadata types file will never contain more than 10K lines
+				let json = eval(line)
+				let xmlTypeName = keys(json)[0]
+				let membersByXmlType[xmlTypeName] = json[xmlTypeName]
+			endfor
+		endif
+	else
+		let membersByXmlType = {}
 	endif
 	" make sure that we accounted for all requested type names
 	for typeName in typeNames

@@ -269,7 +269,9 @@ function apexTooling#listMetadata(projectName, projectPath, specificTypesFilePat
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
 		let resultFile = s:grepValues(logFilePath, "RESULT_FILE=")
-		let resMap["resultFile"] = resultFile[0]
+		if len(resultFile) > 0
+			let resMap["resultFile"] = resultFile[0]
+		endif
 	endif
 	return resMap
 endfunction	
