@@ -90,7 +90,7 @@ function! s:antSpecific()
 	command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexStage#write() | :call apex#deploy('staged', <f-args>)
 
 	"Unit testing
-	command! -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest(<f-args>)
+	command! -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTestAnt(<f-args>)
 
 	"delete Staged files from specified Org
 	"Examples:
@@ -136,7 +136,7 @@ function! s:toolingJarSpecific()
 
 	"Unit testing
 	" TODO
-	"command! -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest(<f-args>)
+	command! -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest(<f-args>)
 
 	"delete Staged files from specified Org
 	"Examples:

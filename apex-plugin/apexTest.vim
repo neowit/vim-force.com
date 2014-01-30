@@ -18,6 +18,8 @@ endif
 let g:loaded_apexTest = 1
 
 let s:ALL = '*ALL*'
+
+" run test using apexTooling
 " Params:
 " Param 1: [optional] mode name: ['testAndDeploy', 'checkOnly']
 " Param 2: [optional] class name
@@ -25,6 +27,40 @@ let s:ALL = '*ALL*'
 " Param 4: [optional] destination project name, must match one of .properties file with
 "		login details
 function! apexTest#runTest(...)
+	let filePath = expand("%:p")
+
+	let modeName = a:0 > 0? a:1 : 'testAndDeploy'
+	let className = a:0 > 1? a:2 : ''
+	let methodName = a:0 > 2? a:3 : ''
+	let projectName = a:0 > 3? a:4 : ''
+
+	let projectSrcPath = apex#getApexProjectSrcPath()
+
+	let isCheckOnly = 'checkOnly' == modeName
+	if strlen(methodName) > 0 && s:ALL != methodName
+		if !isCheckOnly
+			call apexUtil#warning('Single method test is experimental and only supported in "checkOnly" mode.')
+			if 'y' !~# apexUtil#input('Switch to "checkOnly" and continue? [Y/n]: ', 'YyNn', 'y')
+				return
+			endif
+		endif
+
+		call apexTooling#deployAndTest(filePath, {'checkOnly': 1, 'className': className, 'methodName': methodName}, projectName)
+	elseif strlen(className) > 0
+		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly, 'className': className}, projectName)
+	else 
+		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly}, projectName)
+	endif
+
+endfunction
+
+" Params:
+" Param 1: [optional] mode name: ['testAndDeploy', 'checkOnly']
+" Param 2: [optional] class name
+" Param 3: [optional] method name
+" Param 4: [optional] destination project name, must match one of .properties file with
+"		login details
+function! apexTest#runTestAnt(...)
 	let modeName = a:0 > 0? a:1 : 'testAndDeploy'
 	let className = a:0 > 1? a:2 : ''
 	let methodName = a:0 > 2? a:3 : ''
@@ -54,6 +90,8 @@ function! apexTest#runTest(...)
 	endif
 
 endfunction
+
+
 " Args:
 " arg: ArgLead - the leading portion of the argument currently being
 "			   completed on

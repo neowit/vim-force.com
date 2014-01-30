@@ -64,7 +64,7 @@ function apexTooling#deploy(...)
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
 	let projectPath = projectPair.path
 	let projectName = projectPair.name
-	if a:0 >2
+	if a:0 >2 && len(a:3) > 0
 		" if project name is provided via tab completion then spaces in it
 		" will be escaped, so have to unescape otherwise funcions like
 		" filereadable() do not understand such path name
@@ -105,20 +105,51 @@ endfunction
 
 "run unit tests
 "Args:
-"filePath:  path to file which belongs to apex project
-"Param1: - mode
-"			'checkOnly' - dry-run deployment or tests
-"			'testAndDeploy' - deploy if tests successful
-"							only relevant when mode:"test"
+"Param: filePath 
+"			path to file which belongs to apex project
 "
-"Param2: - className: (optional) - if provided then only run tests in the specified class
+"Param: attributeMap - map {} of test attributes
+"			e.g.: {"checkOnly": 0, "className": "Test.cls", "methodName": "mytest1"}
 "
-"Param3: - methodName:(optional) - if provided then only run specified method in the class
+"			className: (optional) - if provided then only run tests in the specified class
+"									otherwise all test classes listed in
+"									deployment package
+"			methodName:(optional) - if provided then only run specified method in the class
+"			checkOnly:(optional) - can be either 0(false) or 1(true)
 "
-"Param4: - orgName:(optional) if provided then given project name will be used as
+"Param: orgName - given project name will be used as
 "						target Org name.
 "						must match one of .properties file with	login details
-function s:runTest(...)
+function apexTooling#deployAndTest(filePath, attributeMap, orgName)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectPath = projectPair.path
+	let projectName = len(a:orgName) > 0 ? a:orgName : projectPair.name
+	let attributeMap = a:attributeMap
+
+	let l:extraParams = {}
+	" another org?
+	if projectPair.name != projectName
+		let l:extraParams["callingAnotherOrg"] = "true"
+	endif
+	" checkOnly?
+	if has_key(attributeMap, "checkOnly")
+		let l:extraParams["checkOnly"] = attributeMap["checkOnly"]? "true" : "false"
+	endif
+	" className
+	if has_key(attributeMap, "className")
+		if has_key(attributeMap, "methodName")
+			" specific method in given class, format: ClassName.methodName
+			let l:extraParams["testsToRun"] = attributeMap["className"] . "." . attributeMap["methodName"]
+		else "all methods in given class
+			let l:extraParams["testsToRun"] = attributeMap["className"]
+		endif
+	else
+		"run all tests in the deployment package
+		let l:extraParams["testsToRun"] = '*'
+	endif
+
+	call apexTooling#execute("deployModified", projectName, projectPath, l:extraParams)
+
 endfunction
 
 "Args:
