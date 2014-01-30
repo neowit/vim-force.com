@@ -149,8 +149,8 @@ function! s:toolingJarSpecific()
 	"command! ApexRefreshFile :call apex#refreshFile(expand("%:p"))
 	command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
 
-	" display last log - TODO
-	"command! ApexLog :call apexAnt#openLastLog()
+	command! -range=% ApexExecuteAnonymous <line1>,<line2>call apexTooling#executeAnonymous(expand("%:p"))
+
 	" display last log
 	command! ApexLog :call apexTooling#openLastLog()
 

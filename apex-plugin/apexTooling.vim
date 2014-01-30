@@ -281,6 +281,54 @@ function! apexTooling#openLastLog()
 		call apexUtil#info('No Log file available')
 	endif
 endfunction
+
+"execute piece of code via executeAnonymous
+"How to get visually selected text in VimScript
+"http://stackoverflow.com/questions/1533565/how-to-get-visually-selected-text-in-vimscript
+"TODO: write function which can accept visual selection or whole buffer and
+"can run executeAnonymous on that code
+"Args:
+"Param1: mode:
+"			'selection' - execute selected code snippet
+"			'buffer' - execute whole buffer
+function apexTooling#executeAnonymous(filePath) range
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectName = projectPair.name
+	let projectPath = projectPair.path
+	
+	let lines = getbufline(bufnr("%"), a:firstline, a:lastline)
+	echo lines
+	"let lines = []
+	"if 'selection' == a:mode
+	"	let lines = getbufline(bufnr("%"), "'<", "'>")
+	"else 
+	"	" default - whole buffer
+	"	let lines = getbufline(bufnr("%"), 1, "$")
+	"endif
+	if !empty(lines)
+		let codeFile = tempname()
+		call writefile(lines, codeFile)
+		call s:executeAnonymous(projectName, projectPath, codeFile)
+	endif
+endfunction	
+
+function s:executeAnonymous(projectName, projectPath, codeFile)
+	call apexTooling#askLogLevel()
+	let resMap = apexTooling#execute("executeAnonymous", a:projectName, a:projectPath, {"codeFile": shellescape(a:codeFile)})
+	if 'None' != g:apex_test_logType
+		:ApexLog
+	endif
+endfunction	
+
+" ask user which log type to use for running unit tests 
+" result is assigned value of g:apex_test_logType variable
+function! apexTooling#askLogLevel()
+	if exists('g:apex_test_logType')
+		let s:LOG_LEVEL = g:apex_test_logType
+	endif
+	let g:apex_test_logType = apexUtil#menu('Select Log Type', ['None', 'Debugonly', 'Db', 'Profiling', 'Callout', 'Detail'], s:LOG_LEVEL)
+endfunction
+
 " Backup files using provided relative paths
 " all file paths are relative to projectPath
 "Returns: backupDir path
@@ -552,7 +600,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	let l:command = l:command  . " --tempFolderPath=" . shellescape(g:apex_temp_folder)
 	let l:command = l:command  . " --config=" . shellescape(projectPropertiesPath)
 	let l:command = l:command  . " --projectPath=" . shellescape(a:projectPath)
-
+	
 	if exists('g:apex_test_logType')
 		let l:command = l:command  . " --logLevel=" . g:apex_test_logType
 	endif
