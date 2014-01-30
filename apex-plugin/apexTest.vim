@@ -79,7 +79,7 @@ function! s:listClassNames(arg, line, pos)
 	let candidates = []
 	for fullName in fullPaths
 		"check if this class contains testMethod
-		if len(apexUtil#grepFile(fullName, 'testmethod')) > 0
+		if len(apexUtil#grepFile(fullName, 'testMethod\|@isTest')) > 0
 			let fName = apexOs#splitPath(fullName).tail
 			let fName = fnamemodify(fName, ":r") " remove .cls
 			"take into account file prefix which user have already entered
@@ -105,7 +105,7 @@ function! s:listMethodNames(arg, line, pos)
 	let projectSrcPath = apex#getApexProjectSrcPath()
 	let filePath = apexOs#joinPath([projectSrcPath, 'classes', className.'.cls'])
 	let candidates = [s:ALL]
-	for lineNum in apexUtil#grepFileLineNums(filePath, '\<testmethod\>')
+	for lineNum in apexUtil#grepFileLineNums(filePath, '\<testmethod\>\|@\<isTest\>')
 		let methodName = s:getMethodName(filePath, lineNum - 1)
 		if len(methodName) > 0
 			call add(candidates, methodName)
@@ -135,25 +135,37 @@ function! s:getMethodName(filePath, lineNum)
 		let text = text . ' ' . line
 	endfor
 	
-	let rangeStart = match(text, '\c\<testmethod\>')
+	let keyword = "testMethod"
+	let rangeStart = match(text, '\c\<testMethod\>')
+	if rangeStart < 0
+		let keyword = "@isTest"
+		let rangeStart = match(text, '\c@\<isTest\>')
+	endif
+	
 	if rangeStart >=0 
-		let rangeStart += len('testmethod')
+		let rangeStart += len(keyword)
 		" from here we can look for first '('
 		let bracketPos = match(text, '(', rangeStart)
-		if bracketPos > 2
-			let index = bracketPos - 1
-			" found '(' now first word on the left will be method name
-			while 1
-				let chr = text[index]
-				if chr =~ '\w'
-				"echoerr "chr=".chr
-					let methodName = chr . methodName
-				elseif len(methodName) > 0 || index < 1
-					break
-				endif
-				let index -= 1
-			endwhile
-		endif	
+		let curlyBracketPos = match(text, '{', rangeStart)
+		if curlyBracketPos < bracketPos
+			"this is most likely class name, not method name
+			return ""
+		else
+			if bracketPos > 2
+				let index = bracketPos - 1
+				" found '(' now first word on the left will be method name
+				while 1
+					let chr = text[index]
+					if chr =~ '\w'
+					"echoerr "chr=".chr
+						let methodName = chr . methodName
+					elseif len(methodName) > 0 || index < 1
+						break
+					endif
+					let index -= 1
+				endwhile
+			endif
+		endif
 	endif
 		
 	return apexUtil#trim(methodName)
