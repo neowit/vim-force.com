@@ -656,6 +656,10 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	" make console output start from new line and do not mix with whatever was
 	" previously on the same line
 	echo "\n"
+	
+	" make sure we do not accidentally reuse old responseFile
+	call delete(responseFilePath)
+
 	call apexOs#exe(l:command, 'M') "disable --more--
 
 	let logFileRes = s:grepValues(responseFilePath, "LOG_FILE=")
