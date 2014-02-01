@@ -21,6 +21,7 @@ endif
 let g:loaded_apexTooling = 1
 
 
+let s:show_log_hint = 1 " first time log is available tell user about that
 let s:LOG_LEVEL = 'None'
 " check that required global variables are defined
 let s:requiredVariables = ["g:apex_tooling_force_dot_com_path"]
@@ -631,8 +632,8 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 		" if defined then add extra JVM params
 		let l:command = l:command  . " " . g:apex_tooling_force_dot_com_java_params
 	else
-	let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
-	let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
+		let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
+		let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
 	endif
 	let l:command = l:command  . " -jar " . g:apex_tooling_force_dot_com_path
 	let l:command = l:command  . " --action=" . a:action
@@ -671,6 +672,10 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	
 	if !empty(logFileRes)
 		let s:apex_last_log = logFileRes[0]
+		if s:show_log_hint
+			call apexUtil#info("Log file is available, use :ApexLog to open it")
+			let s:show_log_hint = 0
+		endif
 	elseif exists("s:apex_last_log")
 		unlet s:apex_last_log
 	endif
