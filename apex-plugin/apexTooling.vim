@@ -627,8 +627,13 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
 
 	let l:command = "java "
+	if exists('g:apex_tooling_force_dot_com_java_params')
+		" if defined then add extra JVM params
+		let l:command = l:command  . " " . g:apex_tooling_force_dot_com_java_params
+	else
 	let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
 	let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
+	endif
 	let l:command = l:command  . " -jar " . g:apex_tooling_force_dot_com_path
 	let l:command = l:command  . " --action=" . a:action
 	let l:command = l:command  . " --tempFolderPath=" . shellescape(g:apex_temp_folder)
