@@ -140,7 +140,7 @@ function apexTooling#deploy(...)
 	endif
 	" END DEBUG
 
-	let resMap = apexTooling#execute(l:action, projectName, projectPath, l:extraParams)
+	let resMap = apexTooling#execute(l:action, projectName, projectPath, l:extraParams, [])
 
 	if !has_key(l:extraParams, "ignoreConflicts")
 		call s:registerConflickCheck(resMap)
@@ -194,7 +194,7 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName)
 	endif
 
 	call apexTooling#askLogLevel()
-	let resMap = apexTooling#execute("deployModified", projectName, projectPath, l:extraParams)
+	let resMap = apexTooling#execute("deployModified", projectName, projectPath, l:extraParams, [])
 
 	if !has_key(l:extraParams, "ignoreConflicts")
 		call s:registerConflickCheck(resMap)
@@ -206,19 +206,34 @@ endfunction
 "Param1: path to file which belongs to apex project
 function apexTooling#printChangedFiles(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {})
+	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {}, [])
 endfunction	
 
 "Args:
 "Param1: path to file which belongs to apex project
 function apexTooling#refreshProject(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {})
+	let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {}, ["ERROR", "INFO"])
 	let logFilePath = resMap["responseFilePath"]
 	" check if SFDC client reported modified files
 	let modifiedFiles = s:grepValues(logFilePath, "MODIFIED_FILE=")
 	if len(modifiedFiles) > 0
-		" modified files detected, record them
+		" modified files detected
+		call apexUtil#warning("Modified file(s) detected.")
+		" show first 5
+		let index = 0
+		for fName in modifiedFiles
+			let index += 1
+			if index > 5
+				call apexUtil#warning("+ " . (len(modifiedFiles) - index) . " more")
+				break
+			endif
+			if fName =~ "package.xml$"
+				continue " skip package.xml
+			endif
+
+			call apexUtil#warning("    " . fName)
+		endfor
 		echohl WarningMsg
 		let response = input('Are you sure you want to lose local changes [y/N]? ')
 		echohl None 
@@ -226,7 +241,7 @@ function apexTooling#refreshProject(filePath)
 			return 
 		endif
 		" forced refresh when there are modified files
-		let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {"skipModifiedFilesCheck":"true"})
+		let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {"skipModifiedFilesCheck":"true"}, ["ERROR", "INFO"])
 	endif
 
 	if "true" == resMap["success"]
@@ -306,7 +321,7 @@ endfunction
 "Param1: path to file which belongs to apex project
 function apexTooling#listConflicts(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	call apexTooling#execute("listConflicts", projectPair.name, projectPair.path, {})
+	call apexTooling#execute("listConflicts", projectPair.name, projectPair.path, {}, [])
 endfunction	
 "
 "List relative (project root) paths of files in Open buffers
@@ -326,7 +341,7 @@ endfunction
 
 "load metadata description into a local file
 function apexTooling#loadMetadataList(projectName, projectPath, allMetaTypesFilePath)
-	return apexTooling#execute("describeMetadata", a:projectName, a:projectPath, {"allMetaTypesFilePath": shellescape(a:allMetaTypesFilePath)})
+	return apexTooling#execute("describeMetadata", a:projectName, a:projectPath, {"allMetaTypesFilePath": shellescape(a:allMetaTypesFilePath)}, [])
 endfunction	
 
 " retrieve members of specified metadata types
@@ -334,7 +349,7 @@ endfunction
 "Param3: path to file which contains JSON description of required types
 "
 function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePath)
-	let resMap = apexTooling#execute("bulkRetrieve", a:projectName, a:projectPath, {"specificTypes": shellescape(a:specificTypesFilePath)})
+	let resMap = apexTooling#execute("bulkRetrieve", a:projectName, a:projectPath, {"specificTypes": shellescape(a:specificTypesFilePath)}, [])
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
 		let resultFolder = s:grepValues(logFilePath, "RESULT_FOLDER=")
@@ -346,7 +361,7 @@ endfunction
 
 "load list of components of specified metadata types into a local file
 function apexTooling#listMetadata(projectName, projectPath, specificTypesFilePath)
-	let resMap = apexTooling#execute("listMetadata", a:projectName, a:projectPath, {"specificTypes": shellescape(a:specificTypesFilePath)})
+	let resMap = apexTooling#execute("listMetadata", a:projectName, a:projectPath, {"specificTypes": shellescape(a:specificTypesFilePath)}, [])
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
 		let resultFile = s:grepValues(logFilePath, "RESULT_FILE=")
@@ -397,7 +412,7 @@ endfunction
 
 function s:executeAnonymous(projectName, projectPath, codeFile)
 	call apexTooling#askLogLevel()
-	let resMap = apexTooling#execute("executeAnonymous", a:projectName, a:projectPath, {"codeFile": shellescape(a:codeFile)})
+	let resMap = apexTooling#execute("executeAnonymous", a:projectName, a:projectPath, {"codeFile": shellescape(a:codeFile)}, [])
 	if 'None' != g:apex_test_logType
 		:ApexLog
 	endif
@@ -439,7 +454,7 @@ endfunction
 " returns: 
 " 0 - if RESULT=SUCCESS
 " any value > 0 - if RESULT <> SUCCESS
-function! s:parseErrorLog(logFilePath, projectPath)
+function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes)
 	"clear quickfix
 	call setqflist([])
 	call CloseEmptyQuickfixes()
@@ -457,7 +472,7 @@ function! s:parseErrorLog(logFilePath, projectPath)
 
 	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
 		" check if we have messages
-		if s:displayMessages(a:logFilePath, a:projectPath) < 1
+		if s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1
 			call apexUtil#info("No errors found")
 		endif
 		return 0
@@ -465,7 +480,7 @@ function! s:parseErrorLog(logFilePath, projectPath)
 
 	call apexUtil#error("Operation failed")
 	" check if we have messages
-	call s:displayMessages(a:logFilePath, a:projectPath)
+	call s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes)
 	
 	call s:fillQuickfix(a:logFilePath, a:projectPath)
 	return 1
@@ -473,14 +488,20 @@ function! s:parseErrorLog(logFilePath, projectPath)
 endfunction
 
 "Returns: number of messages displayed
-function! s:displayMessages(logFilePath, projectPath)
+function! s:displayMessages(logFilePath, projectPath, displayMessageTypes)
 	let prefix = 'MESSAGE: '
 	let l:lines = apexUtil#grepFile(a:logFilePath, prefix)
 	let l:index = 0
-	while l:index < len(l:lines)
-		let line = substitute(l:lines[l:index], prefix, "", "")
+	for line in l:lines
+		let line = substitute(line, prefix, "", "")
 		let message = eval(line)
 		let msgType = has_key(message, "type")? message["type"] : "INFO"
+		if len(a:displayMessageTypes) > 0
+			if index(a:displayMessageTypes, msgType) < 0
+				" this msgType is disabled
+				continue
+			endif
+		endif
 		let text = message["text"]
 		if "ERROR" == msgType
 			call apexUtil#error(text)
@@ -494,8 +515,8 @@ function! s:displayMessages(logFilePath, projectPath)
 			echo text
 		endif
 		call s:displayMessageDetails(a:logFilePath, a:projectPath, message)
-		let l:index = l:index + 1
-	endwhile
+		let l:index += 1
+	endfor
 	if l:index > 0
 		" blank line before next message
 		echo ""
@@ -672,10 +693,14 @@ endfunction
 "	"responseFilePath" : "path to current response/log file"
 "	}
 "
-function! apexTooling#execute(action, projectName, projectPath, extraParams)
+function! apexTooling#execute(action, projectName, projectPath, extraParams, displayMessageTypes)
 	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
 
 	let l:command = "java "
+	if exists("g:apex_java_cmd")
+		" set user defined path to java
+		let l:command = g:apex_java_cmd
+	endif
 	if exists('g:apex_tooling_force_dot_com_java_params')
 		" if defined then add extra JVM params
 		let l:command = l:command  . " " . g:apex_tooling_force_dot_com_java_params
@@ -727,7 +752,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams)
 	elseif exists("s:apex_last_log")
 		unlet s:apex_last_log
 	endif
-	let errCount = s:parseErrorLog(responseFilePath, a:projectPath)
+	let errCount = s:parseErrorLog(responseFilePath, a:projectPath, a:displayMessageTypes)
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
 endfunction
 
