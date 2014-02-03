@@ -395,17 +395,19 @@ function apexTooling#executeAnonymous(filePath) range
 	let projectPath = projectPair.path
 	
 	let lines = getbufline(bufnr("%"), a:firstline, a:lastline)
-	echo lines
-	"let lines = []
-	"if 'selection' == a:mode
-	"	let lines = getbufline(bufnr("%"), "'<", "'>")
-	"else 
-	"	" default - whole buffer
-	"	let lines = getbufline(bufnr("%"), 1, "$")
-	"endif
-	if !empty(lines)
+	" pre-process lines, often we need to remove comment character
+	let processedLines = []
+	for line in lines
+		" remove * if it is first non-space character on the line
+		let line = substitute(line, "^[ ]*\\*", "", "")
+		" remove // if it is first non-space character on the line
+		let line = substitute(line, "^[ ]*\\/\\/", "", "")
+		call add(processedLines, line)
+	endfor
+	"echo processedLines
+	if !empty(processedLines)
 		let codeFile = tempname()
-		call writefile(lines, codeFile)
+		call writefile(processedLines, codeFile)
 		call s:executeAnonymous(projectName, projectPath, codeFile)
 	endif
 endfunction	
