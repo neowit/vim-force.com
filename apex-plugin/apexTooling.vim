@@ -20,6 +20,7 @@ if exists("g:loaded_apexTooling") || &compatible
 endif
 let g:loaded_apexTooling = 1
 
+let s:SESSION_FOLDER = ".vim-force.com"
 
 let s:show_log_hint = 1 " first time log is available tell user about that
 let s:LOG_LEVEL = 'None'
@@ -62,7 +63,6 @@ endfunction
 function! s:registerConflickCheck(resMap)
 	if "true" == a:resMap["success"]
 		let logFilePath = a:resMap["responseFilePath"]
-		echo "len=" . len(apexUtil#grepFile(logFilePath, "no modified files detected."))
 		if filereadable(logFilePath) && len(apexUtil#grepFile(logFilePath, "no modified files detected.")) < 1
 			" record last time we checked for conflicts with remote
 			let s:last_conflict_check_time = localtime()
@@ -138,7 +138,6 @@ function apexTooling#deploy(...)
 	if has_key(l:extraParams, "ignoreConflicts")
 		call apexUtil#warning("skipping conflict check with remote")
 	endif
-	" END DEBUG
 
 	let resMap = apexTooling#execute(l:action, projectName, projectPath, l:extraParams, [])
 
@@ -416,9 +415,36 @@ function s:executeAnonymous(projectName, projectPath, codeFile)
 	call apexTooling#askLogLevel()
 	let resMap = apexTooling#execute("executeAnonymous", a:projectName, a:projectPath, {"codeFile": shellescape(a:codeFile)}, [])
 	if 'None' != g:apex_test_logType
-		:ApexLog
+		if "true" == resMap.success
+			:ApexLog
+		endif
 	endif
 endfunction	
+
+"open scratch file 
+"This file can be used for things line ExecuteAnonymous
+let s:scratch_project_pair = {}
+
+" if changed file name then update vim-force.com.vim file
+let s:SCRATCH_FILE = "vim-force.com-scratch.txt"
+
+function apexTooling#openScratchFile(filePath)
+	let srcPath = apex#getApexProjectSrcPath(a:filePath)
+	let scratchFilePath = apexOs#joinPath(srcPath, s:SCRATCH_FILE)
+
+	try 
+		let projectPair = apex#getSFDCProjectPathAndName(srcPath)
+	catch
+		call apexUtil#error("failed to determine Apex prject location by file: " + scratchFilePath)
+		return
+	endtry
+	let s:scratch_project_pair = projectPair
+	if !filereadable(scratchFilePath) 
+		call writefile(["/* This is a scratch file */"], scratchFilePath)
+	endif
+	:execute "e " . fnameescape(scratchFilePath)
+
+endfunction
 
 " ask user which log type to use for running unit tests 
 " result is assigned value of g:apex_test_logType variable
@@ -730,7 +756,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 		let responseFilePath = a:extraParams["responseFilePath"]
 	else
 		" default responseFilePath
-		let responseFilePath = apexOs#joinPath(a:projectPath, ".vim-force.com", "response_" . a:action)
+		let responseFilePath = apexOs#joinPath(a:projectPath, s:SESSION_FOLDER, "response_" . a:action)
 		let l:command = l:command  . " --responseFilePath=" . shellescape(responseFilePath)
 	endif
 	

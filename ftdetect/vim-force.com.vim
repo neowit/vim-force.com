@@ -20,5 +20,6 @@ au! BufRead,BufNewFile *.cls,*.trigger set filetype=apexcode
 " use <C-0> for Javascript and <C-U> for html complete
 au! BufRead,BufNewFile *.page,*.component,*.scf	set filetype=visualforce | setlocal omnifunc=htmlcomplete#CompleteTags | setlocal completefunc=visualforcecomplete#Complete
 au! BufRead,BufNewFile *JS.resource set filetype=apexcode.javascript | set syntax=javascript | setlocal omnifunc=javascriptcomplete#CompleteJS
-
+" scratch buffer needs 'apexcode' highlighting
+au! BufRead,BufNewFile vim-force.com-scratch.txt set filetype=apexcode
 

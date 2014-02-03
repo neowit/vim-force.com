@@ -158,6 +158,8 @@ function! s:toolingJarSpecific()
 	" display last log
 	command! ApexLog :call apexTooling#openLastLog()
 
+	" open scratch buffer/file
+	command! ApexScratch :call apexTooling#openScratchFile(expand("%:p"))
 endfunction
 
 " finally, define default antSpecific/toolingJarSpecific mappings
