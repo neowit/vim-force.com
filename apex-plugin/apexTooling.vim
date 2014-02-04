@@ -518,7 +518,7 @@ endfunction
 "Returns: number of messages displayed
 function! s:displayMessages(logFilePath, projectPath, displayMessageTypes)
 	let prefix = 'MESSAGE: '
-	let l:lines = apexUtil#grepFile(a:logFilePath, prefix)
+	let l:lines = apexUtil#grepFile(a:logFilePath, '^' . prefix)
 	let l:index = 0
 	for line in l:lines
 		let line = substitute(line, prefix, "", "")
@@ -556,7 +556,7 @@ endfunction
 " details found
 function! s:displayMessageDetails(logFilePath, projectPath, message)
 	let prefix = 'MESSAGE DETAIL: '
-	let l:lines = apexUtil#grepFile(a:logFilePath, prefix)
+	let l:lines = apexUtil#grepFile(a:logFilePath, '^' . prefix)
 	let l:index = 0
 	while l:index < len(l:lines)
 		let line = substitute(l:lines[l:index], prefix, "", "")
@@ -592,7 +592,7 @@ endfunction
 function! s:fillQuickfix(logFilePath, projectPath)
 	" error is reported like so
 	" ERROR: {"line" : 3, "column" : 10, "filePath" : "src/classes/A_Fake_Class.cls", "text" : "Invalid identifier: test22."}
-	let l:lines = apexUtil#grepFile(a:logFilePath, 'ERROR: ')
+	let l:lines = apexUtil#grepFile(a:logFilePath, '^ERROR: ')
 	let l:errorList = []
 
 	let index = 0
@@ -634,7 +634,7 @@ endfunction
 " ['file1.txt', 'file1.txt']
 "
 function! s:grepValues(filePath, prefix)
-	let l:lines = apexUtil#grepFile(a:filePath, a:prefix)
+	let l:lines = apexUtil#grepFile(a:filePath, '^' . a:prefix)
 	let l:index = 0
 	let l:resultLines = []
 	while l:index < len(l:lines)
