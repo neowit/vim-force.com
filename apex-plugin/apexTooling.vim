@@ -147,6 +147,14 @@ function apexTooling#deploy(...)
 
 endfunction
 
+let s:last_coverage_report_file = ''
+function! apexTooling#getLastCoverageReportFile()
+	return s:last_coverage_report_file
+endfunction
+"DEBUG ONLY
+function! apexTooling#setLastCoverageReportFile(filePath)
+	let s:last_coverage_report_file = a:filePath
+endfunction
 "run unit tests
 "Args:
 "Param: filePath 
@@ -164,7 +172,9 @@ endfunction
 "Param: orgName - given project name will be used as
 "						target Org name.
 "						must match one of .properties file with	login details
-function apexTooling#deployAndTest(filePath, attributeMap, orgName)
+"Param: reportCoverage: 'reportCoverage' (means load lines report), anything
+"				        else means do not load lines coverage report
+function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCoverage)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
 	let projectName = len(a:orgName) > 0 ? a:orgName : projectPair.name
@@ -191,9 +201,18 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName)
 		"run all tests in the deployment package
 		let l:extraParams["testsToRun"] = '*'
 	endif
+	"reportCoverage
+	if 'reportCoverage' == a:reportCoverage
+		let l:extraParams["reportCoverage"] = 'true'
+	endif
 
 	call apexTooling#askLogLevel()
 	let resMap = apexTooling#execute("deployModified", projectName, projectPath, l:extraParams, [])
+	let responsePath = resMap["responseFilePath"]
+	let coverageFiles = s:grepValues(responsePath, "COVERAGE_FILE=")
+	if len(coverageFiles) > 0
+		let s:last_coverage_report_file = coverageFiles[0]
+	endif
 
 	if !has_key(l:extraParams, "ignoreConflicts")
 		call s:registerConflickCheck(resMap)

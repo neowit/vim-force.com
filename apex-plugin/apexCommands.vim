@@ -135,8 +135,10 @@ function! s:toolingJarSpecific()
 
 
 	"Unit testing
-	" TODO
-	command! -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest(<f-args>)
+	command! -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest('no-reportCoverage', <f-args>)
+	command! -nargs=* -complete=customlist,apexTest#completeParams ApexTestWithCoverage :call apexTest#runTest('reportCoverage', <f-args>)
+	command! -nargs=0 ApexTestCoverageToggle :call apexCoverage#toggle(expand("%:p"))
+	command! -nargs=0 ApexTestCoverageHideAll :call apexCoverage#hide()
 
 	"delete Staged files from specified Org
 	"Examples:

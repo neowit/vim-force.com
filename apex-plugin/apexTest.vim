@@ -20,13 +20,15 @@ let g:loaded_apexTest = 1
 let s:ALL = '*ALL*'
 
 " run test using apexTooling
-" Params:
+"Param: reportCoverage: 'reportCoverage' (means load lines report), anything
+"				        else means do not load lines coverage report
+"Params: (optional)
 " Param 1: [optional] mode name: ['testAndDeploy', 'checkOnly']
 " Param 2: [optional] class name
 " Param 3: [optional] method name
 " Param 4: [optional] destination project name, must match one of .properties file with
 "		login details
-function! apexTest#runTest(...)
+function! apexTest#runTest(reportCoverage, ...)
 	let filePath = expand("%:p")
 
 	let modeName = a:0 > 0? a:1 : 'testAndDeploy'
@@ -45,11 +47,11 @@ function! apexTest#runTest(...)
 			endif
 		endif
 
-		call apexTooling#deployAndTest(filePath, {'checkOnly': 1, 'className': className, 'methodName': methodName}, projectName)
+		call apexTooling#deployAndTest(filePath, {'checkOnly': 1, 'className': className, 'methodName': methodName}, projectName, a:reportCoverage)
 	elseif strlen(className) > 0
-		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly, 'className': className}, projectName)
+		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly, 'className': className}, projectName, a:reportCoverage)
 	else 
-		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly}, projectName)
+		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly}, projectName, a:reportCoverage)
 	endif
 
 endfunction

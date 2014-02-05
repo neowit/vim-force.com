@@ -233,6 +233,10 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexDeployAll|                     deploy all files in current project
 |ApexDeployStaged|                  deploy all files listed in Stage cache
 |ApexTest|                          run Unit Tests 
+|ApexTestWithCoverage|              run Unit Tests and generate per-line coverage
+|ApexTestCoverageToggle|            toggle per-line coverage highligh in
+                                    current file
+|ApexTestCoverageHideAll|           hide per-line coverage highligh in all files
 
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
@@ -340,7 +344,7 @@ exist in SFDC.
                                                             *ApexDeployStaged*
 Deploy all files previously added by :|ApexStageAdd| command
 
-                                                            *ApexTest*
+                                                                     *ApexTest*
 Very basic function that is similar to :|ApexDeploy| but runs unit tests.  
 If no class name specified then will run tests in all modified classes that
 contain 'testMethod'.
@@ -359,8 +363,21 @@ Param: 3 - method name - if test class contains several 'testMethod'-s then
 Param: 4 - target Org/project name. See :|ApexDeploy| for more details
 
 Differences to :|ApexDeploy| 
-- if you run :|ApexTest| and get unit tests failure(s) or insifficient overall
+- if you run :|ApexTest| and get unit tests failure(s) or insufficient overall
   code coverage then SFDC rejects changes and you files are NOT saved in SFDC.
+
+                                                      *ApexTestWithCoverage*
+Similar to :|ApexTest| but also generates line-by-line report of code coverage.
+Later coverage can be displayed using :|ApexTestCoverageToggle| command.
+
+                                                    *ApexTestCoverageToggle*
+When last test was run with :|ApexTestWithCoverage| a line-by-line report of
+code coverage in the current file can be shown/hidden with
+:|ApexTestCoverageToggle|. Lines not covered by last unit test run will be
+highlighted with vim 'sign' function.
+
+                                                    *ApexTestCoverageHideAll*
+Hide test coverage highlight signs in all files.
 
                                                             *ApexGitInit*
 If git is available then :|ApexGitInit| can be used to initialise new git
