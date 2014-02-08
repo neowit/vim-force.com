@@ -1,7 +1,7 @@
 " File: apexTooling.vim
 " Author: Andrey Gavrikov 
 " Version: 1.0
-" Last Modified: 2014-01-17
+" Last Modified: 2014-02-08
 " Copyright: Copyright (C) 2010-2014 Andrey Gavrikov
 "            Permission is hereby granted to use and distribute this code,
 "            with or without modifications, provided that this copyright
@@ -364,10 +364,23 @@ endfunction
 
 " retrieve members of specified metadata types
 "Args:
-"Param3: path to file which contains JSON description of required types
+"Param3: path to file which contains either
+"	JSON description of required types, like so
+"		{"XMLName": "ApexTrigger", "members": ["*"]}
+"		{"XMLName": "ApprovalProcess", "members": ["*"]}
+"		{"XMLName": "ApexPage", "members": ["AccountEdit", "ContactEdit"]}
+"	OR linear file list, like this
+"		objects/My_Object__c
+"		classes/A_Fake_Class.cls
+"Param4: typesFileFormat - file list format: file-paths|json
+"Param5: targetFolder - if not blank then use this as retrieve destination
 "
-function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePath)
-	let resMap = apexTooling#execute("bulkRetrieve", a:projectName, a:projectPath, {"specificTypes": shellescape(a:specificTypesFilePath)}, [])
+function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePath, typesFileFormat, targetFolder) abort
+	let extraParams = {"specificTypes": shellescape(a:specificTypesFilePath), "typesFileFormat" : a:typesFileFormat}
+	if len(a:targetFolder) > 0
+		let extraParams["targetFolder"] = shellescape(a:targetFolder)
+	endif
+	let resMap = apexTooling#execute("bulkRetrieve", a:projectName, a:projectPath, extraParams, [])
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
 		let resultFolder = s:grepValues(logFilePath, "RESULT_FOLDER=")
@@ -473,6 +486,31 @@ function! apexTooling#askLogLevel()
 	endif
 	let g:apex_test_logType = apexUtil#menu('Select Log Type', ['None', 'Debugonly', 'Db', 'Profiling', 'Callout', 'Detail'], s:LOG_LEVEL)
 endfunction
+
+" delete members of specified metadata types
+"Args:
+"Param3: path to file which contains list of required types
+"
+function apexTooling#deleteMetadata(filePath, projectName, specificComponentsFilePath, mode, updateSessionDataOnSuccess)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let l:extraParams = {"specificComponents": shellescape(a:specificComponentsFilePath)}
+	" another org?
+	if projectPair.name != a:projectName
+		let l:extraParams["callingAnotherOrg"] = "true"
+	endif
+
+	if 'checkOnly' == a:mode
+		let l:extraParams["checkOnly"] = "true"
+	endif
+
+	if a:updateSessionDataOnSuccess
+		let l:extraParams["updateSessionDataOnSuccess"] = 'true'
+	endif
+
+	let resMap = apexTooling#execute("deleteMetadata", a:projectName, projectPair.path, l:extraParams, [])
+	return resMap
+endfunction	
+
 
 " Backup files using provided relative paths
 " all file paths are relative to projectPath
@@ -754,6 +792,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	else
 		let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
 		let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
+		let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
 	endif
 	let l:command = l:command  . " -jar " . g:apex_tooling_force_dot_com_path
 	let l:command = l:command  . " --action=" . a:action
@@ -778,6 +817,16 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 		let responseFilePath = apexOs#joinPath(a:projectPath, s:SESSION_FOLDER, "response_" . a:action)
 		let l:command = l:command  . " --responseFilePath=" . shellescape(responseFilePath)
 	endif
+
+	" set default maxPollRequests and pollWaitMillis values if not specified
+	" by user
+	if exists("g:apex_pollWaitMillis")
+		let l:command = l:command  . " --pollWaitMillis=" . g:apex_pollWaitMillis
+	endif
+	if exists("g:apex_maxPollRequests")
+		let l:command = l:command  . " --maxPollRequests=" . g:apex_maxPollRequests
+	endif
+	
 	
 	" make console output start from new line and do not mix with whatever was
 	" previously on the same line

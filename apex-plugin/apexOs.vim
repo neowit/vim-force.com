@@ -88,7 +88,8 @@ call s:let('g:apex_API_version', '28.0')
 " documentation for 'pollWaitMillis' parameter
 " the smaller the value defined by pollWaitMillis the quicker deploy will
 " finish, but on slow connections larger values, like 10000 may be necessary
-call s:let('g:apex_pollWaitMillis', '1000')
+call s:let('g:apex_pollWaitMillis', '1000') " 1 second
+call s:let('g:apex_maxPollRequests', '1000') " 1000 polls
 
 
 """""""""""""""""""""""""""""""""""""""""""""""

@@ -1,7 +1,7 @@
 " File: apexRetrieve.vim
 " Author: Andrey Gavrikov 
-" Version: 0.1
-" Last Modified: 2012-09-07
+" Version: 0.2
+" Last Modified: 2014-02-08
 " Copyright: Copyright (C) 2010-2012 Andrey Gavrikov
 "            Permission is hereby granted to use and distribute this code,
 "            with or without modifications, provided that this copyright
@@ -550,7 +550,7 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 			let reEnableMore = &more
 			set nomore "disable --More-- prompt
 
-			let resMap = apexTooling#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, specificTypesFilePath)
+			let resMap = apexTooling#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, specificTypesFilePath, "json", "")
 			if 'true' != resMap["success"]
 				return {}
 			endif

@@ -1,7 +1,7 @@
 " File: apexCommands.vim
 " Author: Andrey Gavrikov 
 " Version: 0.1
-" Last Modified: 2014-01-25
+" Last Modified: 2014-02-08
 " Copyright: Copyright (C) 2010-2014 Andrey Gavrikov
 "            Permission is hereby granted to use and distribute this code,
 "            with or without modifications, provided that this copyright
@@ -57,6 +57,11 @@ function! apexCommands#toggleMappings()
 		delcommand ApexRefreshFile
 		delcommand ApexRetrieve
 		delcommand ApexLog
+		delcommand ApexExecuteAnonymous
+		delcommand ApexTestWithCoverage
+		delcommand ApexTestCoverageToggle
+		delcommand ApexTestCoverageHideAll
+		delcommand ApexScratch
 	catch 
 	endtry
 
@@ -100,7 +105,7 @@ function! s:antSpecific()
 	"	:ApexDeleteStaged 'My Project' 
 	"3. do not delete, but test deletion
 	"	:ApexDeleteStaged 'My Project' t
-	command! -nargs=* -complete=customlist,ListProjectNames ApexRemoveStaged :call apexDelete#run(<f-args>)
+	command! -nargs=* -complete=customlist,ListProjectNames ApexRemoveStaged :call apexDelete#runAnt(<f-args>)
 
 	command! -nargs=0 ApexRefreshProject :call apex#refreshProject()
 	command! ApexRefreshFile :call apex#refreshFile(expand("%:p"))
@@ -143,13 +148,13 @@ function! s:toolingJarSpecific()
 	"delete Staged files from specified Org
 	"Examples:
 	"1. Delete Staged files from currect project
-	"   :ApexDeleteStaged
+	"   :ApexRemoveStaged
 	"2. delete files listed in Stage from Org defined by specified <project name>
-	"	:ApexDeleteStaged 'My Project' 
+	"	:ApexRemoveStaged 'My Project' 
 	"3. do not delete, but test deletion
-	"	:ApexDeleteStaged 'My Project' t
+	"	:ApexRemoveStaged 'My Project' t
 	" TODO
-	"command! -nargs=* -complete=customlist,ListProjectNames ApexRemoveStaged :call apexDelete#run(<f-args>)
+	command! -nargs=* -complete=customlist,apexDelete#completeParams ApexRemoveStaged :call apexDelete#run(<f-args>)
 
 	" TODO
 	"command! ApexRefreshFile :call apex#refreshFile(expand("%:p"))
