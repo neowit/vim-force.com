@@ -477,7 +477,10 @@ Optional
 |'g:apex_ctags_cmd'|                path to exuberant ctags 
 |'g:apex_syntax_case_sensitive'|    defines whether Apex syntax highlighting is case sensitive 
 |'g:apex_API_version'|              force.com API version to use when create new files, ex: 25.0
-|'g:apex_pollWaitMillis'|           number of milliseconds to wait between each poll of Salesforce to retrieve the results
+|'g:apex_pollWaitMillis'|           number of milliseconds to wait between each
+                                    poll of Salesforce to retrieve the results
+|'g:apex_maxPollRequests'|          The number of times to poll Salesforce for
+                                    the results of the task
 |'g:apex_test_logType'|             The debug logging level for tests. 
 |'g:conflict_check_frequency'|      Control frequency of conflict check with SFDC before deployment
 
@@ -604,6 +607,14 @@ results. The smaller the value defined by 'g:apex_pollWaitMillis' the quicker
 deploy will finish, but on slow connections larger values, like 10000 may be
 necessary.
 See ant-salesforce.jar documentation for 'pollWaitMillis' parameter.
+
+                                                       *'g:apex_maxPollRequests'*
+Optional. 
+Defaults to 1000. Sets maxPollRequests for tooling jar tasks. 
+The number of times to poll Salesforce for the results of the task.
+Usually default value is sufficient, but if you have a large Org and
+|'g:apex_pollWaitMillis'| parameter is short then higher
+'g:apex_maxPollRequests' value may be needed.
 
                                                         *'g:apex_test_logType'*
 Optional. 
