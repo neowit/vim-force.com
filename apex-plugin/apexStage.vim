@@ -169,7 +169,9 @@ function! apexStage#add(...)
 		let filePair = apexOs#splitPath(filePath)
 		let fName = filePair.tail
 		let folder = apexOs#splitPath(filePair.head).tail
-		let relPath = apexOs#joinPath([folder, fName])
+		"file path in stage always uses / as path separator
+		"let relPath = apexOs#joinPath([folder, fName])
+		let relPath = apexOs#removeTrailingPathSeparator(folder) . "/" . fName
 		"check that file is not already staged
 		let lines = []
 		let alreadyAdded = 0
@@ -211,7 +213,8 @@ function! apexStage#remove(filePath)
 	let filePair = apexOs#splitPath(a:filePath)
 	let fName = filePair.tail
 	let folder = apexOs#splitPath(filePair.head).tail
-	let relPath = apexOs#joinPath([folder, fName])
+	"let relPath = apexOs#joinPath([folder, fName])
+	let relPath = apexOs#removeTrailingPathSeparator(folder) . "/" . fName
 	"check that file is not already staged
 	let lines = []
 	let found = 0

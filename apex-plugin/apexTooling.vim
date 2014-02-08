@@ -287,7 +287,7 @@ function apexTooling#refreshProject(filePath)
 			for path in l:files
 				if !isdirectory(path)
 					let relativePath = strpart(path, resultFolderPathLen)
-					let relativePath = substitute(relativePath, "^/unpackaged/", "src/", "")
+					let relativePath = substitute(relativePath, "^[/|\\\\]unpackaged[/|\\\\]", "src/", "")
 					"check if local file exists adn sizes are different
 					let localFilePath = apexOs#joinPath([projectPair.path, relativePath])
 					if filereadable(localFilePath)
@@ -313,7 +313,7 @@ function apexTooling#refreshProject(filePath)
 				if !isdirectory(sourcePath)
 
 					let relativePath = strpart(sourcePath, resultFolderPathLen)
-					let relativePath = substitute(relativePath, "^/unpackaged/", "src/", "")
+					let relativePath = substitute(relativePath, "^[/|\\\\]unpackaged[/|\\\\]", "src/", "")
 					let destinationPath = apexOs#joinPath([projectPair.path, relativePath])
 					let overwrite = 1
 					if sourcePath =~ "package.xml$" && packageXmlDifferent
@@ -527,6 +527,8 @@ function! s:backupFiles(projectName, projectPath, filePaths)
 
 		let destinationDirPath = apexOs#splitPath(destinationPath).head
 		if !isdirectory(destinationDirPath)
+			"when path contains trailing slash vim complains
+			let destinationDirPath = apexOs#removeTrailingPathSeparator(destinationDirPath)
 			call mkdir(destinationDirPath, "p")
 		endif
 		call apexOs#copyFile(fullPath, destinationPath)
@@ -778,7 +780,7 @@ endfunction
 "	"responseFilePath" : "path to current response/log file"
 "	}
 "
-function! apexTooling#execute(action, projectName, projectPath, extraParams, displayMessageTypes)
+function! apexTooling#execute(action, projectName, projectPath, extraParams, displayMessageTypes) abort
 	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
 
 	let l:command = "java "
@@ -796,9 +798,11 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	endif
 	let l:command = l:command  . " -jar " . g:apex_tooling_force_dot_com_path
 	let l:command = l:command  . " --action=" . a:action
-	let l:command = l:command  . " --tempFolderPath=" . shellescape(g:apex_temp_folder)
+	if exists("g:apex_temp_folder")
+		let l:command = l:command  . " --tempFolderPath=" . shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
+	endif
 	let l:command = l:command  . " --config=" . shellescape(projectPropertiesPath)
-	let l:command = l:command  . " --projectPath=" . shellescape(a:projectPath)
+	let l:command = l:command  . " --projectPath=" . shellescape(apexOs#removeTrailingPathSeparator(a:projectPath))
 	
 	if exists('g:apex_test_logType')
 		let l:command = l:command  . " --logLevel=" . g:apex_test_logType
