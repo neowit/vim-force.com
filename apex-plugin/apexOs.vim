@@ -20,7 +20,7 @@ endif
 let g:loaded_apexOs = 1
 
 " check that required global variables are defined
-let s:requiredVariables = ["g:apex_backup_folder", "g:apex_temp_folder", "g:apex_deployment_error_log", "g:apex_properties_folder"]
+let s:requiredVariables = ["g:apex_backup_folder", "g:apex_temp_folder", "g:apex_properties_folder"]
 for varName in s:requiredVariables
 	if !exists(varName)
 		echoerr "Please define ".varName." See :help force.com-settings"
@@ -260,7 +260,7 @@ endfunction
 "Args:
 " param 1: command to execute
 " param 2: [optional] string of options - 
-"	b - command will be executed in background ignored on MS Windows
+"	b - command will be executed in background (ignored on MS Windows)
 "	M - disable --more-- prompt when screen fills up with messages
 function! apexOs#exe(...)
 	let result = a:1
