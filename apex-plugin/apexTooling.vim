@@ -195,7 +195,7 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 			" specific method in given class, format: ClassName.methodName
 			let l:extraParams["testsToRun"] = attributeMap["className"] . "." . attributeMap["methodName"]
 		else "all methods in given class
-			let l:extraParams["testsToRun"] = attributeMap["className"]
+			let l:extraParams["testsToRun"] = shellescape(attributeMap["className"])
 		endif
 	else
 		"run all tests in the deployment package
