@@ -30,7 +30,6 @@ function! apexCoverage#toggle(filePath)
 	else
 		" show coverage signs
 		call s:showSigns(a:filePath)
-		let s:display_state_by_file[a:filePath] = 1
 	endif
 endfunction
 
@@ -110,6 +109,7 @@ function! s:showSigns(filePath) abort
 		let s:display_state_by_file[filePath] = 1
 	else
 		call apexUtil#warning("No coverage data for " . apexOs#splitPath(filePath).tail)
+		let s:display_state_by_file[filePath] = 0
 	endif
 endfunction
 
