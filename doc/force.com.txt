@@ -28,7 +28,7 @@ Requires :set nocompatible
 ==============================================================================
 DESCRIPTION                                             *force.com-description*
 
-force.com plugin is a bunch of .vim scripts which allow to develop on force.com 
+vim-force.com plugin is a bunch of .vim scripts which allow to develop on force.com 
 platform using only web browser and Vim
 
 It is designed for those who do not feel productive in Force.com IDE for Eclipse
@@ -43,36 +43,33 @@ http://www.youtube.com/watch?v=x5zKA6V__co
 
 Installation/System requirements 
 
-Before force.com plugin can be used following requirements must be met:
+Before vim-force.com plugin can be used following requirements must be met:
 
 1. Vim version 7.3 or later with :set nocompatible
-	There is a chance that it will work with 7.2 as well, but I have not tested
 
 2. Java JDK/JRE, Version 6.1 or greater
-   tested with OpenJDK and Oracle JDK
-   - java version "1.6.0_18" OpenJDK Runtime Environment (IcedTea6 1.8.10)
    - Oracle JDK
      http://www.oracle.com/technetwork/java/javase/downloads/index.html
 
    JDK is not strictly required, JRE will suffice.
 
 3. tooling-force.com.jar
-	See releases page here: https://github.com/neowit/tooling-force.com
+   See releases page here: https://github.com/neowit/tooling-force.com
 
 4. On MS Windows Install shortname.vim 
     http://www.vim.org/scripts/script.php?script_id=433
 
-5. Unpack force.com plugin archive anywhere you like
+5. Unpack vim-force.com plugin archive anywhere you like
 
-ex: ~/vim/force.com
+ex: ~/vim/vim-force.com
 
-6. Add 'force.com' folder to vim runtime path and make sure it loads apexcode filetype detection
+6. Add 'vim-force.com' folder to vim runtime path and make sure it loads apexcode filetype detection
 
 e.g. >
 	if has("unix")
-		let &runtimepath=&runtimepath . ',~/vim/force.com'
+		let &runtimepath=&runtimepath . ',~/vim/vim-force.com'
 	elseif has("win32")
-		let &runtimepath=&runtimepath . ',c:\Documents and Settings\username\vimfiles\force.com'
+		let &runtimepath=&runtimepath . ',c:\Documents and Settings\username\vimfiles\vim-force.com'
 	endif
 	" make sure vim loads apexcode filetype detection
 	runtime ftdetect/vim-force.com.vim
@@ -85,14 +82,20 @@ e.g. add these lines into .vimrc (or _vimrc on windows) >
 	syntax on
 <
 
-7. Index help file
+8. Index help file
 
 e.g. >
-    :helptags ~/vim/force.com/doc
+    :helptags ~/vim/vim-force.com/doc
 
-<    Or if using with pathogen.vim plugin and force.com is in .vim/bundle run >
+<    Or if using with pathogen.vim plugin and vim-force.com is in .vim/bundle run >
     :Helptags
 <
+
+9. Configure required variables: :help |force.com-settings|
+
+
+10. Have a look at the config example: :help |force.com-config-example|
+
 
 ==============================================================================
 Example of minimal _vimrc configuration for win32    *force.com-config-example*
@@ -103,7 +106,7 @@ Example of minimal _vimrc configuration for win32    *force.com-config-example*
  filetype plugin on
  syntax on
  
- let &runtimepath=&runtimepath . ',c:\Documents and Settings\user\vimfiles\force.com'
+ let &runtimepath=&runtimepath . ',c:\Documents and Settings\user\vimfiles\vim-force.com'
  runtime ftdetect/vim-force.com.vim
  
  
