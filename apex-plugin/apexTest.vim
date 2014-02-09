@@ -102,7 +102,11 @@ endfunction
 "
 function! apexTest#completeParams(arg, line, pos)
 	let l = split(a:line[:a:pos-1], '\%(\%(\%(^\|[^\\]\)\\\)\@<!\s\)\+', 1)
-	let n = len(l) - index(l, 'ApexTest') - 2
+	let command = 'ApexTest'
+	if a:line =~ "^ApexTestWithCoverage"
+		let command = 'ApexTestWithCoverage'
+	endif
+	let n = len(l) - index(l, command) - 2
 	"echomsg 'arg='.a:arg.'; n='.n.'; pos='.a:pos.'; line='.a:line
 	let funcs = ['s:listModeNames', 's:listClassNames', 's:listMethodNames', 'apex#listProjectNames']
 	if n >= len(funcs)
