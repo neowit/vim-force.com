@@ -21,6 +21,42 @@ endif
 let g:loaded_apexCoverage = 1
 
 let s:display_state_by_file = {}
+
+function apexCoverage#quickFixOpen(...) abort
+	let filePath = expand("%:p")
+	if a:0 > 0
+		let filePath = a:1
+	endif
+	let projectPair = apex#getSFDCProjectPathAndName(filePath)
+	let projectPath = projectPair.path
+
+	let coverageReportFile = apexTooling#getLastCoverageReportFile()
+	if filereadable(coverageReportFile)
+		let l:coverageList = []
+		for jsonLine in readfile(coverageReportFile)
+			let coverage = eval(jsonLine)
+			let line = {}
+			let linesTotalNum = coverage["linesTotalNum"]
+			let linesNotCoveredNum = coverage["linesNotCoveredNum"]
+			let linesCoveredNum = (linesTotalNum - linesNotCoveredNum)
+			let percent = linesCoveredNum * 100 / linesTotalNum
+			let fullPathName = apexOs#joinPath(projectPath, coverage["path"])
+
+			let line.filename = fullPathName
+			let line.text = "Total lines:" . linesTotalNum . "; Not Covered: " . linesNotCoveredNum . "; Covered: " . linesCoveredNum . "; " . percent . "%" 
+			call add(l:coverageList, line)
+			" call apexCoverage#hide(fullPathName)
+			" call apexCoverage#toggle(fullPathName)
+
+		endfor
+		call setqflist(l:coverageList)
+		if len(l:coverageList) > 0
+			copen
+		endif
+	endif
+	
+endfunction
+
 function! apexCoverage#toggle(filePath)
 	let isDisplayed = has_key(s:display_state_by_file, a:filePath) &&  s:display_state_by_file[a:filePath]
 	if isDisplayed
@@ -38,7 +74,7 @@ endfunction
 function! apexCoverage#hide(...)
 	if a:0 > 0
 		let filePath = a:1
-		let s:display_state_by_file[a:filePath] = 1
+		let s:display_state_by_file[filePath] = 1
 		call apexCoverage#toggle(filePath)
 	else
 		" hide in all files
@@ -101,12 +137,18 @@ function! s:showSigns(filePath) abort
 	"echo "coverageData=" . string(coverageData)
 	if len(coverageData) > 0
 		let linesNotCovered = coverageData.linesNotCovered
-		let index = 1
-		for lineNum in linesNotCovered
-			execute ":sign place ". index ." line=". lineNum ." name=uncovered file=".filePath
-			let index += 1
-		endfor
-		let s:display_state_by_file[filePath] = 1
+		if len(linesNotCovered) < 1
+			" without next line, line after it does not appear, not sure why
+			echo ' ' 
+			call apexUtil#info('No uncovered lines')
+		else
+			let index = 1
+			for lineNum in linesNotCovered
+				execute ":sign place ". index ." line=". lineNum ." name=uncovered file=".filePath
+				let index += 1
+			endfor
+			let s:display_state_by_file[filePath] = 1
+		endif
 	else
 		call apexUtil#warning("No coverage data for " . apexOs#splitPath(filePath).tail)
 		let s:display_state_by_file[filePath] = 0

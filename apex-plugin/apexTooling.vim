@@ -179,6 +179,8 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 	let projectPath = projectPair.path
 	let projectName = len(a:orgName) > 0 ? a:orgName : projectPair.name
 	let attributeMap = a:attributeMap
+	" if any coverage shown - remove highlight, to avoid confusion
+	call apexCoverage#hide(a:filePath)
 
 	let l:extraParams = {}
 	" another org?
@@ -212,6 +214,10 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 	let coverageFiles = s:grepValues(responsePath, "COVERAGE_FILE=")
 	if len(coverageFiles) > 0
 		let s:last_coverage_report_file = coverageFiles[0]
+		" display coverage list if available and there are no errors in quickfix
+		if len(getqflist()) < 1
+			call apexCoverage#quickFixOpen(a:filePath)
+		endif
 	endif
 
 	if !has_key(l:extraParams, "ignoreConflicts")
