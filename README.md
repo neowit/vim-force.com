@@ -34,39 +34,38 @@ Other vim plugins recommended for use alongside vim-force.com plugin
 ## FEATURES
 
 * Build/Save to SFDC
-	- with error reporting
-	- "Run test"
-	<ul>
-	* Execute unit tests in all modified files
-	* Execute unit tests in a selected Class
-	* Execute *selected* test method in a selected Class
-	* Display code Coverage ( [percent](https://f.cloud.github.com/assets/552057/2120257/d57660e8-91a8-11e3-8d15-799afcd9a5b5.png) and [line-by-line](https://f.cloud.github.com/assets/552057/2120253/84aedf0a-91a8-11e3-842e-78aca091da02.png) ) of a selected file after running test
-	</ul>
+  - with error reporting
+  - "Run test"
+    * Execute unit tests in all modified files
+    * Execute unit tests in a selected Class
+    * Execute *selected* test method in a selected Class
+    * Display [code coverage](https://f.cloud.github.com/assets/552057/2147462/89eec2b0-93d2-11e3-9207-432ef8d90763.png) after running test
+	
 
 * Deploy from one Org to Another
 
 * Delete selected metadata from SFDC
 
-* Execute Anonymous 
-    - whole buffer or selected lines    
-
-* Persistent "Stage" for cherry-picking components to be deployed or deleted
+* Execute Anonymous
+  - whole buffer or selected lines  
+          
+* Persistent "Stage" for cherry-picking and re-using list of components to be deployed or deleted
 
 * Load/update metadata from SFDC
-	- Retrieve All or Selected components of given metadata type  
-	 Support for metadata types that reside inside folders (e.g. Document, Dashboard or Report) is limited because requires querying data (in addition to metadata).
+  - Retrieve All or Selected components of given metadata type.  
+Support for metadata types that reside inside folders (e.g. Document, Dashboard or Report) is limited because requires querying data (in addition to metadata).
 
 * Create triggers/classes/pages
 
 * Refresh current file from SFDC, Refresh whole project from SFDC
 
 * Search
-	- find word in classes/triggers
-	- find word everywhere
-	- find visual selection
+  - find word in classes/triggers  
+  - find word everywhere  
+  - find visual selection  
 
 * Syntax highlighting
-	- supports syntax highlighting of Apex Classes, Triggers, Pages, JS Resources
+  - supports syntax highlighting of Apex Classes, Triggers, Pages, JS Resources
 
 * Basic (really basic) Visualforce code completion
 	- try following in .page file  
