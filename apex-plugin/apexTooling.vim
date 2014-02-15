@@ -426,10 +426,12 @@ endfunction
 "Param1: mode:
 "			'selection' - execute selected code snippet
 "			'buffer' - execute whole buffer
-function apexTooling#executeAnonymous(filePath) range
+function apexTooling#executeAnonymous(filePath, ...) range
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectName = projectPair.name
-	let projectPath = projectPair.path
+	if a:0 > 0 && len(a:1) > 0
+		let projectName = apexUtil#unescapeFileName(a:1)
+	endif
 	
 	let lines = getbufline(bufnr("%"), a:firstline, a:lastline)
 	" pre-process lines, often we need to remove comment character
@@ -445,13 +447,21 @@ function apexTooling#executeAnonymous(filePath) range
 	if !empty(processedLines)
 		let codeFile = tempname()
 		call writefile(processedLines, codeFile)
-		call s:executeAnonymous(projectName, projectPath, codeFile)
+		call s:executeAnonymous(a:filePath, projectName, codeFile)
 	endif
 endfunction	
 
-function s:executeAnonymous(projectName, projectPath, codeFile)
+function s:executeAnonymous(filePath, projectName, codeFile)
 	call apexTooling#askLogLevel()
-	let resMap = apexTooling#execute("executeAnonymous", a:projectName, a:projectPath, {"codeFile": shellescape(a:codeFile)}, [])
+
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectPath = projectPair.path
+	let l:extraParams = {"codeFile": shellescape(a:codeFile)}
+	" another org?
+	if projectPair.name != a:projectName
+		let l:extraParams["callingAnotherOrg"] = "true"
+	endif
+	let resMap = apexTooling#execute("executeAnonymous", a:projectName, projectPath, l:extraParams, [])
 	if 'None' != g:apex_test_logType
 		if "true" == resMap.success
 			:ApexLog

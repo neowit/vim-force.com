@@ -43,7 +43,7 @@ function apexCoverage#quickFixOpen(...) abort
 			let fullPathName = apexOs#joinPath(projectPath, coverage["path"])
 
 			let line.filename = fullPathName
-			let line.text = "Total lines:" . linesTotalNum . "; Not Covered: " . linesNotCoveredNum . "; Covered: " . linesCoveredNum . "; " . percent . "%" 
+			let line.text = "Total lines: " . linesTotalNum . "; Not Covered: " . linesNotCoveredNum . "; Covered: " . linesCoveredNum . "; " . percent . "%" 
 			call add(l:coverageList, line)
 			" call apexCoverage#hide(fullPathName)
 			" call apexCoverage#toggle(fullPathName)
