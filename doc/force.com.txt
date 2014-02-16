@@ -28,8 +28,8 @@ Requires :set nocompatible
 ==============================================================================
 DESCRIPTION                                             *force.com-description*
 
-vim-force.com plugin is a bunch of .vim scripts which allow to develop on force.com 
-platform using only web browser and Vim
+vim-force.com plugin is a bunch of .vim scripts which allow to develop on
+force.com platform using only web browser and Vim
 
 It is designed for those who do not feel productive in Force.com IDE for Eclipse
 
@@ -63,7 +63,8 @@ Before vim-force.com plugin can be used following requirements must be met:
 
 ex: ~/vim/vim-force.com
 
-6. Add 'vim-force.com' folder to vim runtime path and make sure it loads apexcode filetype detection
+6. Add 'vim-force.com' folder to vim runtime path and make sure it loads
+   apexcode filetype detection
 
 e.g. >
 	if has("unix")
@@ -218,6 +219,8 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
 |ApexPrintChanged|                  display all modified files
+|ApexPrintConflicts|                list potential conflicts between local and remote
+
 |ApexRefreshFile|                   refresh current file from SFDC
 |ApexRefreshProject|                refresh project from SFDC
 
@@ -290,25 +293,26 @@ For example if I am working in "My Sandbox1" project and have 2 .properties file
 "My Sandbox 1.properties" and "My Sandbox 2.properties" then >
  :ApexDeploy
 <will deploy by default using "My Sandbox 1.properties" file, while >
- :ApexDeploy My Sandbox 2
-<will deploy files from current project using "My Sandbox 2.properties" file
+ :ApexDeploy My\ Sandbox\ 2
+<will deploy files from current project using "My Sandbox 2.properties" file.
 
 Project name argument of all commands in :|ApexDeploy|* family supports completion.
 For instance, using project names from the example above >
  :ApexDeploy checkOnly My<Tab>
 < will offer "My Sandbox 1" and "My Sandbox 2"
-                                                            *force.com-F11*
+
+                                                                 *force.com-F11*
 Plugin also defines keyboard shortcut F11 which calls :|ApexDeploy| and works
 in 'normal' and 'insert' modes
 
-                                                            *ApexDeployConfirm*
-As opposed to |ApexDeploy| with |ApexDeployConfirm| system will ask for confirmation
-to deploy every modified file to SFDC
+                                                             *ApexDeployConfirm*
+As opposed to |ApexDeploy| with |ApexDeployConfirm| system will ask for
+confirmation to deploy every modified file to SFDC
 
-                                                            *ApexDeployOpen*
+                                                                *ApexDeployOpen*
 Deploy/Save to SFDC all files open in current vim instance
 
-                                                            *ApexDeployAll*
+                                                                 *ApexDeployAll*
 Deploy all files in current project.  This feature works reasonably well with
 code files, custom labels, page layouts and many other metadata types but
 suffers from the same limitations as salesforce library for Ant. 
@@ -318,10 +322,10 @@ If there are Objects and Workflows in current project then SFDC may complain
 that Objects have to be created before workflows, even if all objects already
 exist in SFDC.
 
-                                                            *ApexDeployStaged*
-Deploy all files previously added by :|ApexStageAdd| command
+                                                              *ApexDeployStaged*
+Deploy all files previously added by :|ApexStageAdd| command.
 
-                                                                     *ApexTest*
+                                                                      *ApexTest*
 Very basic function that is similar to :|ApexDeploy| but runs unit tests.  
 If no class name specified then will run tests in all modified classes that
 contain 'testMethod'.
@@ -353,10 +357,10 @@ code coverage in the current file can be shown/hidden with
 :|ApexTestCoverageToggle|. Lines not covered by last unit test run will be
 highlighted with vim 'sign' function.
 
-                                                    *ApexTestCoverageHideAll*
+                                                      *ApexTestCoverageHideAll*
 Hide test coverage highlight signs in all files.
 
-                                                            *ApexGitInit*
+                                                                  *ApexGitInit*
 If git is available then :|ApexGitInit| can be used to initialise new git
 repository in current force.com project and add (with confirmation) existing
 source files.
@@ -365,10 +369,19 @@ See apexUtil#gitInit() for the list of supported force.com project resources.
                                                             *ApexPrintChanged*
 Display changed files, i.e. candidates for deployment to SFDC.
 
-                                                            *ApexRefreshFile*
+                                                           *ApexPrintConflicts*
+Checks if locally modified files have been updated remotely since last time we
+deployed local project.  
+Takes into account only modified files (see :|ApexPrintChanged|), i.e. files
+which would be deployed if :DeployModified command is executed.
+See also |'g:conflict_check_frequency'|.
+
+
+
+                                                              *ApexRefreshFile*
 Refresh current (single) file and replace it with its version from SFDC.
 
-                                                            *ApexRefreshProject*
+                                                           *ApexRefreshProject*
 Refresh current project and download new/modified files from SFDC replacing
 all local files.
 
@@ -380,12 +393,12 @@ i.e. every time when Taglist is called set filetype=apexcode temporarely
 and then revert back to what it was 
 See apexcode.vim s:Apex_TList_Toggle() method for more details.
 
-                                                            *ApexNewFile*
+                                                                  *ApexNewFile*
 Invoke file types menu and create Apex file (class, trigger, etc). 
 Not all files currently supported.
 File will be created with API version defined by |g:apex_API_version| variable.
 
-                                                            *ApexRetrieve*
+                                                                 *ApexRetrieve*
 Invoke metadata types list "menu" and load data of specified types.  
 Usually :|ApexRefreshProject| will retrieve all types defined in package.xml.
 :|ApexRetrieve| can be used to load types which are not part of current package.xml
@@ -434,8 +447,8 @@ Before using force.com plgin following variables must be defined (ex: in .vimrc)
 The plugin provides the following options that can customise the behaviour the
 force.com plugin behaviour. These options should be set in your vimrc.
 
-All of the examples below are for Unix environments. When defining paths for MS Windows 
-use double slash, like this: >
+All of the examples below are for Unix environments. When defining paths for MS
+Windows use double slash, like this: >
 	let g:apex_backup_folder="c:\\temp\\apex\\backup"
 <
 
@@ -460,7 +473,8 @@ Optional
 |'g:apex_maxPollRequests'|          The number of times to poll Salesforce for
                                     the results of the task
 |'g:apex_test_logType'|             The debug logging level for tests. 
-|'g:conflict_check_frequency'|      Control frequency of conflict check with SFDC before deployment
+|'g:conflict_check_frequency'|      Control frequency of conflict check with
+                                    SFDC before deployment
 
 |'g:apex_java_cmd'|                 custom path to java executable
 
@@ -477,13 +491,14 @@ ex:
 
                                                           *'g:apex_temp_folder'*
 
-If by default tooling-force.com.jar will use system temp folder for all file related operations.
-If you want to specify an alternative location then set 'g:apex_temp_folder' variable
+If by default tooling-force.com.jar will use system temp folder for all file
+related operations.  If you want to specify an alternative location then set
+'g:apex_temp_folder' variable
 Note, full path is required.
 ex: >
 	let g:apex_temp_folder="/tmp/apex/gvim-deployment"
 <
-                                                    *'g:apex_properties_folder'*	
+                                                   *'g:apex_properties_folder'*	
 Path to folder with *.property files which contain SFDC orgs access details
 It is recommended to store those files in encrypted folder or partition.
 Note, full path is required.
@@ -512,7 +527,7 @@ But it is assumed that these are generally available out of the box.
 If you are using non standard environment then you can define paths to those commands.
 See apexOs.vim for details
 
-                                                            *'g:apex_binary_tee'*
+                                                           *'g:apex_binary_tee'*
 Full path to shell command 'tee'
 tee - read from standard input and write to standard output and files
 
@@ -537,7 +552,7 @@ ex: >
 <
 If undefined then internal vimdiff will be used
 
-                                                             *'g:apex_ctags_cmd'*
+                                                            *'g:apex_ctags_cmd'*
 /path/to/exuberant/ctags/binary
 ex: >
 	let g:apex_ctags_cmd="/usr/local/bin/ctags"
@@ -575,7 +590,7 @@ deploy will finish, but on slow connections larger values, like 10000 may be
 necessary.
 See ant-salesforce.jar documentation for 'pollWaitMillis' parameter.
 
-                                                       *'g:apex_maxPollRequests'*
+                                                      *'g:apex_maxPollRequests'*
 Optional. 
 Defaults to 1000. Sets maxPollRequests for tooling jar tasks. 
 The number of times to poll Salesforce for the results of the task.
@@ -583,18 +598,19 @@ Usually default value is sufficient, but if you have a large Org and
 |'g:apex_pollWaitMillis'| parameter is short then higher
 'g:apex_maxPollRequests' value may be needed.
 
-                                                        *'g:apex_test_logType'*
+                                                         *'g:apex_test_logType'*
 Optional. 
 Defaults to 'None'. The debug logging level for tests. 
-Valid options are 'None', 'Debugonly', 'Db', 'Profiling', 'Callout', and 'Detail'.
-See ant-salesforce.jar documentation for 'logType' parameter.
+Valid options are 'None', 'Debugonly', 'Db', 'Profiling', 'Callout', and
+'Detail'.  See ant-salesforce.jar documentation for 'logType' parameter.
 
                                                 *'g:conflict_check_frequency'*
 Optional.
 By default every time when |:ApexDeploy| or |:ApexTest| command is issued a
 check is done if there have been changes to remote (SFDC) version of local
-files which are currently being deployed. In order to control this behaviour
-'g:conflict_check_frequency' variable can be set as follows:
+files which are currently being deployed. 
+In order to control this behaviour 'g:conflict_check_frequency' variable can be
+set as follows:
 - To always check (default) - set to 0
 - To never check  - set to any value below 0
 ex: >
@@ -642,7 +658,7 @@ e.g. change default stdout log level to 'info' >
 <
 
 ==============================================================================
-RECOMMENDED KEYBOARD SHORTCUTS                    *force.com-shortcuts-example*
+RECOMMENDED KEYBOARD SHORTCUTS                     *force.com-shortcuts-example*
 
 To further speedup your day-to-day workflow you may want to consider adding 
 something like this in your .vimrc file
@@ -721,7 +737,7 @@ something like this in your .vimrc file
 
 
 ==============================================================================
-FEATURES                                                   *force.com-features*
+FEATURES                                                    *force.com-features*
 
 Build/Save to SFDC 
 - with error reporting

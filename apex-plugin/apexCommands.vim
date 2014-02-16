@@ -136,7 +136,7 @@ function! s:toolingJarSpecific()
 	command! -nargs=0 ApexRefreshProject :call apexTooling#refreshProject(expand("%:p"))
 
 	command! ApexPrintChanged :call apexTooling#printChangedFiles(expand("%:p"))
-	command! ApexListConflicts :call apexTooling#listConflicts(expand("%:p"))
+	command! ApexPrintConflicts :call apexTooling#printConflicts(expand("%:p"))
 
 
 	"Unit testing

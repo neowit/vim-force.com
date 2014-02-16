@@ -341,9 +341,11 @@ function apexTooling#refreshProject(filePath)
 endfunction	
 
 "list potential conflicts between local and remote
+"takes into account only modified files, i.e. files which would be deployed if
+":DeployModified command is executed
 "Args:
 "Param1: path to file which belongs to apex project
-function apexTooling#listConflicts(filePath)
+function apexTooling#printConflicts(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	call apexTooling#execute("listConflicts", projectPair.name, projectPair.path, {}, [])
 endfunction	
