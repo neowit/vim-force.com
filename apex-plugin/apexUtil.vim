@@ -383,6 +383,3 @@ function! apexUtil#commandLineComplete(arg, line, pos, candidates)
 	return res
 endfunction	
 	
-function! apexUtil#trim(str)
-	return substitute(a:str, '^\s*\(.\{-}\)\s*$', '\1', '')
-endfunction
