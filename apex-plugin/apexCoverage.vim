@@ -69,6 +69,36 @@ function! apexCoverage#toggle(filePath)
 	endif
 endfunction
 
+"Args:
+"Param: buffer - number or name of buffer
+function! apexCoverage#show(buffer)
+	
+	if a:buffer == ''
+		" No buffer provided, use the current buffer.
+		let buffer = bufnr('%')
+	elseif (a:buffer + 0) > 0
+		" A buffer number was provided.
+		let buffer = bufnr(a:buffer + 0)
+	else
+		" A buffer name was provided.
+		let buffer = bufnr(a:buffer)
+	endif
+	
+	if buffer < 0
+		call apexUtil#error("No matching buffer for " . a:buffer)
+		return
+	endif
+	
+	let filePath = expand('#'.buffer.':p')
+
+	" check if proivided file is a valid one (i.e. class or trigger)
+	if filePath !~ '\.cls$\|\.trigger$'
+		call apexUtil#error("File " . filePath . " is not valid for coverage display")
+		return
+	endif
+	let s:display_state_by_file[filePath] = 0
+	call apexCoverage#toggle(filePath)
+endfunction
 "Param1: (optional) file path where signs must be cleared
 "					if not provided then clear signs in all files
 function! apexCoverage#hide(...)

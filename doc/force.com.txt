@@ -212,6 +212,8 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexDeployStaged|                  deploy all files listed in Stage cache
 |ApexTest|                          run Unit Tests 
 |ApexTestWithCoverage|              run Unit Tests and generate per-line coverage
+|ApexTestCoverageShow|              show per-line coverage highligh for file in 
+                                    the current or specified buffer
 |ApexTestCoverageToggle|            toggle per-line coverage highligh in
                                     current file
 |ApexTestCoverageHideAll|           hide per-line coverage highligh in all files
@@ -350,12 +352,26 @@ Differences to :|ApexDeploy|
                                                       *ApexTestWithCoverage*
 Similar to :|ApexTest| but also generates line-by-line report of code coverage.
 Later coverage can be displayed using :|ApexTestCoverageToggle| command.
+Note: :|ApexTestCoverageToggle| allows to pipe :|ApexTestCoverageShow| command
+ex: >
+ :ApexTestWithCoverage checkOnly MyTestClass |ApexTestCoverageShow OtherClass.cls
+<
 
-                                                    *ApexTestCoverageToggle*
+                                                         *ApexTestCoverageShow*
 When last test was run with :|ApexTestWithCoverage| a line-by-line report of
-code coverage in the current file can be shown/hidden with
-:|ApexTestCoverageToggle|. Lines not covered by last unit test run will be
-highlighted with vim 'sign' function.
+code coverage in the current file can be shown with :|ApexTestCoverageShow|. 
+Lines not covered by last unit test run will be highlighted with vim 'sign'
+function.
+Note: this command accepts command line parameter - name of open buffer.
+If provided then coverage will be shown for file open in the specified buffer
+instead of current file.
+ex: >
+ :ApexTestCoverageShow MyClass.cls
+<
+
+                                                       *ApexTestCoverageToggle*
+Shows or hides code coverage highlight for current file.
+See :|ApexTestCoverageShow| for more details
 
                                                       *ApexTestCoverageHideAll*
 Hide test coverage highlight signs in all files.
