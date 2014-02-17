@@ -140,8 +140,9 @@ function! s:toolingJarSpecific()
 
 
 	"Unit testing
-	command! -bang -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest('no-reportCoverage', <bang>0, <f-args>)
-	command! -bang -nargs=* -complete=customlist,apexTest#completeParams ApexTestWithCoverage :call apexTest#runTest('reportCoverage', <bang>0, <f-args>)
+	command! -bar -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest('no-reportCoverage', <bang>0, <f-args>)
+	command! -bar -bang -nargs=* -complete=customlist,apexTest#completeParams ApexTestWithCoverage :call apexTest#runTest('reportCoverage', <bang>0, <f-args>)
+	command! -nargs=? -complete=buffer ApexTestCoverageShow :call apexCoverage#show(<q-args>)
 	command! -nargs=0 ApexTestCoverageToggle :call apexCoverage#toggle(expand("%:p"))
 	command! -nargs=0 ApexTestCoverageHideAll :call apexCoverage#hide()
 
