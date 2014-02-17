@@ -35,40 +35,17 @@ endfor
 "let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
 let s:MAKE_MODES = ['Modified', 'All', 'Open', 'Staged', 'One'] "supported Deploy modes
 
-let s:last_conflict_check_time = 0
 function! s:isNeedConflictCheck()
 	let doCheck = 1
-	if exists("g:conflict_check_frequency")
-		let isNumber = (0 == type(g:conflict_check_frequency))
-		if isNumber " g:conflict_check_frequency is defined and it is a number
-			if g:conflict_check_frequency < 0 
-				" conflict check is disabled by user
-				let doCheck = 0
-			elseif 0 == g:conflict_check_frequency	
-				" conflict check is set by user to happen every time
-				let doCheck = 1
-			else
-				" check how much time has passed since last check in the
-				" current session
-				let l:now = localtime() " time in seconds
-				let doCheck = (s:last_conflict_check_time + g:conflict_check_frequency * 60) - l:now < 0
-			endif
+	if exists("g:apex_conflict_check")
+		let isNumber = (0 == type(g:apex_conflict_check))
+		if isNumber " g:apex_conflict_check is defined and it is a number
+			let doCheck = 0 != g:apex_conflict_check
 		endif	
 	endif
 	return doCheck
 endfunction
 
-"Args:
-"resMap - dictionary returned by apexTooling#execute method
-function! s:registerConflickCheck(resMap)
-	if "true" == a:resMap["success"]
-		let logFilePath = a:resMap["responseFilePath"]
-		if filereadable(logFilePath) && len(apexUtil#grepFile(logFilePath, "no modified files detected.")) < 1
-			" record last time we checked for conflicts with remote
-			let s:last_conflict_check_time = localtime()
-		endif
-	endif
-endfunction
 "Args:
 "Param1: mode:
 "			'Modified' - all changed files
@@ -140,10 +117,6 @@ function apexTooling#deploy(...)
 	endif
 
 	let resMap = apexTooling#execute(l:action, projectName, projectPath, l:extraParams, [])
-
-	if !has_key(l:extraParams, "ignoreConflicts")
-		call s:registerConflickCheck(resMap)
-	endif
 
 endfunction
 
@@ -218,10 +191,6 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 		if len(getqflist()) < 1
 			call apexCoverage#quickFixOpen(a:filePath)
 		endif
-	endif
-
-	if !has_key(l:extraParams, "ignoreConflicts")
-		call s:registerConflickCheck(resMap)
 	endif
 
 endfunction

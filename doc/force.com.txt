@@ -374,7 +374,7 @@ Checks if locally modified files have been updated remotely since last time we
 deployed local project.  
 Takes into account only modified files (see :|ApexPrintChanged|), i.e. files
 which would be deployed if :DeployModified command is executed.
-See also |'g:conflict_check_frequency'|.
+See also |'g:apex_conflict_check'|.
 
 
 
@@ -473,8 +473,7 @@ Optional
 |'g:apex_maxPollRequests'|          The number of times to poll Salesforce for
                                     the results of the task
 |'g:apex_test_logType'|             The debug logging level for tests. 
-|'g:conflict_check_frequency'|      Control frequency of conflict check with
-                                    SFDC before deployment
+|'g:apex_conflict_check'|           Control (on/off) conflict check with SFDC before deployment
 
 |'g:apex_java_cmd'|                 custom path to java executable
 
@@ -604,33 +603,22 @@ Defaults to 'None'. The debug logging level for tests.
 Valid options are 'None', 'Debugonly', 'Db', 'Profiling', 'Callout', and
 'Detail'.  See ant-salesforce.jar documentation for 'logType' parameter.
 
-                                                *'g:conflict_check_frequency'*
+                                                *'g:apex_conflict_check'*
 Optional.
 By default every time when |:ApexDeploy| or |:ApexTest| command is issued a
 check is done if there have been changes to remote (SFDC) version of local
 files which are currently being deployed. 
-In order to control this behaviour 'g:conflict_check_frequency' variable can be
+In order to control this behaviour 'g:apex_conflict_check' variable can be
 set as follows:
-- To always check (default) - set to 0
-- To never check  - set to any value below 0
+- To disable check  - set to 0
+- any other value means - "check always".
 ex: >
 
-	let g:conflict_check_frequency = 0 " always check
-	let g:conflict_check_frequency = -1 " never check
+	let g:apex_conflict_check = 1 " always check
+	let g:apex_conflict_check = 0 " never check
 <
 
-- To check every NN minutes since last check - set to a positive number.
-  For example, setting to 30 will mean that conflict check is done first time
-  (in current vim session) when  |:ApexDeploy| or |:ApexTest| command is
-  issued, and then again only when |:ApexDeploy| or |:ApexTest| is called in 30
-  minutes (or more) since last check within the same vim session.
-  All |:ApexDeploy| or |:ApexTest| commands in between will be run without
-  check for coflicts.
-ex: >
-	let g:conflict_check_frequency = 30 " every 30 minutes
-<
-
-                                    *'g:apex_java_cmd'*
+                                                             *'g:apex_java_cmd'*
 Optional.
 If java executable is not found in $PATH then specify custom location like so >
  " windows
@@ -639,7 +627,7 @@ If java executable is not found in $PATH then specify custom location like so >
  let g:apex_java_cmd = '/path/to/your/java'
 <
 
-                                    *'g:apex_tooling_force_dot_com_path'*
+                                           *'g:apex_tooling_force_dot_com_path'*
 Full path to toolling-force.com.jar.
 toolling-force.com.jar can be obtained on 'releases' page here: 
 https://github.com/neowit/tooling-force.com
