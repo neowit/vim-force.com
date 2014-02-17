@@ -617,7 +617,10 @@ ex: >
 	let g:apex_conflict_check = 1 " always check
 	let g:apex_conflict_check = 0 " never check
 <
-
+Note: If you want to disable conflict check for specific :|ApexDeploy| or 
+:|ApexTest| operation then use <bang>, ex: >
+	:ApexDeploy!
+<
                                                              *'g:apex_java_cmd'*
 Optional.
 If java executable is not found in $PATH then specify custom location like so >

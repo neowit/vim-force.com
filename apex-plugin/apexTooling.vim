@@ -47,7 +47,7 @@ function! s:isNeedConflictCheck()
 endfunction
 
 "Args:
-"Param1: mode:
+"Param: mode:
 "			'Modified' - all changed files
 "			'Open' - deploy only files from currently open Tabs or Buffers (if
 "					less than 2 tabs open)
@@ -55,18 +55,17 @@ endfunction
 "			'All' - all files under ./src folder
 "			'Staged' - all files listed in stage-list.txt file
 "			'One' - single file from current buffer
-"Param2: subMode: (optional), allowed values:
+"Param: bang - if 1 then skip conflicts check with remote
+"Param1: subMode: (optional), allowed values:
 "			'deploy' (default) - normal deployment
 "			'checkOnly' - dry-run deployment or tests
-"			'deployIgnoreConflicts' - do not run check if remote files has
-"			been modified
-"Param3: orgName:(optional) if provided then given project name will be used as
+"Param2: orgName:(optional) if provided then given project name will be used as
 "						target Org name.
 "						must match one of .properties file with	login details
-function apexTooling#deploy(...)
+function apexTooling#deploy(mode, bang, ...)
 	let filePath = expand("%:p")
-	let l:mode = a:0 > 0? a:1 : 'Modified'
-	let l:subMode = a:0 > 1? a:2 : 'deploy'
+	let l:mode = len(a:mode) < 1 ? 'Modified' : a:mode
+	let l:subMode = a:0 > 0? a:1 : 'deploy'
 
 	if index(s:MAKE_MODES, l:mode) < 0
 		call apexUtil#error("Unsupported deployment mode: " . a:1)
@@ -77,11 +76,11 @@ function apexTooling#deploy(...)
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
 	let projectPath = projectPair.path
 	let projectName = projectPair.name
-	if a:0 >2 && len(a:3) > 0
+	if a:0 >1 && len(a:2) > 0
 		" if project name is provided via tab completion then spaces in it
 		" will be escaped, so have to unescape otherwise funcions like
 		" filereadable() do not understand such path name
-		let projectName = apexUtil#unescapeFileName(a:3)
+		let projectName = apexUtil#unescapeFileName(a:2)
 	endif
 
 	let l:action = "deploy" . l:mode
@@ -91,7 +90,7 @@ function apexTooling#deploy(...)
 		let l:extraParams["checkOnly"] = "true"
 	endif
 	"ignoreConflicts ?
-	if l:subMode == 'deployIgnoreConflicts' || !s:isNeedConflictCheck()
+	if a:bang || !s:isNeedConflictCheck()
 		let l:extraParams["ignoreConflicts"] = "true"
 	endif
 
@@ -147,7 +146,8 @@ endfunction
 "						must match one of .properties file with	login details
 "Param: reportCoverage: 'reportCoverage' (means load lines report), anything
 "				        else means do not load lines coverage report
-function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCoverage)
+"Param: bang - if 1 then skip conflicts check with remote
+function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCoverage, bang)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
 	let projectName = len(a:orgName) > 0 ? a:orgName : projectPair.name
@@ -179,6 +179,10 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 	"reportCoverage
 	if 'reportCoverage' == a:reportCoverage
 		let l:extraParams["reportCoverage"] = 'true'
+	endif
+	"ignoreConflicts ?
+	if a:bang
+		let l:extraParams["ignoreConflicts"] = "true"
 	endif
 
 	call apexTooling#askLogLevel()

@@ -125,11 +125,11 @@ endfunction
 function! s:toolingJarSpecific()
 	"
 	" Deployment
-	command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apexTooling#deploy('Modified', <f-args>)
-	command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAll :call apexTooling#deploy('All', <f-args>)
-	command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOpen :call apexTooling#deploy('Open', <f-args>)
-	command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexTooling#deploy('Staged', <f-args>)
-	command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOne :call apexTooling#deploy('One', <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apexTooling#deploy('Modified', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAll :call apexTooling#deploy('All', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOpen :call apexTooling#deploy('Open', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexTooling#deploy('Staged', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOne :call apexTooling#deploy('One', <bang>0, <f-args>)
 	" TODO
 	"command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployConfirm :call apexTooling#deploy('Confirm', <f-args>)
 
@@ -140,8 +140,8 @@ function! s:toolingJarSpecific()
 
 
 	"Unit testing
-	command! -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest('no-reportCoverage', <f-args>)
-	command! -nargs=* -complete=customlist,apexTest#completeParams ApexTestWithCoverage :call apexTest#runTest('reportCoverage', <f-args>)
+	command! -bang -nargs=* -complete=customlist,apexTest#completeParams ApexTest :call apexTest#runTest('no-reportCoverage', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apexTest#completeParams ApexTestWithCoverage :call apexTest#runTest('reportCoverage', <bang>0, <f-args>)
 	command! -nargs=0 ApexTestCoverageToggle :call apexCoverage#toggle(expand("%:p"))
 	command! -nargs=0 ApexTestCoverageHideAll :call apexCoverage#hide()
 

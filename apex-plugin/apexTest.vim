@@ -28,7 +28,7 @@ let s:ALL = '*ALL*'
 " Param 3: [optional] method name
 " Param 4: [optional] destination project name, must match one of .properties file with
 "		login details
-function! apexTest#runTest(reportCoverage, ...)
+function! apexTest#runTest(reportCoverage, bang, ...)
 	let filePath = expand("%:p")
 
 	let modeName = a:0 > 0? a:1 : 'testAndDeploy'
@@ -47,11 +47,11 @@ function! apexTest#runTest(reportCoverage, ...)
 			endif
 		endif
 
-		call apexTooling#deployAndTest(filePath, {'checkOnly': 1, 'className': className, 'methodName': methodName}, projectName, a:reportCoverage)
+		call apexTooling#deployAndTest(filePath, {'checkOnly': 1, 'className': className, 'methodName': methodName}, projectName, a:reportCoverage, a:bang)
 	elseif strlen(className) > 0
-		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly, 'className': className}, projectName, a:reportCoverage)
+		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly, 'className': className}, projectName, a:reportCoverage, a:bang)
 	else 
-		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly}, projectName, a:reportCoverage)
+		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly}, projectName, a:reportCoverage, a:bang)
 	endif
 
 endfunction

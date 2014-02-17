@@ -239,7 +239,7 @@ function! apex#listProjectNames(arg, line, pos)
 endfunction	
 
 function! s:listModeNames(arg, line, pos)
-	return ['deploy', 'checkOnly', 'deployIgnoreConflicts']
+	return ['deploy', 'checkOnly']
 endfunction	
 
 " Args:
