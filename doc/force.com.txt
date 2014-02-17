@@ -727,13 +727,6 @@ something like this in your .vimrc file
  	imap <silent> <F3> <Esc>:ApexTListToggle<CR>
  	vmap <silent> <F3> <Esc>:ApexTListToggle<CR>
  
- 	""""""""""""""""""""""""""""""""""""""""""
- 	" Apex build shorctuts 
- 	""""""""""""""""""""""""""""""""""""""""""
- 	" build without saving current file
- 	map <F11> :call apex#MakeProject()<CR>
- 	imap <F11> <Esc>:call apex#MakeProject()<CR>
- 
  endfunction
  
  " load shortcut mapping when one of apexcode file types is detected/loaded

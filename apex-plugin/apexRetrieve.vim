@@ -272,10 +272,6 @@ let s:LOADED_CHILDREN_BY_ROOT_TYPE = {}
 "{"CustomTab" : ["Account_Edit", "My_Object__c"]}
 "{"CustomObject" : ["Account", "My_Object__c", ...]}
 function! s:getCachedChildrenOfSelectedTypes(xmlTypeName)
-	if apexCommands#isAnt()
-		" for ant this method is not supported
-		return {}
-	endif
 	if has_key(s:LOADED_CHILDREN_BY_ROOT_TYPE, a:xmlTypeName)
 		return s:LOADED_CHILDREN_BY_ROOT_TYPE[a:xmlTypeName]
 	endif
@@ -383,37 +379,7 @@ endfunction
 "load children of metadata type in given line
 "Returns: list of children
 function! s:expandOne(lineNum)
-	if apexCommands#isAnt()
-		return s:expandOneAnt(a:lineNum)
-	else
-		return s:expandOneToolingJar(a:lineNum)
-	endif
-endfunction
-
-"load children of metadata type in given line
-"Returns: list of children
-function! s:expandOneAnt(lineNum)
-	let lineNum = a:lineNum
-
-	let lineStr = getline(lineNum)
-	"remove mark if exist
-	let lineStr = substitute(lineStr, s:MARK_SELECTED, "", "")
-	let typeName = apexUtil#trim(lineStr)
-
-	" load children of given metadata type
-	let typesMap = s:loadChildrenOfType(typeName)
-	
-	if len(typesMap) > 0
-		let typesList = sort(keys(typesMap))
-		let shiftedList = []
-		" append types below current
-		for curType in typesList
-			call add(shiftedList, s:HIERARCHY_SHIFT . curType)
-		endfor
-		call append(lineNum, shiftedList)
-		return typesList
-	endif
-	return []
+	return s:expandOneToolingJar(a:lineNum)
 endfunction
 
 "load children of metadata type in given line
@@ -441,91 +407,13 @@ function! s:expandOneToolingJar(lineNum)
 	return typesList
 endfunction
 
-" for most types this method just calls apexAnt#bulkRetrieve
-" but some (like Profile and PermissionSet) require special treatment
-"
-" return: temp folder path which contains subfolder with retrieved components
-" ex: /tmp/temp
-" Args:
-" typeName: name of currently retrieved type, ex: ApexClass
-" members - list of members ot retrieve, ex: ['MyClass1.cls', 'MyClass2.cls']
-" allTypeMap - map of all types with members selected by user
-"	this map is relevan for things like Profile & PermissionSet
-function! s:bulkRetrieve(typeName, members, allTypeMap)
-	let typeName = a:typeName
-	let members = a:members
-	if index(["Profile", "PermissionSet"], typeName) < 0 && members == ['*']
-		return apexAnt#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, typeName)
-	elseif "Profile" ==? typeName || "PermissionSet" ==? typeName
-		" The contents of a profile retrieved depends on the contents of the
-		" organization. For example, profiles will only include field-level
-		" security for fields included in custom objects returned at the same
-		" time as the profiles.
-		" we have to retrieve all object types and generate package.xml
-		" load children of given metadata type
-		" generate package.xml which contains Custom Objects and Profiles
-		let package = apexMetaXml#packageXmlNew()
-		if has_key(a:allTypeMap, "CustomObject")
-			"call extend(types, a:allTypeMap["CustomObject"]) " add <members>...</members> option
-			let customObjTypes = a:allTypeMap["CustomObject"]
-		else
-			let typesMap = s:loadChildrenOfType("CustomObject") "map of types with service info like file name, etc
-																"each key is API Name of custom object
-			if len(typesMap) <=0
-				call apexUtil#warning("Something went wrong. There are no objects available. Abort.")
-				return ""
-			endif
-			let customObjTypes = keys(typesMap) "names of all custom objects retrieved above"
-			"no specific CustomObject types selected, use all
-			"call add(types, "*") " add <members>*</members> option
-		endif
-		call apexMetaXml#packageXmlAdd(package, "CustomObject", customObjTypes)
-		call apexMetaXml#packageXmlAdd(package, typeName, members)
-		let tempDir = apexOs#createTempDir('wipe')
-		let srcDir = apexOs#joinPath([tempDir, s:SRC_DIR_NAME])
-		call apexOs#createDir(srcDir)
-		let packageXmlPath = apexMetaXml#packageWrite(package, srcDir)
-
-		" call Retrieve Ant task
-		call apexAnt#refresh(b:PROJECT_NAME, tempDir)
-		"now we expect some folders created under srcDir
-		return srcDir
-	else 
-		"single type name with selected members
-		return s:retrieveOne(typeName, members)
-	endif
-endfunction
-
-" load selected members of given type
-"Args:
-"typeName - meta type name like: 'CustomObject' or 'ApexClass'
-"members - list of members of given meta type, ex: ['MyClass.cls', 'MyController.cls']
-function! s:retrieveOne(typeName, members)
-	let package = apexMetaXml#packageXmlNew()
-	call apexMetaXml#packageXmlAdd(package, a:typeName, a:members)
-	let tempDir = apexOs#createTempDir('wipe')
-	let srcDir = apexOs#joinPath([tempDir, s:SRC_DIR_NAME])
-	call apexOs#createDir(srcDir)
-	let packageXmlPath = apexMetaXml#packageWrite(package, srcDir)
-
-	" call Retrieve Ant task
-	call apexAnt#refresh(b:PROJECT_NAME, tempDir)
-	"now we expect some folders created under srcDir
-	return srcDir
-
-endfunction
-
 function! <SID>RetrieveSelected()
 	"echo "Retrieve all selected items"
 	"go through root meta types
 	let selectedTypes = s:getSelectedTypes()
 	"{'ApexClass': ['asasa.cls', 'adafsd.cls'], 'AnalyticSnapshot': ['*'], 'ApexComponent': ['*']}
 
-	if apexCommands#isAnt()
-		call s:retrieveSelectedAnt(selectedTypes)
-	else
-		call s:retrieveSelectedToolingJar(selectedTypes)
-	endif
+	call s:retrieveSelectedToolingJar(selectedTypes)
 endfunction
 "
 " retrieve components of all selected metadata types
@@ -660,132 +548,6 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 	endif "if !empty(lines)
 endfunction
 
-" retrieve components of all selected metadata types
-function! s:retrieveSelectedAnt(selectedTypes)
-	let selectedTypes = a:selectedTypes
-	"{'ApexClass': ['asasa.cls', 'adafsd.cls'], 'AnalyticSnapshot': ['*'], 'ApexComponent': ['*']}
-
-
-	let retrievedTypes = {} "type-name => 1  - means type has been retrieved
-	for l:type in keys(selectedTypes)
-		let members = selectedTypes[l:type]
-		"members can be a list of Child Types or constant list ['*']
-
-		let reEnableMore = 0
-		try
-			let reEnableMore = &more
-			set nomore "disable --More-- prompt
-
-			let outputDir = s:bulkRetrieve(l:type, members, selectedTypes)
-		finally
-			if reEnableMore
-				set more
-			endif
-		endtry	
-		"echo "outputDir=".outputDir
-		" now we need to sort out current type before downloading the next one
-		" because target temp folder will be overwritten
-		let typeDef = s:CACHED_META_TYPES[l:type]
-		let dirName = typeDef["DirName"]
-		let sourceFolder = apexOs#joinPath([outputDir, dirName])
-		let targetFolder = apexOs#joinPath([b:SRC_PATH, dirName])
-
-		let sourceFiles = apexOs#glob(sourceFolder . "/*")
-		let targetFiles = apexOs#glob(targetFolder . "/*")
-		
-		"echo "sourceFiles=\n"
-		"echo sourceFiles
-		" copy files from loaded folder into project/src/dir-name folder checking
-		" that we do not overwrite anything without user's permission
-		
-		if len(sourceFiles) < 1
-			call apexUtil#warning("[2] " . l:type . " has no members. SKIP.")
-		else	
-			" check that target folder exists
-			if !isdirectory(targetFolder)
-				call apexOs#createDir(targetFolder)
-			endif
-
-			let allConfirmed = 0
-			for fPath in sourceFiles
-				let fName = apexOs#splitPath(fPath).tail
-				let targetFilePath = apexOs#joinPath([targetFolder, fName])
-				"echo "check ".targetFilePath
-				if filereadable(targetFilePath)
-					" compare sizes
-					let sourceSize = getfsize(fPath)
-					let targetSize = getfsize(targetFilePath)
-					if !allConfirmed && sourceSize != targetSize
-						while 1
-							echo " "
-							call apexUtil#warning('File '.dirName.'/'.fName.' already exists.')
-							echo 'New file size=' . sourceSize . ', Existing file size=' . targetSize
-							let response = input('Overwrite (Y)es / (N)o / all / (A)bort / (C)ompare ? ')
-							if index(['a', 'A', 'y', 'Y', 'n', 'N', 'all'], response) >= 0
-								break " good answer, can continue with the main logic
-							else
-								if 'c' ==? response
-									"run file comparison tool
-									call ApexCompare(fPath, targetFilePath)
-								else
-									echo "\n"
-									call apexUtil#warning("Permitted answers are: Y/N/A/all")
-								endif
-							endif	
-						endwhile
-						if 'a' ==? response
-							"abort
-							break
-						elseif 'y' ==? response
-							" proceed with overwrite
-						elseif 'n' ==? response
-							continue
-						elseif 'all' ==? response
-							" proceed with overwrite of all files
-							let allConfirmed = 1
-						else
-							call apexUtil#warning("Something unexpected has happened. Aborting...")
-							return
-						endif	
-					endif
-				endif	
-				call apexOs#copyFile(fPath, targetFilePath)
-				" check if copy succeeded
-				if !filereadable(targetFilePath)
-					echoerr "Something went wrong, failed to write file ".targetFilePath.". Process aborted."
-					return 
-				else
-					"mark current type is retrieved
-					let retrievedTypes[l:type] = members
-				endif
-
-			endfor
-		endif "len(sourceFiles) < 1
-	endfor
-	"now go through individual elements on level 1
-	"ex: individual Object or class names
-	
-	"update package.xml
-	if len(retrievedTypes) > 0
-		let packageXml = apexMetaXml#packageXmlRead(b:SRC_PATH)
-		let changeCount = 0
-		for typeName in keys(retrievedTypes)
-			let changeCount += apexMetaXml#packageXmlAdd(packageXml, typeName, retrievedTypes[typeName])
-		endfor
-		"write updated package.xml
-		"echo packageXml
-		if changeCount >0
-			echohl WarningMsg
-			let response = input('Update package.xml with new types [y/N]? ')
-			echohl None
-			if 'y' == response || 'Y' == response
-				call apexMetaXml#packageWrite(packageXml, b:SRC_PATH)
-			endif
-		endif
-	endif
-	
-endfunction
-
 " load Dictionary of available meta-types
 " Args:
 " projectName: name of .properties file name
@@ -803,21 +565,13 @@ endfunction
 "
 "
 function! s:getMetaTypesMap(projectName, projectPath, forceLoad)
-	if apexCommands#isAnt()
-		return s:getMetaTypesMapAnt(a:projectName, a:projectPath, a:forceLoad)
-	else
-		return s:getMetaTypesMapToolingJar(a:projectName, a:projectPath, a:forceLoad)
-	endif
+	return s:getMetaTypesMapToolingJar(a:projectName, a:projectPath, a:forceLoad)
 endfunction
 
 "depending on the currenc command set metadata descrption can be in two
 "different formats
 function! s:getMetadataResultFile()
-	if apexCommands#isAnt()
-		return "describeMetadata-result.txt"
-	else
-		return "describeMetadata-result.js"
-	endif
+	return "describeMetadata-result.js"
 endfunction
 
 "load metadata description using toolingJar
@@ -859,30 +613,6 @@ function! s:getMetaTypesMapToolingJar(projectName, projectPath, forceLoad)
 	endfor
 	" store in cache
 	let s:CACHED_META_TYPES = typesMap
-	return typesMap
-
-endfunction
-
-"load metadata description using Ant
-function! s:getMetaTypesMapAnt(projectName, projectPath, forceLoad)
-	let allMetaTypesFilePath = apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:getMetadataResultFile()])
-
-	if !filereadable(allMetaTypesFilePath) || a:forceLoad
-		"cache file does not exist, need to load it first
-		let response = input('Load list of supported metadata types from server?: [y/n]? ')
-		if 'y' != response && 'Y' != response
-			" clear message line
-			echo "\nCancelled" 
-			return []
-		endif
-
-		try
-			call apexAnt#loadMetadataList(a:projectName, a:projectPath, allMetaTypesFilePath)
-		catch
-			return {}
-		endtry
-	endif
-	let typesMap = s:getMetaTypesCache(allMetaTypesFilePath)
 	return typesMap
 
 endfunction
@@ -984,170 +714,6 @@ function! s:SID()
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
 endfun
 let s:sid = s:SID()
-
-"
-"return: map of types which looks like this
-" assuming metadataType = CustomObject
-" {
-" 'Activity': {FileName: 'objects/Activity.object', 'Manageable State': 'null'},
-" 'Group_subsidiary__c': {FileName: ' objects/Group_subsidiary__c.object', 'Manageable State': 'unmanaged'},
-" ...
-" }
-"
-function! s:parseListMetadataResult(metadataType, fname)
-	let l:metaMap = {}
-	let typeDef = s:CACHED_META_TYPES[a:metadataType]
-	if len(typeDef) < 1
-		echoerr "list of supported metadata types has not been loaded."
-		return {}
-	endif
-
-	let dirName = typeDef["DirName"]
-	let suffix = typeDef["Suffix"]
-
-	"result of 'listMetadata' looks like this
-	"
-	"************************************************************
-	"FileName: objects/Activity.object
-	"FullName/Id: Activity/
-	"Manageable State: null
-	"Namespace Prefix: 
-	"Created By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
-	"Last Modified By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
-	"************************************************************
-	"************************************************************
-	"FileName: objects/Group_subsidiary__c.object
-	"FullName/Id: Group_subsidiary__c/01I600000005JyoEAE
-	"Manageable State: unmanaged
-	"Namespace Prefix: null
-	"Created By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
-	"Last Modified By (Name/Id): Andrey Gavrikov/00530000000dUMVAA2
-	"************************************************************
-	
-	for line in readfile(a:fname, '', 10000) " assuming metadata types file will never contain more than 10K lines
-		"echo 'line='.line
-		let items = split(line, ':')
-		if len(items) < 2
-			continue
-		endif
-
-		let key = apexUtil#trim(items[0])
-		let value = apexUtil#trim(items[1])
-		"echo 'key='.key.' value='.value
-
-		if "FileName" == key
-			" initialise new type
-			" remove dir name
-			let name = substitute(value, "^".dirName."/", "", "") " start from the beginning
-			" remove file extension name
-			let name = substitute(name, ".".suffix."$", "", "") " substitute only tail
-			let currentTypeName = name
-			let currentElement = {}
-			let l:metaMap[currentTypeName] = currentElement
-			let currentElement[key] = value
-			"call extend(currentElement, {key:value})
-		elseif len(value) > 0
-			let currentElement = l:metaMap[currentTypeName]
-			let currentElement[key] = value
-		endif	
-	endfor
-
-	"echo "l:metaMap=\n"
-	"echo l:metaMap
-	return l:metaMap
-endfunction
-
-" load children of given meta-type
-" e.g. if type is "CustomObject" then all standard and custom object API 
-" names will be returned 
-" return: types map, see s:parseListMetadataResult() for details
-function! s:loadChildrenOfType(typeName)
-	let l:tmpfile = tempname()
-	call apexAnt#listMetadata(b:PROJECT_NAME, b:PROJECT_PATH, l:tmpfile, a:typeName)
-	if !filereadable(l:tmpfile)
-		call apexUtil#warning( "No subtypes of ".a:typeName." found.")
-		return {}
-	endif	
-	" parse returned file into manageable format
-	let typesMap = s:parseListMetadataResult(a:typeName, l:tmpfile)
-	return typesMap
-endfunction
-
-
-" parse metadata definition file and return result in following format
-"
-"{'CustomPageWebLink': {'InFolder': 'false', 'DirName': 'weblinks','ChildObjects': [], 'HasMetaFile': 'false', 'Suffix': 'weblink'}, 
-"'OpportunitySharingRules': {'InFolder': 'false', 'DirName': 'opportunitySharingRules', 
-"		'ChildObjects': ['OpportunityOwnerSharingRule', 'OpportunityCriteriaBasedSharingRule'], 
-"		'HasMetaFile': 'false', 'Suffix': 'sharingRules'}, 
-"'CustomLabels': {'InFolder': 'false', 'DirName': 'labels', 'ChildObjects':['CustomLabel'], 'HasMetaFile': 'false', 'Suffix': 'labels'}, 
-"…}
-function! s:getMetaTypesCache(allMetaTypesFilePath)
-	let allMetaTypesFilePath = a:allMetaTypesFilePath
-
-	"echo "allMetaTypesFilePath=".allMetaTypesFilePath
-	
-	" parse loaded file and extract all meta types
-	" single type in the file returned by describeMetadata ant task looks
-	" like this
-	" ************************************************************
-	" XMLName: CustomObject
-	" DirName: objects
-	" Suffix: object
-	" HasMetaFile: false
-	" InFolder: false
-	" ChildObjects:
-	" CustomField,BusinessProcess,RecordType,WebLink,ValidationRule,NamedFilter,SharingReason,ListView,FieldSet,ApexTriggerCoupling,************************************************************
-	" ************************************************************
-	
-	" we need to parse the file and cache results
-	"
-	let currentTypeName = ""
-	let simpleKeys = ["DirName", "Suffix", "HasMetaFile", "InFolder"]
-	for line in readfile(allMetaTypesFilePath, '', 10000) " assuming metadata types file will never contain more than 10K lines
-		"echo "line=".line
-		let items = split(line, ':')
-		if len(items) < 2
-			continue
-		endif
-
-		let key = apexUtil#trim(items[0])
-		let value = apexUtil#trim(items[1])
-		
-		if "XMLName" == key
-			" initialise new type
-			let currentTypeName = value
-			let currentElement = {}
-			let currentElement[currentTypeName] = {}
-			call extend(s:CACHED_META_TYPES, currentElement)
-		elseif index(simpleKeys, key) >=0
-			let currentElement = s:CACHED_META_TYPES[currentTypeName]
-			let currentElement[key] = value
-			"let s:CACHED_META_TYPES[currentTypeName] = currentElement
-		elseif "ChildObjects" == key
-			let currentElement = s:CACHED_META_TYPES[currentTypeName]
-			let children = []
-			" value of this item is represented as a comma separated line
-			" which ends with '****...' or ',null,***...'
-			for objName in split(value,',')
-				"echo "objName=".objName
-				if match(objName, '*') < 0 && match(objName, 'null') < 0
-					"echo "add ". objName
-					call add(children, objName)
-				endif
-			endfor	
-			let currentElement[key] = children
-			"let s:CACHED_META_TYPES[currentTypeName] = currentElement
-		endif	
-	endfor
-	"now we have a map of all metadata types in s:CACHED_META_TYPES
-	
-	"echo "s:CACHED_META_TYPES=\n"
-	"echo s:CACHED_META_TYPES
-
-	return s:CACHED_META_TYPES
-
-endfunction	
 
 " if file does not exist then plugin will attempt loading list
 " of supported metadata types from SFDC
