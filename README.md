@@ -118,7 +118,15 @@ JDK is not strictly required, JRE will suffice.
 5. Unpack force.com plugin archive anywhere you like  
 	ex: ~/vim/force.com
 
-6. Add 'vim-force.com' folder to vim runtime path and make sure it loads apexcode filetype detection  
+6. Enable filetype plugin and syntax highlighting  
+e.g. add these lines into .vimrc (or _vimrc on windows)<pre>
+	set nocompatible
+	filetype plugin on
+	syntax on
+</pre>
+
+7. Add 'vim-force.com' folder to vim runtime path and make sure it loads apexcode filetype detection.  
+  Important - this part must go after (not before) lines added on step 6.  
 e.g.<pre>
     if has("unix")
 		let &runtimepath=&runtimepath . ',~/vim/vim-force.com'
@@ -129,21 +137,15 @@ e.g.<pre>
     runtime ftdetect/vim-force.com.vim
 </pre>
 
-7. Enable filetype plugin and syntax highlighting  
-e.g. add these lines into .vimrc (or _vimrc on windows)<pre>
-	filetype plugin on
-	syntax on
-</pre>
-
-8. Index help file  
+8. Open Vim and index help file  
 e.g.
     `:helptags ~/vim/force.com/doc`
 
-    Or if using with pathogen.vim plugin and vim-force.com is in .vim/bundle run  
+    Or if using with pathogen.vim plugin and vim-force.com is in `.vim/bundle` run  
     `:Helptags`
 
 9. Configure required variables: `:help force.com-settings`
-10. Have a look at the config example: `help force.com-config-example`
+10. Have a look at the config example: `:help force.com-config-example`
 11. Read: `:help force.com-usage`  
     Important: if you are working with existing src/ project structure, make sure that you backup the original sources first and then issue command `:ApexRefreshProject`.
 

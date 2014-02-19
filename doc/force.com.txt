@@ -63,8 +63,16 @@ Before vim-force.com plugin can be used following requirements must be met:
 
 ex: ~/vim/vim-force.com
 
-6. Add 'vim-force.com' folder to vim runtime path and make sure it loads
-   apexcode filetype detection
+6. Enable filetype plugin and syntax highlighting
+
+e.g. add these lines into .vimrc (or _vimrc on windows) >
+	set nocompatible 
+	filetype plugin on
+	syntax on
+<
+
+7. Below lines added on step 6, add 'vim-force.com' folder to vim runtime path
+   and make sure it loads apexcode filetype detection
 
 e.g. >
 	if has("unix")
@@ -74,13 +82,6 @@ e.g. >
 	endif
 	" make sure vim loads apexcode filetype detection
 	runtime ftdetect/vim-force.com.vim
-<
-
-7. Enable filetype plugin and syntax highlighting
-
-e.g. add these lines into .vimrc (or _vimrc on windows) >
-	filetype plugin on
-	syntax on
 <
 
 8. Index help file
@@ -112,7 +113,7 @@ Example of minimal _vimrc configuration for win32    *force.com-config-example*
  
  
  if has("win32")
-	let g:apex_tooling_force_dot_com_path = ""c:\\temp\\apex\\toolling-force.com.jar"
+	let g:apex_tooling_force_dot_com_path = "c:\\temp\\apex\\toolling-force.com.jar"
  	if !exists("g:apex_backup_folder")
  		" full path required here, relative may not work
  		let g:apex_backup_folder="c:\\temp\\apex\\backup"
