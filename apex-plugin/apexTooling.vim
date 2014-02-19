@@ -393,14 +393,10 @@ function! apexTooling#openLastLog()
 endfunction
 
 "execute piece of code via executeAnonymous
-"How to get visually selected text in VimScript
-"http://stackoverflow.com/questions/1533565/how-to-get-visually-selected-text-in-vimscript
-"TODO: write function which can accept visual selection or whole buffer and
-"can run executeAnonymous on that code
+"This function can accept visual selection or whole buffer and
+"runs executeAnonymous on that code
 "Args:
-"Param1: mode:
-"			'selection' - execute selected code snippet
-"			'buffer' - execute whole buffer
+"Param: filePath - file which contains the code to be executed
 function apexTooling#executeAnonymous(filePath, ...) range
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectName = projectPair.name
@@ -408,20 +404,26 @@ function apexTooling#executeAnonymous(filePath, ...) range
 		let projectName = apexUtil#unescapeFileName(a:1)
 	endif
 	
+	let totalLines = line('$') " last line number in current buffer
 	let lines = getbufline(bufnr("%"), a:firstline, a:lastline)
-	" pre-process lines, often we need to remove comment character
-	let processedLines = []
-	for line in lines
-		" remove * if it is first non-space character on the line
-		let line = substitute(line, "^[ ]*\\*", "", "")
-		" remove // if it is first non-space character on the line
-		let line = substitute(line, "^[ ]*\\/\\/", "", "")
-		call add(processedLines, line)
-	endfor
-	"echo processedLines
-	if !empty(processedLines)
+
+	if len(lines) < totalLines
+		"looks like we are working with visual selection, not whole buffer
+		"with visual selection we often select lines which are commented out
+		"inside * block
+		" pre-process lines - remove comment character '*'
+		let processedLines = []
+		for line in lines
+			" remove * if it is first non-space character on the line
+			let line = substitute(line, "^[ ]*\\*", "", "")
+			call add(processedLines, line)
+		endfor
+		let lines = processedLines
+	endif
+	
+	if !empty(lines)
 		let codeFile = tempname()
-		call writefile(processedLines, codeFile)
+		call writefile(lines, codeFile)
 		call s:executeAnonymous(a:filePath, projectName, codeFile)
 	endif
 endfunction	
