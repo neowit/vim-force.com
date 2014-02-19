@@ -82,6 +82,7 @@ function! s:toolingJarSpecific()
 	command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
 
 	command! -nargs=? -complete=customlist,apex#listProjectNames -range=% ApexExecuteAnonymous <line1>,<line2>call apexTooling#executeAnonymous(expand("%:p"), <f-args>)
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexExecuteAnonymousRepeat call apexTooling#executeAnonymousRepeat(expand("%:p"), <f-args>)
 
 	" display last log
 	command! ApexLog :call apexTooling#openLastLog()

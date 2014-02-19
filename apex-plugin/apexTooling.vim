@@ -392,6 +392,7 @@ function! apexTooling#openLastLog()
 	endif
 endfunction
 
+let s:lastExecuteAnonymousFilePath = ''
 "execute piece of code via executeAnonymous
 "This function can accept visual selection or whole buffer and
 "runs executeAnonymous on that code
@@ -423,10 +424,27 @@ function apexTooling#executeAnonymous(filePath, ...) range
 	
 	if !empty(lines)
 		let codeFile = tempname()
+		let s:lastExecuteAnonymousFilePath = codeFile " record file path for future use in executeAnonymousRepeat
 		call writefile(lines, codeFile)
 		call s:executeAnonymous(a:filePath, projectName, codeFile)
 	endif
 endfunction	
+
+"re-run last block of code executed with ExecuteAnonymous
+"Param1: (optional) - project name
+function apexTooling#executeAnonymousRepeat(filePath, ...)
+	let codeFile = s:lastExecuteAnonymousFilePath
+	if len(codeFile) < 1
+		call apexUtil#warning('Nothing to repeat')
+		return -1
+	endif
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectName = projectPair.name
+	if a:0 > 0 && len(a:1) > 0
+		let projectName = apexUtil#unescapeFileName(a:1)
+	endif
+	call s:executeAnonymous(a:filePath, projectName, codeFile)
+endfunction
 
 function s:executeAnonymous(filePath, projectName, codeFile)
 	call apexTooling#askLogLevel()
