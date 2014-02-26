@@ -206,8 +206,8 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexStageRemove|                   remove from Stage file in the current buffer
 |ApexStageClear|                    clear Stage buffer
 
-|ApexDeploy|                        deploy project to SFDC
-|ApexDeployConfirm|                 deploy with confirmation for each file
+|ApexDeploy|                        deploy modified files to SFDC (Metadata API)
+|ApexSave|                          save modified files to SFDC (Tooling API)
 |ApexDeployOpen|                    deploy all open files
 |ApexDeployAll|                     deploy all files in current project
 |ApexDeployStaged|                  deploy all files listed in Stage cache
@@ -286,9 +286,11 @@ Add current file to |ApexStage|.
 Cycle through open buffers and add their files to |ApexStage|, provided that these
 are supported apex file types.
 
-                                                                  *ApexDeploy*
-Use :|ApexDeploy| to upload/deploy/save all modified files of current project
-to SFDC
+                                                                    *ApexDeploy*
+Use :|ApexDeploy| to deploy all modified files of current project to SFDC.
+:|ApexDeploy| uses Metadata API (see also :|ApexSave|)
+See also :|ApexPrintChanged|.
+
 All commands in :|ApexDeploy|* family support 2 optional arguments 
 - deployment mode: normal deploy or 'checkOnly'
 - 'project name' to deploy to.  This name should match file name part of
@@ -306,21 +308,24 @@ For instance, using project names from the example above >
  :ApexDeploy checkOnly My<Tab>
 < will offer "My Sandbox 1" and "My Sandbox 2"
 
-                                                                 *force.com-F11*
-Plugin also defines keyboard shortcut F11 which calls :|ApexDeploy| and works
-in 'normal' and 'insert' modes
+All commands in :|ApexDeploy|* family support <bang>, see |'g:apex_conflict_check'|
+for more details.
 
-                                                             *ApexDeployConfirm*
-As opposed to |ApexDeploy| with |ApexDeployConfirm| system will ask for
-confirmation to deploy every modified file to SFDC
+                                                                      *ApexSave*
+
+Similar to :|ApexDeploy| but uses Tooling API instead of Metadata API.
+Takes modified files and tries to save them to SFDC.
+In some cases (especially in large Orgs) Tooling API may be a bit quicker than
+:|ApexDeploy| which uses Metadata API.
+Note: deploy with Tooling API does not work in Production Orgs.
 
                                                                 *ApexDeployOpen*
-Deploy/Save to SFDC all files open in current vim instance
+Deploy to SFDC all files open in current Vim instance.
 
                                                                  *ApexDeployAll*
 Deploy all files in current project.  This feature works reasonably well with
 code files, custom labels, page layouts and many other metadata types but
-suffers from the same limitations as salesforce library for Ant. 
+suffers from the same limitations as salesforce.com library for Ant. 
 For example - it will not create new Profiles. If profile already exist then it
 will complain that it can not rename it, even if you are not trying to rename.
 If there are Objects and Workflows in current project then SFDC may complain
@@ -626,7 +631,7 @@ Usually default value is sufficient, but if you have a large Org and
 
                                                          *'g:apex_test_logType'*
 Optional. 
-Defaults to 'None'. The debug logging level for tests. 
+Defaults to 'None'. Default debug logging level for tests. 
 Valid options are 'None', 'Debugonly', 'Db', 'Profiling', 'Callout', and
 'Detail'.  See ant-salesforce.jar documentation for 'logType' parameter.
 
@@ -644,7 +649,7 @@ ex: >
 	let g:apex_conflict_check = 1 " always check
 	let g:apex_conflict_check = 0 " never check
 <
-Note: If you want to disable conflict check for specific :|ApexDeploy| or 
+Note: If you want to disable conflict check for a single :|ApexDeploy| or 
 :|ApexTest| operation then use <bang>, ex: >
 	:ApexDeploy!
 <

@@ -47,6 +47,9 @@ function! s:isNeedConflictCheck()
 endfunction
 
 "Args:
+"Param: action:
+"			'deploy' - use metadata api
+"			'save' - use tooling api
 "Param: mode:
 "			'Modified' - all changed files
 "			'Open' - deploy only files from currently open Tabs or Buffers (if
@@ -62,10 +65,15 @@ endfunction
 "Param2: orgName:(optional) if provided then given project name will be used as
 "						target Org name.
 "						must match one of .properties file with	login details
-function apexTooling#deploy(mode, bang, ...)
+function apexTooling#deploy(action, mode, bang, ...)
 	let filePath = expand("%:p")
 	let l:mode = len(a:mode) < 1 ? 'Modified' : a:mode
 	let l:subMode = a:0 > 0? a:1 : 'deploy'
+
+	if index(['deploy', 'save'], a:action) < 0
+		call apexUtil#error("Unsupported action: " . a:action)
+		return
+	endif
 
 	if index(s:MAKE_MODES, l:mode) < 0
 		call apexUtil#error("Unsupported deployment mode: " . a:1)
@@ -83,7 +91,7 @@ function apexTooling#deploy(mode, bang, ...)
 		let projectName = apexUtil#unescapeFileName(a:2)
 	endif
 
-	let l:action = "deploy" . l:mode
+	let l:action = a:action . l:mode
 	let l:extraParams = {}
 	"checkOnly ?
 	if l:subMode == 'checkOnly'
@@ -109,10 +117,6 @@ function apexTooling#deploy(mode, bang, ...)
 	" another org?
 	if projectPair.name != projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
-	endif
-
-	if has_key(l:extraParams, "ignoreConflicts")
-		call apexUtil#warning("skipping conflict check with remote")
 	endif
 
 	let resMap = apexTooling#execute(l:action, projectName, projectPath, l:extraParams, [])
@@ -793,6 +797,10 @@ endfunction
 "
 function! apexTooling#execute(action, projectName, projectPath, extraParams, displayMessageTypes) abort
 	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
+
+	if has_key(a:extraParams, "ignoreConflicts")
+		call apexUtil#warning("skipping conflict check with remote")
+	endif
 
 	let l:command = "java "
 	if exists("g:apex_java_cmd")
