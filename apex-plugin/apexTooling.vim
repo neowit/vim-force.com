@@ -683,7 +683,7 @@ function! s:fillQuickfix(logFilePath, projectPath)
 		if has_key(err, "text")
 			let errLine.text = err["text"]
 		endif
-		if has_key(err, "filePath")
+		if has_key(err, "filePath") && len(err["filePath"]) > 0
 			let errLine.filename = apexOs#joinPath(a:projectPath, err["filePath"])
 		endif
 
