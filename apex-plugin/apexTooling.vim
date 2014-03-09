@@ -117,6 +117,9 @@ function apexTooling#deploy(action, mode, bang, ...)
 	" another org?
 	if projectPair.name != projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
+		"when deploying to another org there is no point in checking conflicts
+		"because local metadata is not related to that org
+		let l:extraParams["ignoreConflicts"] = "true"
 	endif
 
 	let resMap = apexTooling#execute(l:action, projectName, projectPath, l:extraParams, [])
@@ -163,6 +166,9 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 	" another org?
 	if projectPair.name != projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
+		"when deploying to another org there is no point in checking conflicts
+		"because local metadata is not related to that org
+		let l:extraParams["ignoreConflicts"] = "true"
 	endif
 	" checkOnly?
 	if has_key(attributeMap, "checkOnly")
