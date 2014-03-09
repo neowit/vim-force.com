@@ -742,7 +742,7 @@ function! s:deployStagedPrepareParams(projectPath)
 	"however we need [aths relative project folder
 	"so need to add src/ in front of each file
 	if len(relativePaths) > 0
-		let relativePaths = map(relativePaths, '"src/" . relativePaths[v:val]')
+		call map(relativePaths, '"src/" . v:val')
 	else
 		call apexUtil#warning('Stage is empty.')
 		return {}
