@@ -6,6 +6,7 @@ force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 
 |force.com-description|   Description
 |force.com-features|      Features
+|zipped-resources|        How to work with zipped *.resource files
 |force.com-limitations|   Limitations
 |force.com-system-requirements|     Installation/System requirements
 |force.com-config-example|          Minimal config example
@@ -189,10 +190,7 @@ In this mode Eclipse is not needed
 	- Issue command:  
 	  :ApexRefreshProject
 
- B.2. Adding Class/Page/Trigger
-	- create relevant apex Class/Page/Trigger via force.com UI (Setup->Develop)
-	- Run command
-	  :ApexRefreshProject
+ B.2. Create Class/Page/Trigger with :|ApexNewFile|
 
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*
@@ -513,6 +511,9 @@ Optional
 |'g:apex_tooling_force_dot_com_java_params'|      
                                     pass extra JVM params to tooling jar
 
+|'g:zip_zipcmd'|                    path to zip program
+|'g:zip_unzipcmd'|                  path to unzip program
+
                                                         *'g:apex_backup_folder'*
 
 /path/to/folder where current project source is backed up before refresh from SFDC
@@ -680,6 +681,17 @@ e.g. change default stdout log level to 'info' >
  let g:apex_tooling_force_dot_com_java_params = "-Dorg.apache.commons.logging.simplelog.defaultlog=info"
 <
 
+                                             *'g:zip_zipcmd'* *'g:zip_unzipcmd'*
+Optional.
+In order to handle zipped *.resource files zip and unzip command line binaries
+must be available in $PATH or explicitly specified via 'g:zip_zipcmd' and
+'g:zip_unzipcmd' variables.
+e.g. 
+ let g:zip_zipcmd = "/usr/local/bin/zip"
+ let g:zip_unzipcmd = "/usr/local/bin/unzip"
+<
+see also |zipped-resources|
+
 ==============================================================================
 RECOMMENDED KEYBOARD SHORTCUTS                     *force.com-shortcuts-example*
 
@@ -785,6 +797,28 @@ Basic Visualforce code completion
       '<' Ctrl-X,Ctrl-U
       '<apex:' Ctrl-X,Ctrl-U
       '<chatter' Ctrl-X,Ctrl-U
+
+- Handling content of zipped .resource files
+
+                                        *resources_unpacked* *zipped-resources*
+Work with zipped content of "staticresources/*.resource" files is done as
+follows:
+- open any class/page/trigger in Vim as normal to let Vim load vim-force.com
+  plugin
+- navigate to .resource file and open it as you would open normal file in vim
+- if selected .resource file is a valid ZIP archive then vim-force.com will
+  extract content of .resource file in a separate folder and will open
+  directory listing for that folder so you can select relevant file from
+  archive to work with
+- now you can modify unpacked files from the .resource you have just "opened"
+  Every time you save such unpacked file - the corresponding .resource will be
+  updated and changes re-packed
+- deployment of such modified .resource files is done same way as with any
+  other Apex file, using commands like :|ApexDeploy|, :|ApexSave|, etc.
+
+Note: current version of vim-force.com does not support creating new .resource
+files. Use SFDC UI to create new static resource and then call
+:|ApexRefreshProject|.
 
 ==============================================================================
 LIMITATIONS                                             *force.com-limitations*

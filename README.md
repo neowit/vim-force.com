@@ -68,6 +68,7 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
       `<apex: Ctrl-X,Ctrl-U`  
       `<chatter Ctrl-X,Ctrl-U`
 
+* Handling content of zipped .resource files
 
 ## LIMITATIONS
 
