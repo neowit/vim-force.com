@@ -53,10 +53,12 @@ function apexResource#browse(zipfile)
 		echo " "
 	endif
 
-	exe "keepjumps !".g:zip_unzipcmd." ".fnameescape(a:zipfile).' -d '.fnameescape(extractedResourceDir)
+	let commandLine = "keepjumps !".g:zip_unzipcmd." ".shellescape(a:zipfile).' -d '.shellescape(extractedResourceDir)
+	"echomsg commandLine
+	exe commandLine
 	if v:shell_error != 0
 		redraw!
-		call apexUtil#warning( fnameescape(a:zipfile)." is not a zip file")
+		call apexUtil#warning( a:zipfile." is not a zip file")
 		return
 	endif
 	" let user select a file from unpacked resource
@@ -92,7 +94,7 @@ function! apexResource#write(filePath)
 	"copies /home/joe/papers into zip file: archivefile3
 	let curdir= getcwd()
 	if 0 == s:changeDir(unpackedResourceDir)
-		let zipCommand = g:zip_zipcmd." -r ".fnameescape(resourcePath)." *"
+		let zipCommand = g:zip_zipcmd." -r ".shellescape(resourcePath)." *"
 		"echo zipCommand
 		let shellMessage = system(zipCommand)
 		"echomsg "zip result=".res
