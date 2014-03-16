@@ -16,6 +16,7 @@
 " Part of vim/force.com plugin
 " Language:	ApexCode		
 " http://vim.wikia.com/wiki/Creating_your_own_syntax_files
+" http://learnvimscriptthehardway.stevelosh.com/chapters/46.html
 "
 """""""""""""""""""""""""""""""""""""""""
 if !exists("main_syntax")
@@ -76,7 +77,7 @@ syn match 	apexcodeOperator		"||"
 
 
 "SOQL
-syn keyword apexcodeSelectKeywords	contained select from where with having limit
+syn keyword apexcodeSelectKeywords	contained select from where with having limit offset
 								" use \< .. \> to match the whole word
 syn match	apexcodeSelectKeywords	contained "\<\(order by\|group by\|group by rollup\|group by cube\)\>"
 syn match	apexcodeSelectKeywords	contained "\<\(NULLS FIRST\|NULLS LAST\|asc\|desc\)\>"
