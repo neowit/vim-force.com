@@ -19,7 +19,7 @@ if exists("g:loaded_apexResource") || &compatible
 endif
 let g:loaded_apexResource = 1
 
-let s:RESOURCES_DIR = 'resources_unpacked'
+let s:RESOURCES_DIR = 'resources_unpacked' " NOTE if dir name here is changed then ftdetect/vim-force.com.vim must be updated as well
 
 if !exists("g:zip_zipcmd")
 	let g:zip_zipcmd= "zip"
@@ -197,5 +197,5 @@ endfun
 
 " open resources as ZIP file, see also apexResource#browse
 au! BufReadCmd */staticresources/*.resource call apexResource#browse(expand("<amatch>"))
-au! BufWritePost */resources_unpacked/* call apexResource#write(expand("<amatch>"))
+exe "au! BufWritePost */".s:RESOURCES_DIR."/* call apexResource#write(expand('<amatch>'))"
 
