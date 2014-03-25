@@ -73,8 +73,8 @@ syn match 	apexcodeOperator		"||"
 "syn match 	apexcodeOperator		"*"	
 "syn match 	apexcodeOperator		"/"	
 
-
-
+" apexcode keywords which do not fall into other categories
+syn keyword	apexcodeKeyword			webservice	
 
 "SOQL
 syn keyword apexcodeSelectKeywords	contained select from where with having limit offset
@@ -147,6 +147,8 @@ hi def link apexcodePreProc			PreProc
 
 hi def link apexcodeException		Exception	
 hi def link apexcodeOperator		Operator
+
+hi def link apexcodeKeyword			Keyword
 
 hi def link apexcodeSelectKeywords	Statement	
 hi def link apexcodeSelectOperator	Operator	
