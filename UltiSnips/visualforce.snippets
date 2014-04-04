@@ -25,7 +25,7 @@ snippet commandLink
 endsnippet
 
 snippet component
-<apex:component controller="${1:`!v Filename()`}" allowDML="$2">
+<apex:component controller="${1:`!p snip.rv=snip.basename`}" allowDML="$2">
 	$3
 </apex:component>
 endsnippet

@@ -48,12 +48,12 @@ final Map<${1}, ${2}> ${3} = new Map<$1, $2>();
 endsnippet
 
 snippet class "generic class"
-public ${1:with} sharing class ${2:`!v Filename()`} {
+public ${1:with} sharing class ${2:`!p snip.rv=snip.basename`} {
 }
 endsnippet
 
 snippet class "extension class with Standard Controller"
-public with sharing class ${1:`!v Filename()`} {
+public with sharing class ${1:`!p snip.rv=snip.basename`} {
 	private final ApexPages.StandardController $2;
 
 	public $1 (ApexPages.StandardController ${2:stdCon}) {
@@ -63,7 +63,7 @@ public with sharing class ${1:`!v Filename()`} {
 endsnippet
 
 snippet class "extension class with Standard Controller *extends* ControllerBase"
-public with sharing class ${1:`!v Filename()`} extends ControllerBase {
+public with sharing class ${1:`!p snip.rv=snip.basename`} extends ControllerBase {
 	public $1 (ApexPages.StandardController ${2:stdCon}) {
 		super($2);
 	}
@@ -81,7 +81,7 @@ public with sharing class ${1:`!v Filename()`} extends ControllerBase {
 endsnippet
 
 snippet handler "Trigger Handler class methods for all Before actions"
-	private static ${1:`!v Filename()`} handler;
+	private static ${1:`!p snip.rv=snip.basename`} handler;
 
 	public static $1 getHandler() {
 		if (null == handler) {
@@ -120,7 +120,7 @@ snippet handler "Trigger Handler class methods for all Before actions"
 endsnippet
 
 snippet trigger "Before trigger with handler template"
-trigger ${1:`!v Filename()`} on ${2:object-name} (before insert, before update, before delete) {
+trigger ${1:`!p snip.rv=snip.basename`} on ${2:object-name} (before insert, before update, before delete) {
 	$1Handler handler  = $1Handler.getHandler();
 	if (Trigger.isInsert) {
 		handler.beforeInsert();
@@ -133,7 +133,7 @@ trigger ${1:`!v Filename()`} on ${2:object-name} (before insert, before update, 
 endsnippet
 
 snippet trigger "After trigger with handler template"
-trigger ${1:`!v Filename()`} on ${2:object-name} (after insert, after update, after delete, after undelete) {
+trigger ${1:`!p snip.rv=snip.basename`} on ${2:object-name} (after insert, after update, after delete, after undelete) {
 	$1Handler handler  = $1Handler.getHandler();
 	if (Trigger.isInsert) {
 		handler.afterInsert();
