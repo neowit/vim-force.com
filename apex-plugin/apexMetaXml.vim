@@ -26,7 +26,7 @@ let g:loaded_apex_metaXml = 1
 "proper path
 let s:PLUGIN_FOLDER = expand("<sfile>:h")
 
-let s:SUPPORTED_FILE_TYPES = ["ApexClass", "ApexPage", "ApexTrigger"]
+let s:SUPPORTED_FILE_TYPES = ["ApexClass", "ApexPage", "ApexTrigger", "ApexComponent"]
 
 " request file type/name, check that file does not exist, create file and switch
 " buffer to the new file
@@ -410,6 +410,27 @@ function s:getFilesContentApexTrigger(fName)
 	let metaContent = metaContent + ["</ApexTrigger>"]
 
 	return {"mainFileContent": fileContent, "metaContent": metaContent, "fileExtension": "trigger", "folderName": "triggers"}
+
+endfun	
+
+" generate 2 files
+" <componentname>.component
+" <componentname>.component-meta.xml
+" @return: {mainFileContent: [lines to be inserted in main file], 
+"			metaContent: [lines to be inserted into meta file],
+"			fileExtension: "component",
+"			folderName: "components"}
+function s:getFilesContentApexComponent(fName)
+	let fileContent = ["<apex:component>", "</apex:component>"]
+
+	let metaContent = []
+	let metaContent = metaContent + ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>"]
+	let metaContent = metaContent + ["<ApexComponent xmlns=\"http://soap.sforce.com/2006/04/metadata\">"]
+	let metaContent = metaContent + ["    <apiVersion>". s:stringify(g:apex_API_version) . "</apiVersion>"]
+	let metaContent = metaContent + ["    <label>".a:fName."</label>"]
+	let metaContent = metaContent + ["</ApexComponent>"]
+
+	return {"mainFileContent": fileContent, "metaContent": metaContent, "fileExtension": "component", "folderName": "components"}
 
 endfun	
 
