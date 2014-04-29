@@ -1,0 +1,168 @@
+snippet head Visualforce/JS Custom Button/SControl header
+	<!--
+	 *	@author: ${1}
+	 *	@date: `strftime("%Y-%m-%d %X")` 
+	 *	@description:
+	 *	    ${2}
+	 *	
+	 *	Version History :   
+	 *		
+	 -->
+snippet actionFunction
+		<apex:actionFunction name="${1}" action="{!${2}}" rerender="${3}" status="${4}" />
+snippet actionStatus
+	<apex:actionStatus id="${1}" onStart="${2:startFunc()}" onStop="${3:stopFunc()}" />
+snippet attribute
+	<apex:attribute name="${1}" description="${2}" type="${3}" required="${4}" />
+snippet column
+	<apex:column headerValue="{!${1}}" value="{!${2}}" />
+snippet commandButton
+	<apex:commandButton action="{!${1}}" value="${2:Submit}" id="${3}" />
+snippet commandLink
+	<apex:commandLink action="{!${1}}" value="${2:Link text}" id="${3}" />
+snippet component
+	<apex:component controller="${1}" allowDML="${2}">
+		${3}
+	</apex:component>
+snippet composition
+	<apex:composition template="${1}">
+		${2}
+	</apex:composition>
+snippet dataList
+	<apex:dataList value="{!${1}}" var="${2}">
+		${3}
+	</apex:dataList>
+snippet dataTable
+	<apex:dataTable value="{!${1}}" var="${2}">
+		${3}
+	</apex:dataTable>
+snippet define
+	<apex:define name="${1}">
+		${2}
+	</apex:define>
+snippet form
+	<apex:form id="${1}">
+		${2}
+	</apex:form>
+snippet include
+	<apex:include pageName="${1}" />
+snippet includeScript "standalone static resource"
+	<apex:includeScript value="{!$Resource.${1:resource_name}}" />
+snippet includeScript "ZIP file static resource"
+	<apex:includeScript value="{!URLFor($Resource.${1:resource_name}, '${2:path/to/script}.js')}" />
+snippet input
+	<apex:input value={!${1}}" id="${2}" type="${3}" />
+snippet inputField
+	<apex:inputField value="${1}" type="${2}" />
+snippet inputFile
+	<apex:inputFile value="{!${1}}" filename="{!${2}}" />
+snippet inputHidden
+	<apex:inputHidden value="{!${1}}" id="{!${2}}" />
+snippet inputSecret
+	<apex:inputSecret value="{!${1}}" id="{!${2}}" />
+snippet inputText
+	<apex:inputText value="{!${1}}" id="{!${2}}" />
+snippet inputTextarea
+	<apex:inputTextarea value="{!${1}}" id="{!${2}}" />
+snippet insert
+	<apex:insert name="${1}" />
+snippet message
+	<apex:message for="${1:id}" styleClass="${2}" />
+snippet messages
+	<apex:messages styleClass="${1}" />
+snippet outputField
+	<apex:outputField value="{!${1}}" />
+snippet outputLabel
+	<apex:outputLabel value="${1}" for="${2}" />
+snippet outputLink
+	<apex:outputLink value="${1}" id="${2}" />
+snippet outputPanel
+	<apex:outputPanel id="${1}" layout="${2:block}">
+		${3}
+	</apex:outputPanel>
+snippet outputText
+	<apex:outputText value="${1}" />
+snippet page
+	<apex:page controller="${1}" extensions="${2}" title="${3}" showHeader="${4:false}" sidebar="${5:false}" >
+		${6}
+	</apex:page>
+snippet pageBlock
+	<apex:pageBlock title="${1}" id="${2}">
+		${3}
+	</apex:pageBlock>
+snippet pageBlockButtons
+	<apex:pageBlockButtons id="${1}">
+		${2}
+	</apex:pageBlockButtons>
+snippet pageBlockSection
+	<apex:pageBlockSection title="${1}" columns="${2}" collapsible="${3}" id="${4}">
+		${5}
+	</apex:pageBlockSection>
+snippet pageBlockSectionItem
+	<apex:pageBlockSectionItem${2}>
+		${2}
+	</apex:pageBlockSectionItem>
+snippet pageBlockTable
+	<apex:pageBlockTable value="{!${1}}" var="${2}">
+		${3}
+	</apex:pageBlockTable>
+snippet pageMessage
+	<apex:pageMessage severity="${1:error}" summary="${2}" />
+snippet pageMessages
+	<apex:pageMessages />
+snippet panelBar
+	<apex:panelBar id="${1}" >
+		${2}
+	</apex:panelBar>
+snippet panelBarItem
+	<apex:panelBarItem label="${1}" id="${2}">
+		${3}
+	</apex:panelBarItem>
+snippet panelGrid
+	<apex:panelGrid columns="${1}" id="${2}">
+		${3}
+	</apex:panelGrid>
+snippet panelGroup
+	<apex:panelGroup id="${1}">
+		${2}
+	</apex:panelGroup>
+snippet param
+	<apex:param name="${1}" value="{!${2}}" ${3}/>
+snippet relatedList
+	<apex:relatedList list="${1}" />
+snippet repeat
+	<apex:repeat value="{!${1}}" var="${2}" id="${3}">
+		${4}
+	</apex:repeat>
+snippet sectionHeader
+	<apex:sectionHeader title="${1}" subtitle="${2}" id="${3}" />
+snippet selectCheckboxes
+	<apex:selectCheckboxes value="{!${1}}">
+		<apex:selectOptions value="{!${2}}" />
+	</apex:selectCheckboxes>
+snippet selectList
+	<apex:selectList value="{!${1}}">
+		<apex:selectOptions value="{!${2}}" />
+	</apex:selectList>
+snippet selectOption
+	<apex:selectOption itemValue="${1}" itemLabel="${2}" />
+snippet selectOptions
+	<apex:selectOptions value="${1}" />
+snippet selectRadio
+	<apex:selectRadio value="${1}">
+		<apex:selectOptions value="{!${2}}" />
+	</apex:selectRadio>
+snippet stylesheet "standalone static resource"
+	<apex:stylesheet value="${1}" />
+snippet stylesheet "ZIP file static resource"
+	<apex:stylesheet value="{!URLFor($Resource.${1:resource_name}, '${2:path/to/stylesheet}.css')}" />
+snippet tab
+	<apex:tab label="${1}" name="${2}" id="${3}">
+		${4}
+	</apex:tab>
+snippet tabPanel
+	<apex:tabPanel selectedTab="${1}" switchType="${2:server}" id="${3}">
+		${4}
+	</apex:tabPanel>
+snippet variable
+	<apex:variable value="{!${1}}" var="${2}" />
