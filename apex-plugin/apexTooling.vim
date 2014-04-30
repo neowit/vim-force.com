@@ -217,10 +217,12 @@ function apexTooling#printChangedFiles(filePath)
 endfunction	
 
 "Args:
-"Param1: path to file which belongs to apex project
-function apexTooling#refreshProject(filePath)
+"Param: filePath: path to file which belongs to apex project
+"Param1: skipModifiedFiles: (optional) 0 for false, anything else for true
+function apexTooling#refreshProject(filePath, ...)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {}, ["ERROR", "INFO"])
+	let extraParams = a:0 > 0 && a:1 ? {"skipModifiedFilesCheck":"true"} : {}
+	let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, extraParams, ["ERROR", "INFO"])
 	let logFilePath = resMap["responseFilePath"]
 	" check if SFDC client reported modified files
 	let modifiedFiles = s:grepValues(logFilePath, "MODIFIED_FILE=")
@@ -881,3 +883,64 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
 endfunction
 
+function apexTooling#initProject()
+	let l:projectName = fnameescape(apexTooling#askInput('Enter project name: '))
+	call system('mkdir ' . l:projectName)
+	call system('mkdir ' . l:projectName . '/src')
+	call system('mkdir ' . l:projectName . '/src/classes')
+
+	call apexTooling#buildPropertiesFile(l:projectName)
+	call apexTooling#buildPackageFile(l:projectName)
+
+	execute 'cd ' . l:projectName
+
+	execute 'e src/classes/SomeFakeClass.cls'
+	call apexTooling#refreshProject(getcwd() . '/src/classes/SomeFakeClass.cls', 1)
+	execute 'e .'
+endfunction
+
+function apexTooling#buildPropertiesFile(projectName)
+	let l:propertiesFilePath = g:apex_properties_folder . '/' . a:projectName . '.properties'
+	let l:username = apexTooling#askInput('Enter username: ')
+	let l:password = apexTooling#askSecretInput('Enter password: ')
+	let l:token = apexTooling#askInput('Enter security token: ')
+	let l:orgType = apexTooling#askInput('Enter org type (test|login): ')
+
+	call system('echo sf.username = ' . l:username . ' > ' . l:propertiesFilePath)
+	call system('echo sf.password = ' . l:password . l:token . ' >> ' . l:propertiesFilePath)
+	call system('echo sf.serverurl = https://' . l:orgType . '.salesforce.com >> ' . l:propertiesFilePath)
+endfunction
+
+" Ask the user for an input
+" Param: message: A text to show to the user
+" Param1: secret: (optional) 0 for false, anything else for true
+function apexTooling#askInput(message, ...)
+	:call inputsave()
+	let secret = a:0 > 0 && a:1
+	let value = secret ? inputsecret(a:message) : input(a:message)
+	:call inputrestore()
+	return value
+endfunction
+
+function apexTooling#askSecretInput(message)
+	:call apexTooling#askInput(a:message)
+endfunction
+
+function apexTooling#buildPackageFile(projectName)
+	let l:packageFilePath = a:projectName . '/src/package.xml'
+
+	let l:packageElements = ['ApexClass', 'ApexComponent', 'ApexPage', 'ApexTrigger', 'CustomLabels', 'Scontrol', 'StaticResource']
+
+	:call system('echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > ' . l:packageFilePath)
+	:call system('echo "<Package xmlns=\"http://soap.sforce.com/2006/04/metadata\">" >> ' . l:packageFilePath)
+
+	for element in l:packageElements
+		:call system('echo "	<types>" >> ' . l:packageFilePath)
+		:call system('echo "		<members>*</members>" >> ' . l:packageFilePath)
+		:call system('echo "		<name>' . element . '</name>" >> ' . l:packageFilePath)
+		:call system('echo "	</types>" >> ' . l:packageFilePath)
+	endfor
+
+	:call system('echo "	<version>' . g:apex_API_version . '</version>" >> ' . l:packageFilePath)
+	:call system('echo "</Package>" >> ' . l:packageFilePath)
+endfunction
