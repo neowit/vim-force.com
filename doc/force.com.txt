@@ -228,6 +228,7 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexTListToggle|                   toggle taglist (works if 'taglist' plugin 
                                     is installed)
 
+|ApexInitProject|                   initialise new SFDC project
 |ApexNewFile|                       create new file
 
 |ApexRetrieve|                      retrieve specified metadata types from server
@@ -414,6 +415,20 @@ so we have to trick it like if &filetype was = 'apexcode'
 i.e. every time when Taglist is called set filetype=apexcode temporarely
 and then revert back to what it was 
 See apexcode.vim s:Apex_TList_Toggle() method for more details.
+
+                                                              *ApexInitProject*
+Ask some data to the user and create a new project folder and a properties file. 
+Finlly it will run :|ApexRefreshProject|.
+The project folder will be created in the current directory and the properties
+file in the path specified by |g:apex_properties_folder|.
+It requires an exsting SFDC org. To create one see: https://developer.salesforce.com
+
+The user will be prompted for the following:
+1. Project name: Whatever strign suported by the OS as a folder name.
+2. Username: The SFDC org's username (email format).
+3. Password: The password for the given username.
+4. Security token: The org security token if needed.
+5. Org type: It must be "login" for a dev/prod org or "test" for a sandbox.
 
                                                                   *ApexNewFile*
 Invoke file types menu and create Apex file (class, trigger, etc). 
