@@ -21,15 +21,13 @@ endif
 let g:loaded_apexProject = 1
 
 function apexProject#init()
-	let projectName = fnameescape(apexProject#askInput('Enter project name: '))
-	call apexOs#createDir(projectName)
-	call apexOs#createDir(apexOs#joinPath([projectName, 'src']))
+	let projectName = apexProject#askInput('Enter project name: ')
 	call apexOs#createDir(apexOs#joinPath([projectName, 'src', 'classes']))
 
 	call apexProject#buildPropertiesFile(projectName)
 	call apexProject#buildPackageFile(projectName)
 
-	execute 'cd ' . projectName
+	execute 'cd ' . fnameescape(projectName)
 
 	let fakeClassPath = apexOs#joinPath(['src', 'classes', 'SomeFakeClass.cls'])
 	execute 'e ' . fakeClassPath
