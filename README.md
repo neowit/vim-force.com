@@ -130,7 +130,7 @@ e.g.<pre>
 		let &runtimepath=&runtimepath . ',c:\Documents and Settings\username\vimfiles\vim-force.com'
     endif
     " make sure vim loads apexcode filetype detection
-    runtime ftdetect/vim-force.com.vim
+    runtime! ftdetect/vim-force.com.vim global/globalCommands.vim
 </pre>
 
 8. Open Vim and index help file  

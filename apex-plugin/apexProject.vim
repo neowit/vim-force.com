@@ -27,12 +27,16 @@ function apexProject#init()
 	call apexProject#buildPropertiesFile(projectName)
 	call apexProject#buildPackageFile(projectName)
 
-	execute 'cd ' . fnameescape(projectName)
+	let fakeClassPath = apexOs#joinPath([projectName, 'src', 'classes', 'SomeFakeClass.cls'])
 
-	let fakeClassPath = apexOs#joinPath(['src', 'classes', 'SomeFakeClass.cls'])
-	execute 'e ' . fakeClassPath
+        try
+            execute 'e ' . fnameescape(fakeClassPath)
+        catch /E37/
+            execute 'tabnew ' . fnameescape(fakeClassPath)
+        endtry
+
 	call apexTooling#refreshProject(expand("%:p"), 1)
-	execute 'e .'
+	execute 'e ' . fnameescape(apex#getSFDCProjectPathAndName(fakeClassPath).path)
 endfunction
 
 function apexProject#buildPropertiesFile(projectName)
