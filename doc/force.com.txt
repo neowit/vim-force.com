@@ -418,13 +418,13 @@ See apexcode.vim s:Apex_TList_Toggle() method for more details.
 
                                                               *ApexInitProject*
 Ask some data to the user and create a new project folder and a properties file. 
-Finlly it will run :|ApexRefreshProject|.
+Finally it will run :|ApexRefreshProject|.
 The project folder will be created in the current directory and the properties
 file in the path specified by |g:apex_properties_folder|.
 It requires an exsting SFDC org. To create one see: https://developer.salesforce.com
 
 The user will be prompted for the following:
-1. Project name: Whatever strign suported by the OS as a folder name.
+1. Project name: Whatever string supported by the OS as a folder name.
 2. Username: The SFDC org's username (email format).
 3. Password: The password for the given username.
 4. Security token: The org security token if needed.
