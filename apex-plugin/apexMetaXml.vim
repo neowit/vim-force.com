@@ -209,12 +209,12 @@ function! apexMetaXml#packageWrite(package, srcFolderPath, ...)
 
 	for key in sortedKeys
 		let members = package[key]
-		call add(lines, "	<types>")
+		call add(lines, "    <types>")
 		for member in members
-			call add(lines, "		<members>" . member . "</members>")
+			call add(lines, "        <members>" . member . "</members>")
 		endfor
-		call add(lines, "		<name>" . key . "</name>")
-		call add(lines, "	</types>")
+		call add(lines, "        <name>" . key . "</name>")
+		call add(lines, "    </types>")
 	endfor
 
 	"append footer
@@ -315,7 +315,7 @@ function! s:getHeader()
 endfunction
 
 function! s:getFooter()
-	let lines = [ "	<version>".s:stringify(g:apex_API_version)."</version>",
+	let lines = [ "    <version>".s:stringify(g:apex_API_version)."</version>",
 				\ "</Package>",
 				\]
 	return lines

@@ -217,10 +217,12 @@ function apexTooling#printChangedFiles(filePath)
 endfunction	
 
 "Args:
-"Param1: path to file which belongs to apex project
-function apexTooling#refreshProject(filePath)
+"Param: filePath: path to file which belongs to apex project
+"Param1: skipModifiedFiles: (optional) 0 for false, anything else for true
+function apexTooling#refreshProject(filePath, ...)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {}, ["ERROR", "INFO"])
+	let extraParams = a:0 > 0 && a:1 ? {"skipModifiedFilesCheck":"true"} : {}
+	let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, extraParams, ["ERROR", "INFO"])
 	let logFilePath = resMap["responseFilePath"]
 	" check if SFDC client reported modified files
 	let modifiedFiles = s:grepValues(logFilePath, "MODIFIED_FILE=")
