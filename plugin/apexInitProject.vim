@@ -15,9 +15,9 @@
 " Part of vim/force.com plugin
 "
 
-command! ApexInitProject :call ApexInitProject()
+command! ApexInitProject :call apexInitProject#init()
 
-function! ApexInitProject()
+function! apexInitProject#init()
     setfiletype apexcode
     call apexProject#init()
 endfunction

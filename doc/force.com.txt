@@ -179,18 +179,27 @@ A. Using alongside Force.com IDE for Eclipse                *apex-with-eclipse*
 ------------------------------------------------------------------------------
 B. vim force.com plugin standalone                     *apex-plugin-standalone*
 
-In this mode Eclipse is not needed
+In this mode Eclipse is not needed.
+Run :|ApexInitProject| and follow the wizard
 
- B.1. Creating new project
-	- inside force.com plugin folder locate folder A-ProjectTemplate
-	- copy A-ProjectTemplate to the location where you want your project
-	  to reside and rename as desired, 
-	  ex: '/home/user/projects/My Org (Sandbox)'
-	- inside 'src/classes' folder locate A-Fake-Class.cls and open with Vim
-	- Issue command:  
-	  :ApexRefreshProject
+                                                              *ApexInitProject*
+Asks project location/login related questions (see below) and creates a new
+project folder and properties file.
+As the very last step it will run :|ApexRefreshProject|.
+The project folder will be created in the current directory and the properties
+file in the path specified by |g:apex_properties_folder|.
+It requires an existing SFDC org. To create one see: https://developer.salesforce.com
 
- B.2. Create Class/Page/Trigger with :|ApexNewFile|
+:|ApexRefreshProject| asks following questions:
+1. Project name: Whatever string supported by the OS as a folder name.
+2. Username: The SFDC org's user name (email format).
+3. Password: The password for the given user name.
+4. Security token: can be left blank if your IP is white-listed in the Org
+   security settings.
+5. Org type: It must be "login" for a dev/prod org or "test" for a sandbox.
+
+Once project is setup you can proceed with creation of Class/Page/Trigger using
+:|ApexNewFile|
 
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*
@@ -415,20 +424,6 @@ so we have to trick it like if &filetype was = 'apexcode'
 i.e. every time when Taglist is called set filetype=apexcode temporarely
 and then revert back to what it was 
 See apexcode.vim s:Apex_TList_Toggle() method for more details.
-
-                                                              *ApexInitProject*
-Ask some data to the user and create a new project folder and a properties file. 
-Finally it will run :|ApexRefreshProject|.
-The project folder will be created in the current directory and the properties
-file in the path specified by |g:apex_properties_folder|.
-It requires an exsting SFDC org. To create one see: https://developer.salesforce.com
-
-The user will be prompted for the following:
-1. Project name: Whatever string supported by the OS as a folder name.
-2. Username: The SFDC org's username (email format).
-3. Password: The password for the given username.
-4. Security token: The org security token if needed.
-5. Org type: It must be "login" for a dev/prod org or "test" for a sandbox.
 
                                                                   *ApexNewFile*
 Invoke file types menu and create Apex file (class, trigger, etc). 

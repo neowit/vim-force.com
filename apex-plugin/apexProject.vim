@@ -22,21 +22,24 @@ let g:loaded_apexProject = 1
 
 function apexProject#init()
 	let projectName = apexProject#askInput('Enter project name: ')
-	call apexOs#createDir(apexOs#joinPath([projectName, 'src', 'classes']))
+	let l:projectSrcPath = apexOs#joinPath(projectName, 'src')
+	let l:classesDirPath = apexOs#joinPath(l:projectSrcPath, 'classes')
+	call apexOs#createDir(l:classesDirPath)
 
 	call apexProject#buildPropertiesFile(projectName)
 	call apexProject#buildPackageFile(projectName)
 
-	let fakeClassPath = apexOs#joinPath([projectName, 'src', 'classes', 'SomeFakeClass.cls'])
-
-        try
-            execute 'e ' . fnameescape(fakeClassPath)
-        catch /E37/
-            execute 'tabnew ' . fnameescape(fakeClassPath)
-        endtry
-
-	call apexTooling#refreshProject(expand("%:p"), 1)
-	execute 'e ' . fnameescape(apex#getSFDCProjectPathAndName(fakeClassPath).path)
+	call apexTooling#refreshProject(l:projectSrcPath, 1)
+	" check if we have existing files to open
+	let fullPaths = apexOs#glob(l:projectSrcPath . "**/*.cls")
+	if len(fullPaths) > 0
+		"open random class from just loaded files
+		execute 'e ' . fnameescape(fullPaths[0])
+	else
+		":ApexNewFile
+		call apexMetaXml#createFileAndSwitch(l:projectSrcPath)
+	endif
+	
 endfunction
 
 function apexProject#buildPropertiesFile(projectName)
