@@ -12,14 +12,34 @@ if exists("g:loaded_apexProject") || &compatible
 endif
 let g:loaded_apexProject = 1
 
-function apexProject#init()
-	let projectName = apexProject#askInput('Enter project name: ')
-	let l:projectSrcPath = apexOs#joinPath(projectName, 'src')
+function apexProject#init() abort
+	let l:isWorkspacePathDefined = exists('g:apex_workspace_path') && len(g:apex_workspace_path) > 0
+	if !l:isWorkspacePathDefined
+		call apexUtil#info('Hint: you can set the root path where your projects will to be created by default, see :h g:apex_workspace_path')
+	endif
+
+	let l:enteredName = s:askInput('Enter project name: ')
+	let l:pathPair = apexOs#splitPath(l:enteredName)
+	let l:projectName = pathPair.tail
+
+	let l:rootFolder =  getcwd()
+	if l:isWorkspacePathDefined
+		let l:rootFolder =  g:apex_workspace_path
+	endif
+
+	if !apexOs#isFullPath(l:enteredName)
+		let l:projectPath = apexOs#joinPath(l:rootFolder, l:pathPair.head)
+	else
+		let l:projectPath = l:pathPair.head
+	endif
+
+	let l:projectSrcPath = apexOs#joinPath(l:projectPath, l:projectName, 'src')
 	let l:classesDirPath = apexOs#joinPath(l:projectSrcPath, 'classes')
+
 	call apexOs#createDir(l:classesDirPath)
 
-	call apexProject#buildPropertiesFile(projectName)
-	call apexProject#buildPackageFile(projectName)
+	call s:buildPropertiesFile(l:projectName)
+	call s:buildPackageFile(l:projectSrcPath)
 
 	call apexTooling#refreshProject(l:projectSrcPath, 1)
 	" check if we have existing files to open
@@ -34,12 +54,15 @@ function apexProject#init()
 	
 endfunction
 
-function apexProject#buildPropertiesFile(projectName)
+function s:buildPropertiesFile(projectName) abort
 	let propertiesFilePath = apexOs#joinPath([g:apex_properties_folder, a:projectName . '.properties'])
-	let username = apexProject#askInput('Enter username: ')
-	let password = apexProject#askSecretInput('Enter password: ')
-	let token = apexProject#askInput('Enter security token: ')
-	let orgType = apexProject#askInput('Enter org type (test|login): ')
+	let username = s:askInput('Enter username: ')
+	let password = s:askSecretInput('Enter password: ')
+	let token = s:askInput('Enter security token: ')
+	let orgType = s:askInput('Enter org type (test|login), if blank then defaults to "test": ')
+	if len(orgType) < 1
+		let orgType = 'test'
+	endif
 
 	let fileLines = []
 	call add(fileLines, 'sf.username = ' . username)
@@ -51,7 +74,7 @@ endfunction
 " Ask the user for an input
 " Param: message: A text to show to the user
 " Param1: secret: (optional) 0 for false, anything else for true
-function apexProject#askInput(message, ...)
+function s:askInput(message, ...)
 	call inputsave()
 	let secret = a:0 > 0 && a:1
 	let value = secret ? inputsecret(a:message) : input(a:message)
@@ -59,12 +82,12 @@ function apexProject#askInput(message, ...)
 	return value
 endfunction
 
-function apexProject#askSecretInput(message)
-	return apexProject#askInput(a:message, 1)
+function s:askSecretInput(message)
+	return s:askInput(a:message, 1)
 endfunction
 
-function apexProject#buildPackageFile(projectName)
-	let srcFolderPath = apexOs#joinPath([a:projectName, 'src'])
+function s:buildPackageFile(projectSrcPath)
+	let srcFolderPath = a:projectSrcPath
 	let packageElements = ['ApexClass', 'ApexComponent', 'ApexPage', 'ApexTrigger', 'CustomLabels', 'Scontrol', 'StaticResource']
 	let package = apexMetaXml#packageXmlNew()
 

@@ -183,12 +183,16 @@ In this mode Eclipse is not needed.
 Run :|ApexInitProject| and follow the wizard
 
                                                               *ApexInitProject*
+Requires an existing SFDC org. To create one see: https://developer.salesforce.com
+
 Asks project location/login related questions (see below) and creates a new
 project folder and properties file.
 As the very last step it will run :|ApexRefreshProject|.
-The project folder will be created in the current directory and the properties
-file in the path specified by |g:apex_properties_folder|.
-It requires an existing SFDC org. To create one see: https://developer.salesforce.com
+
+Depending on whether or not |'g:apex_workspace_path'| variable is set the
+project folder will be created in the current or relative to
+|'g:apex_workspace_path'| directory, and the properties file in the path
+specified by |g:apex_properties_folder|.
 
 :|ApexRefreshProject| asks following questions:
 1. Project name: Whatever string supported by the OS as a folder name.
@@ -523,6 +527,10 @@ Optional
 
 |'g:zip_zipcmd'|                    path to zip program
 |'g:zip_unzipcmd'|                  path to unzip program
+
+|'g:apex_workspace_path'|           root folder to use when creating new project
+                                    with :|ApexInitProject|
+
 
                                                         *'g:apex_backup_folder'*
 
