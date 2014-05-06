@@ -63,6 +63,7 @@ endfunction
 " utility function to display highlighted warning message
 function! apexUtil#warning(text)
 	echohl WarningMsg
+	echo " "
 	echomsg a:text
 	echohl None 
 endfun	
@@ -77,9 +78,16 @@ endfun
 " utility function to display highlighted error message
 function! apexUtil#error(text)
 	echohl ErrorMsg
-	echomsg a:text
+	echo " "
+	echoerr a:text
 	echohl None
 endfun	
+
+function! apexUtil#throw(string) abort
+  let v:errmsg = 'vim-force.com: '.a:string
+  throw v:errmsg
+endfunction
+
 
 " create Git repo for current Apex project and add files
 function! apexUtil#gitInit()

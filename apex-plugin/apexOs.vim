@@ -148,10 +148,10 @@ function! apexOs#createTempDir(...)
 endfunction
 " 
 " Os dependent directory create
-function! apexOs#createDir(path)
+function! apexOs#createDir(path) abort
 	let path = apexOs#removeTrailingPathSeparator(a:path)
 	if isdirectory(path)
-		echoerr path." already exists, skip createDir()"
+		call apexUtil#warning(path." already exists, skip createDir()")
 		return
 	endif	
 	if has("unix")
@@ -328,3 +328,18 @@ function! apexOs#joinPath(...)
 	return resPath
 endfunction	
 
+" check if provided string looks like full or relative path
+" e.g. (unix)
+" /, /usr, /my/log/path = full paths
+" usr, my/log/path = relative paths
+" e.g. (windows)
+" c:\, c:\usr, c:\my\log\path = full paths
+" usr, my\log\path = relative paths
+"
+"Param1: path to check
+"Returns: 1 - full path, 0 - relative path
+function! apexOs#isFullPath(path)
+	let l:isFullPath = a:path =~? '^\(\a:\\\|/\)'
+	return l:isFullPath
+endfunction
+	
