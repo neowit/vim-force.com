@@ -56,19 +56,22 @@ endfunction
 
 function s:buildPropertiesFile(projectName) abort
 	let propertiesFilePath = apexOs#joinPath([g:apex_properties_folder, a:projectName . '.properties'])
-	let username = s:askInput('Enter username: ')
-	let password = s:askSecretInput('Enter password: ')
-	let token = s:askInput('Enter security token: ')
-	let orgType = s:askInput('Enter org type (test|login), if blank then defaults to "test": ')
-	if len(orgType) < 1
-		let orgType = 'test'
-	endif
+	if !filereadable(propertiesFilePath) || 'y' ==? apexUtil#input('File '.propertiesFilePath. ' already exists, would you like to overwrite it y/N? ', 'yYnN', 'n')
 
-	let fileLines = []
-	call add(fileLines, 'sf.username = ' . username)
-	call add(fileLines, 'sf.password = ' . password . token)
-	call add(fileLines, 'sf.serverurl = https://' . orgType . '.salesforce.com')
-	call writefile(fileLines, propertiesFilePath)
+		let username = s:askInput('Enter username: ')
+		let password = s:askSecretInput('Enter password: ')
+		let token = s:askInput('Enter security token: ')
+		let orgType = s:askInput('Enter org type (test|login), if blank then defaults to "test": ')
+		if len(orgType) < 1
+			let orgType = 'test'
+		endif
+
+		let fileLines = []
+		call add(fileLines, 'sf.username = ' . username)
+		call add(fileLines, 'sf.password = ' . password . token)
+		call add(fileLines, 'sf.serverurl = https://' . orgType . '.salesforce.com')
+		call writefile(fileLines, propertiesFilePath)
+	endif
 endfunction
 
 " Ask the user for an input
