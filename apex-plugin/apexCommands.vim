@@ -1,19 +1,11 @@
+" This file is part of vim-force.com plugin
+"   https://github.com/neowit/vim-force.com
 " File: apexCommands.vim
-" Author: Andrey Gavrikov 
-" Version: 0.2
 " Last Modified: 2014-02-17
-" Copyright: Copyright (C) 2010-2014 Andrey Gavrikov
-"            Permission is hereby granted to use and distribute this code,
-"            with or without modifications, provided that this copyright
-"            notice is copied with it. Like anything else that's free,
-"            this plugin is provided *as is* and comes with no warranty of any
-"            kind, either expressed or implied. In no event will the copyright
-"            holder be liable for any damages resulting from the use of this
-"            software.
+" Author: Andrey Gavrikov 
+" Maintainers: 
 "
 " apexMappings.vim - vim-force.com commands mapping
-
-" Part of vim-force.com plugin
 "
 " Only do this when not done yet for this buffer
 if exists("g:loaded_apexCommands") || &compatible

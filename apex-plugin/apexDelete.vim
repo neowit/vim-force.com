@@ -1,17 +1,10 @@
+" This file is part of vim-force.com plugin
+"   https://github.com/neowit/vim-force.com
 " File: apexDelete.vim
-" Author: Andrey Gavrikov 
-" Version: 0.2
 " Last Modified: 2014-02-08
-" Copyright: Copyright (C) 2010-2012 Andrey Gavrikov
-"            Permission is hereby granted to use and distribute this code,
-"            with or without modifications, provided that this copyright
-"            notice is copied with it. Like anything else that's free,
-"            this plugin is provided *as is* and comes with no warranty of any
-"            kind, either expressed or implied. In no event will the copyright
-"            holder be liable for any damages resulting from the use of this
-"            software.
+" Author: Andrey Gavrikov 
+" Maintainers: 
 "
-" apexDelete.vim - part of vim-force.com plugin
 " Methods handling metadata Delete, aka destructiveChanges
 
 if exists("g:loaded_apex_delete") || &compatible 

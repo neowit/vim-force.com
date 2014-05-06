@@ -1,19 +1,11 @@
+" This file is part of vim-force.com plugin
+"   https://github.com/neowit/vim-force.com
 " File: apexTooling.vim
-" Author: Andrey Gavrikov 
-" Version: 1.0
 " Last Modified: 2014-02-08
-" Copyright: Copyright (C) 2010-2014 Andrey Gavrikov
-"            Permission is hereby granted to use and distribute this code,
-"            with or without modifications, provided that this copyright
-"            notice is copied with it. Like anything else that's free,
-"            this plugin is provided *as is* and comes with no warranty of any
-"            kind, either expressed or implied. In no event will the copyright
-"            holder be liable for any damages resulting from the use of this
-"            software.
+" Author: Andrey Gavrikov 
+" Maintainers: 
 "
 " main actions calling tooling-force.com command line executable
-" Part of vim/force.com plugin
-"
 "
 if exists("g:loaded_apexTooling") || &compatible
   finish
