@@ -63,7 +63,6 @@ endfunction
 " utility function to display highlighted warning message
 function! apexUtil#warning(text)
 	echohl WarningMsg
-	echo " "
 	echomsg a:text
 	echohl None 
 endfun	
@@ -78,8 +77,7 @@ endfun
 " utility function to display highlighted error message
 function! apexUtil#error(text)
 	echohl ErrorMsg
-	echo " "
-	echoerr a:text
+	echomsg a:text
 	echohl None
 endfun	
 
