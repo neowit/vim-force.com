@@ -877,11 +877,17 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
 endfunction
 
+"================= server mode commands ==========================
+
+" send server 'shutdown' command to stop it
+function! apexTooling#serverShutdown()
+	call system(s:prepareServerCommand("shutdown"))
+endfunction
+
 " depending on the configuration either spawn a brand new java process to run
 " current command or try to execute on the running server
 " Global variables:
 " g:apex_use_server - if <> 0 then server will be used
-"
 "
 function! s:runCommand(java_command, commandLine)
 	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
