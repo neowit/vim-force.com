@@ -380,4 +380,15 @@ function! apexUtil#commandLineComplete(arg, line, pos, candidates)
 	endfor	
 	return res
 endfunction	
-	
+
+function! apexUtil#getOrElse(var, defaultValue)
+    if exists(a:var)
+		let value = eval(a:var)
+		if type(value) != type(a:defaultValue)
+			call apexUtil#error("invalid type of variable " . a:var . ", valid value example: " . a:defaultValue)
+		else
+			return value
+		endif
+	endif
+	return a:defaultValue
+endfunction
