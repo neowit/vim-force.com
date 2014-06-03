@@ -22,7 +22,7 @@ function! apexcode#UpdateIdeCtags()
 	if exists("g:apex_ctags_cmd")
 		let ctags_cmd=g:apex_ctags_cmd
 	endif
-    silent call apexOs#exe(ctags_cmd." -f ./tags -R .")
+    silent call apexOs#exe(ctags_cmd." --extra=+q --langmap=java:.cls.trigger -f ./tags -R .")
 endfunction
 command! -nargs=0 -bar ApexUpdateCtags call apexcode#UpdateIdeCtags()
 

@@ -609,11 +609,6 @@ ex: >
 <
 If undefined then first available ctags binary will be used for tag generation
 
-if ctags used to generate tag files then it is useful to add to your ~/.ctags file
-following line:
---langmap=java:+.cls.trigger
-this way we tell ctags to process Apex classes and triggers as Java files
-
                                                 *'g:apex_syntax_case_sensitive'*
 Use this variable to specify that Apex classes and triggers shall use case sensitive
 syntax highlighting.
