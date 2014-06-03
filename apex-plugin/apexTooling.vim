@@ -802,21 +802,22 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 		call apexUtil#warning("skipping conflict check with remote")
 	endif
 
-	let l:command = "java "
+	let l:java_command = "java "
 	if exists("g:apex_java_cmd")
 		" set user defined path to java
-		let l:command = g:apex_java_cmd
+		let l:java_command = g:apex_java_cmd
 	endif
 	if exists('g:apex_tooling_force_dot_com_java_params')
 		" if defined then add extra JVM params
-		let l:command = l:command  . " " . g:apex_tooling_force_dot_com_java_params
+		let l:java_command = l:java_command  . " " . g:apex_tooling_force_dot_com_java_params
 	else
-		let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
-		let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
-		let l:command = l:command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
+		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
+		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
+		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
 	endif
-	let l:command = l:command  . " -jar " . g:apex_tooling_force_dot_com_path
-	let l:command = l:command  . " --action=" . a:action
+	let l:java_command = l:java_command  . " -jar " . g:apex_tooling_force_dot_com_path
+
+	let l:command = " --action=" . a:action
 	if exists("g:apex_temp_folder")
 		let l:command = l:command  . " --tempFolderPath=" . shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
 	endif
@@ -858,7 +859,8 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	" make sure we do not accidentally reuse old responseFile
 	call delete(responseFilePath)
 
-	call apexOs#exe(l:command, 'M') "disable --more--
+	"call apexOs#exe(l:command, 'M') "disable --more--
+	call s:runCommand(l:java_command, l:command)
 
 	let logFileRes = s:grepValues(responseFilePath, "LOG_FILE=")
 	
@@ -875,3 +877,56 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
 endfunction
 
+" depending on the configuration either spawn a brand new java process to run
+" current command or try to execute on the running server
+" Global variables:
+" g:apex_use_server - if <> 0 then server will be used
+"
+"
+function! s:runCommand(java_command, commandLine)
+	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
+	if isServerEnabled && s:ensureServerRunning(a:java_command)
+		let l:command = s:prepareServerCommand(a:commandLine)
+		call apexOs#exe(l:command, 'M') "disable --more--
+	else
+		let l:command = a:java_command . a:commandLine
+		call apexOs#exe(l:command, 'M') "disable --more--
+	endif
+endfunction
+
+function! s:ensureServerRunning(java_command)
+	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
+	if !isServerEnabled
+		"server not enabled
+		return 0
+	else
+		let pong = system(s:prepareServerCommand("ping"))
+		if pong !~? "pong"
+			" start server
+			let l:command = a:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
+			call apexOs#exe(l:command, 'bM') "start in background, disable --more--
+			"wait a little to make sure it had a chance to start
+			echo "wait for server to start..."
+			silent call apexOs#exe("sleep 5")
+		endif
+	endif
+	return 1
+endfunction
+
+function! s:prepareServerCommand(commandLine)
+	let l:host = s:getServerHost()
+	let l:port = s:getServerPort()
+	return 'echo "' . a:commandLine . '" | nc ' . l:host . ' ' . l:port
+endfunction
+
+function! s:getServerHost()
+	return apexUtil#getOrElse("g:apex_server_host", "localhost")
+endfunction
+
+function! s:getServerPort()
+	return apexUtil#getOrElse("g:apex_server_port", 8888)
+endfunction
+
+function! s:getServerTimeoutSec()
+	return apexUtil#getOrElse("g:apex_server_timeoutSec", 60)
+endfunction
