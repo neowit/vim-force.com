@@ -915,7 +915,7 @@ function! s:ensureServerRunning(java_command)
 			echo "wait for server to start..."
 			let l:count = 15 " wait for server to start no more than 15 seconds
 			while (system(s:prepareServerCommand("ping")) !~? "pong" ) && l:count > 0
-				silent call apexOs#exe("sleep 1")
+				sleep 1
 				let l:count = l:count - 1
 			endwhile
 			" echo 'had to wait for ' . (5-l:count) . ' second(s)'
