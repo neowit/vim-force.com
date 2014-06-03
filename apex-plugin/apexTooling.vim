@@ -931,7 +931,7 @@ function! s:prepareServerCommand(commandLine)
 endfunction
 
 function! s:getServerHost()
-	return apexUtil#getOrElse("g:apex_server_host", "localhost")
+	return apexUtil#getOrElse("g:apex_server_host", "127.0.0.1")
 endfunction
 
 function! s:getServerPort()
