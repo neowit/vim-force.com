@@ -74,7 +74,7 @@ syn keyword apexcodeSelectKeywords	contained select from where with having limit
 								" use \< .. \> to match the whole word
 syn match	apexcodeSelectKeywords	contained "\<\(order by\|group by\|group by rollup\|group by cube\)\>"
 syn match	apexcodeSelectKeywords	contained "\<\(NULLS FIRST\|NULLS LAST\|asc\|desc\)\>"
-"syn match	apexcodeSelectOperator	contained "\(=:\|in:\)"
+syn match	apexcodeSelectOperator	contained "\<\(in\|not in\)\>"
 syn keyword	apexcodeSelectOperator	contained or and 
 syn keyword	apexcodeSelectOperator	contained toLabel includes excludes convertTimezone convertCurrency
 syn keyword	apexcodeSelectOperator	contained avg count count_distinct min max sum 
