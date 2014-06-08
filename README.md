@@ -1,5 +1,8 @@
 # Vim plugin for developing on force.com      
 
+### Update June 2014  
+If you are getting `java.lang.ClassCastException: scala.util.parsing.json.JSONArray cannot be cast to java.lang.String` when trying to deploy Apex Class with syntax error(s) then you are most likely affected by what appears to be a backwards compatibility bug in Summer'14. Upgrade of `tooling-force.com` jar to [v0.1.4.2](https://github.com/neowit/tooling-force.com/releases/tag/v0.1.4.2) should fix this.
+
 Update Feb. 2014  
 'master' branch of vim-force.com is no longer based on Ant and [force.com migration tool](http://www.salesforce.com/us/developer/docs/daas/). This version requires config changes, see `:help force.com-installation`, `:help g:apex_tooling_force_dot_com_path` and `:help force.com-config-example`.  
 If you want to continue using Ant + ant-salesforce.jar then switch to [ant-based](https://github.com/neowit/vim-force.com/tree/ant-based) branch.  
