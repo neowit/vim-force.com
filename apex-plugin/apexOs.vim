@@ -256,16 +256,16 @@ endfunction
 " param 2: [optional] string of options - 
 "	b - command will be executed in background (ignored on MS Windows)
 "	M - disable --more-- prompt when screen fills up with messages
-function! apexOs#exe(...)
-	let result = a:1
+function! apexOs#exe(command, ...)
+	let result = a:command
 	let disableMore = 0
 	if s:is_windows
 		let result = result
-	elseif a:0 > 1 
-		if a:2 =~# "b"
+	elseif a:0 > 0 
+		if a:1 =~# "b"
 			let result .= ' &'
 		endif
-		let disableMore = a:2 =~# "M"
+		let disableMore = a:1 =~# "M"
 	endif
 
 	"temporarily disable more if enabled
@@ -276,7 +276,12 @@ function! apexOs#exe(...)
 		set nomore
 	endif
 
-	exe "!".result
+	if s:is_windows && exists(':VimProcBang')
+		"on windows attempt to use vimproc to prevent console window popup
+		call vimproc#system(a:command)
+	else
+		exe "!".result
+	endif
 
 	if disableMore && reEnableMore
 		set more

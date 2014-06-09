@@ -92,9 +92,7 @@ will not bring the list of String methods as Force.com IDE may do.
 
 On MS Windows default configuration spawns separate DOS/CMD window on every call
 to command line utility.  
-It looks like there is a way to overcome this but I have not tried it.  
-@see shell.vim - http://peterodding.com/code/vim/shell/
-
+This annoyance can be somewhat mitigated by installing [vimproc](https://github.com/Shougo/vimproc.vim) plugin. When vimproc is installed vim-force.com will use it to run commands on MS Windows.
 
 ## Installation/System requirements 
 
