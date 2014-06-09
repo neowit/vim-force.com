@@ -278,7 +278,7 @@ function! apexOs#exe(command, ...)
 
 	if s:is_windows && exists(':VimProcBang')
 		"on windows attempt to use vimproc to prevent console window popup
-		call vimproc#system(a:command)
+		call vimproc#cmd#system(a:command)
 	else
 		exe "!".result
 	endif
