@@ -68,7 +68,7 @@ function s:buildPropertiesFile(projectName) abort
 
 		let fileLines = []
 		call add(fileLines, 'sf.username = ' . username)
-		call add(fileLines, 'sf.password = ' . password . token)
+		call add(fileLines, 'sf.password = ' . escape(password,'\') . token)
 		call add(fileLines, 'sf.serverurl = https://' . orgType . '.salesforce.com')
 		call writefile(fileLines, propertiesFilePath)
 	endif
