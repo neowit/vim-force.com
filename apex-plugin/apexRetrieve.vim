@@ -512,6 +512,7 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 					" check if copy succeeded
 					if !filereadable(targetFilePath)
 						echoerr "Something went wrong, failed to write file ".targetFilePath.". Process aborted."
+						checktime "make sure that external changes are reported
 						return 
 					else
 						"mark current type is retrieved
@@ -522,6 +523,9 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 				endfor
 			endif "len(sourceFiles) < 1
 		endfor
+		
+		checktime "make sure that external changes are reported
+
 		"update package.xml
 		let packageXml = apexMetaXml#packageXmlRead(b:SRC_PATH)
 		let changeCount = 0

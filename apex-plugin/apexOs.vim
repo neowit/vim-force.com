@@ -55,13 +55,11 @@ endfunction
 " space at the end of command is important
 if s:is_windows
 	call s:let('g:apex_binary_remove_dir', 'rmdir /s /q ')
-	call s:let('g:apex_binary_copy_file', 'copy ')
 	call s:let('g:apex_binary_touch', 'touch.exe ')
 	call s:let('g:apex_binary_tee', 'tee.exe ')
 else
 	call s:let('g:apex_binary_create_dir', 'mkdir ')
 	call s:let('g:apex_binary_remove_dir', 'rm -R ')
-	call s:let('g:apex_binary_copy_file', 'cp ')
 	call s:let('g:apex_binary_touch', 'touch ')
 	call s:let('g:apex_binary_tee', 'tee ')
 endif
@@ -185,7 +183,13 @@ function! apexOs#copyFile(srcPath, destPath)
 		"echo "cp " . sourcePath . " " . destinationPath
 		silent exe "!cp -p " . sourcePath . " " . destinationPath
 	elseif s:is_windows
-		silent exe "!copy " . sourcePath . " " . destinationPath
+		"silent exe "!copy " . sourcePath . " " . destinationPath
+
+		"readfile/writefile method is slower on the actual file copy part but
+		"shall be not slower on the overal operation time because unlike
+		"!copy it does not wait for a popup/close of cmd.exe window 
+		let fl = readfile(a:srcPath, "b")
+		call writefile(fl, a:destPath, "b")
 	else
 		echoerr "Not implemented"
 	endif

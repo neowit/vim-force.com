@@ -313,6 +313,7 @@ function apexTooling#refreshProject(filePath, ...)
 					endif
 				endif
 			endfor
+			checktime "make sure that external changes are reported
 		endif
 	endif
 endfunction	
