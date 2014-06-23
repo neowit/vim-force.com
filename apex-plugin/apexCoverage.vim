@@ -125,9 +125,7 @@ endfunction
 function! s:defineHighlight()
     hi SignColumn guifg=#004400 guibg=green ctermfg=40 ctermbg=40
     hi uncovered guifg=#ff2222 guibg=red ctermfg=1 ctermbg=1
-    hi covered guifg=#004400 guibg=green ctermfg=40 ctermbg=40
     sign define uncovered text=00 texthl=uncovered
-    sign define covered text=XX texthl=covered
 endfunction
 
 "Returns: dictionary which looks like so:
