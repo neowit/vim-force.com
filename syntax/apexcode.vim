@@ -98,10 +98,9 @@ syn match apexcodeStandardInterface	"Auth\.RegistrationHandler\|Messaging\.Inbou
 syn match apexcodeStandardInterface	"Database\.\(Stateful\|BatchableContext\|Batchable\)"
 
 syn keyword apexcodeVisualforceClasses	PageReference SelectOption Savepoint
-syn match 	apexcodeVisualforceClasses	"Database\.\(SaveResult\|Error\|UpsertResult\|DeleteResult\)"
 syn match 	apexcodeVisualforceClasses	"ApexPages\.\(StandardController\|StandardSetController\|Message\)"
 " apexcode System methods
-syn match 	apexcodeSystemKeywords	"Database\.\(insert\|update\|delete\|undelete\|upsert\)"
+syn match 	apexcodeSystemKeywords	"\<Database\.\(insert\|update\|delete\|undelete\|upsert\)\>"
 syn match 	apexcodeSystemKeywords	"Database\.\(convertLead\|countQuery\|emptyRecycleBin\|executeBatch\|getQueryLocator\|query\|rollback\|setSavepoint\)"
 syn match 	apexcodeSystemKeywords	"Test\.\(isRunningTest\|setCurrentPage\|setCurrentPageReference\|setFixedSearchResults\|setReadOnlyApplicationMode\|startTest\|stopTest\)"
 
@@ -110,6 +109,7 @@ syn match   apexcodeTriggerDecl		"^trigger\>"
 syn match 	apexcodeTriggerType		"\(after\|before\) \(insert\|update\|delete\|undelete\)"
 syn match 	apexcodeTriggerKeywords	"Trigger\.\(newMap\|oldMap\|new\|old\)"
 syn match 	apexcodeTriggerKeywords	"Trigger\.is\(Before\|After\|Insert\|Update\|Delete\|UnDelete\|Undelete\)"
+syn match 	apexcodeDatabaseClasses	"Database\.\<\(SaveResult\|Error\|UpsertResult\|DeleteResult\)\>"
 
 
 
@@ -156,6 +156,7 @@ hi def link apexcodeSFDCId			Type
 hi def link apexcodeSFDCSObject		Type
 hi def link apexcodeStandardInterface Type
 hi def link apexcodeVisualforceClasses Type
+hi def link apexcodeDatabaseClasses Type
 
 hi def link apexcodeSystemKeywords	Statement
 
