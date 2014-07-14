@@ -109,7 +109,7 @@ syn match   apexcodeTriggerDecl		"^trigger\>"
 syn match 	apexcodeTriggerType		"\(after\|before\) \(insert\|update\|delete\|undelete\)"
 syn match 	apexcodeTriggerKeywords	"Trigger\.\(newMap\|oldMap\|new\|old\)"
 syn match 	apexcodeTriggerKeywords	"Trigger\.is\(Before\|After\|Insert\|Update\|Delete\|UnDelete\|Undelete\)"
-syn match 	apexcodeDatabaseClasses	"Database\.\<\(SaveResult\|Error\|UpsertResult\|DeleteResult\)\>"
+syn match 	apexcodeDatabaseClasses	"Database\.\<\(SaveResult\|Error\|UpsertResult\|DeleteResult\|UndeleteResult\)\>"
 
 
 
