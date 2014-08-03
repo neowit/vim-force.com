@@ -40,7 +40,7 @@ syn keyword apexcodeConstant		null
 syn keyword apexcodeTypeDef			this super
 syn keyword apexcodeType			void
 syn keyword apexcodeStatement		return continue break
-syn match   apexcodeAccessor        "[^.]\(get\|set\)\_s*[{;]"me=e-1
+syn match   apexcodeAccessor        "\<\(get\|set\)\>\_s*[{;]"me=e-1
 
 syn keyword apexcodeStorageClass	static final transient
 syn keyword apexcodeStructure		enum
