@@ -10,6 +10,8 @@ if exists("b:did_ftplugin")
 endif
 let b:did_ftplugin = 1 
 
+let s:FTPLUGIN_FOLDER = expand("<sfile>:h")
+
 "load all force.com/apex-plugin scripts after vim starts and when apexcode
 "filetype is detected
 runtime! apex-plugin/**/*.vim
@@ -22,14 +24,29 @@ function! apexcode#UpdateIdeCtags()
 	if exists("g:apex_ctags_cmd")
 		let ctags_cmd=g:apex_ctags_cmd
 	endif
-    silent call apexOs#exe(ctags_cmd." --extra=+q --langmap=java:.cls.trigger -f ./tags -R .")
+	
+	" extra treatment for Apex specific definitions
+	let l:cmdRest = " --extra=+q --langmap=java:.cls.trigger "
+	let l:cmdRest .= " --options=" . s:getCtagsConfigPath()
+	let l:cmdRest .= " -f ./tags -R ."
+
+    silent call apexOs#exe(ctags_cmd.l:cmdRest)
 endfunction
 command! -nargs=0 -bar ApexUpdateCtags call apexcode#UpdateIdeCtags()
 
 " when saving any *.cls file update ctags database
 "au BufWritePost *.cls,*.trigger,*.page   :call {MyUpdateCtagsFunction}()
 
-
+" for apexcode we use extended version of ctags java config
+" default is in ftplugin/apex_ctags.conf, but can be overridden with
+" g:apex_ctags_config variable
+function! s:getCtagsConfigPath()
+	let l:ctags_config = fnameescape(apexOs#joinPath(s:FTPLUGIN_FOLDER, "apex_ctags.conf"))
+	if exists("g:apex_ctags_config")
+		let l:ctags_config=g:apex_ctags_config
+	endif
+	return l:ctags_config
+endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " Taglist plugin settings
@@ -84,12 +101,16 @@ let tlist_apexcode_settings = 'java;p:package;c:class;i:interface;f:field;m:meth
 let g:tagbar_type_apexcode = {
   \ 'ctagstype' : 'java',
   \ 'kinds'     : [
-    \ 'p:package',
-    \ 'c:class',
-    \ 'i:interface',
-    \ 'f:field',
-    \ 'm:method'
-  \ ]
+		\ 'C:class',
+		\ 'I:Inner Class',
+		\ 'i:interface',
+		\ 'e:enum',
+		\ 'f:field',
+		\ 'P:property',
+		\ 'm:method',
+	\ ],
+	\ 'sro' : '.',
+	\ 'deffile': s:getCtagsConfigPath()
 \ }
 
 """"""""""""""""""""""""""""""""""""""""""""""""
