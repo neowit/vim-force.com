@@ -101,8 +101,7 @@ let tlist_apexcode_settings = 'java;p:package;c:class;i:interface;f:field;m:meth
 let g:tagbar_type_apexcode = {
   \ 'ctagstype' : 'java',
   \ 'kinds'     : [
-		\ 'C:class',
-		\ 'I:Inner Class',
+		\ 'c:class',
 		\ 'i:interface',
 		\ 'e:enum',
 		\ 'f:field',
@@ -110,6 +109,11 @@ let g:tagbar_type_apexcode = {
 		\ 'm:method',
 	\ ],
 	\ 'sro' : '.',
+	\ 'scope2kind' : {
+		\ 'enum'      : 'e',
+		\ 'interface' : 'i',
+		\ 'class'     : 'c',
+	\ },
 	\ 'deffile': s:getCtagsConfigPath()
 \ }
 
