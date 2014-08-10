@@ -178,9 +178,12 @@ augroup END
 """"""""""""""""""""""""""""""""""""""""""""""""
 " NERDTree plugin settings
 """"""""""""""""""""""""""""""""""""""""""""""""
-" hide -meta.xml files
-let NERDTreeIgnore=['.*\~$']
-let NERDTreeIgnore+=['.*\-meta\.xml$']
+" hide -meta.xml files, making sure we do not overwrite user defined
+" NERDTreeIgnore elsewhere
+if !exists("g:NERDTreeIgnore")
+	let NERDTreeIgnore=['.*\~$']
+	let NERDTreeIgnore+=['.*\-meta\.xml$']
+endif
 
 
 " Change javascript highlighting color inside of visualforce pages from Special to Normal
