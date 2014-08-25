@@ -372,10 +372,19 @@ Differences to :|ApexDeploy|
                                                       *ApexTestWithCoverage*
 Similar to :|ApexTest| but also generates line-by-line report of code coverage.
 Later coverage can be displayed using :|ApexTestCoverageToggle| command.
-Note: :|ApexTestCoverageToggle| allows to pipe :|ApexTestCoverageShow| command
 ex: >
- :ApexTestWithCoverage checkOnly MyTestClass |ApexTestCoverageShow OtherClass.cls
+ :ApexTestWithCoverage checkOnly MyTestClass
+ " before executing next line make sure that buffer with 'OtherClass.cls' is loaded
+ " it does not have to be current buffer, but *must* be loaded
+ :ApexTestCoverageShow OtherClass
 <
+
+Note_1: :|ApexTestCoverageToggle| allows to pipe :|ApexTestCoverageShow| command
+ex: >
+ :ApexTestWithCoverage checkOnly MyTestClass | ApexTestCoverageShow OtherClass
+<
+Note_2: piping is a bit tempremental, so if it does not work then use the
+generic (two commands, each on its own line) version shown above.
 
                                                          *ApexTestCoverageShow*
 When last test was run with :|ApexTestWithCoverage| a line-by-line report of

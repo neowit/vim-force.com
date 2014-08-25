@@ -193,9 +193,15 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 	let coverageFiles = s:grepValues(responsePath, "COVERAGE_FILE=")
 	if len(coverageFiles) > 0
 		let s:last_coverage_report_file = coverageFiles[0]
-		" display coverage list if available and there are no errors in quickfix
-		if len(getqflist()) < 1
-			call apexCoverage#quickFixOpen(a:filePath)
+		" if last command is piped to another command then no need to display
+		" quickfix window
+		let l:histnr = histnr("cmd")
+		let l:lastCmd = histget("cmd", l:histnr)
+		if l:lastCmd !~ "|.*ApexTestCoverage"
+			" display coverage list if available and there are no errors in quickfix
+			if len(getqflist()) < 1
+				call apexCoverage#quickFixOpen(a:filePath)
+			endif
 		endif
 	endif
 
