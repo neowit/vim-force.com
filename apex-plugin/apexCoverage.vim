@@ -115,9 +115,13 @@ function! s:clearSigns(...) abort
 		try
 			exe ":sign unplace * file=" . a:1
 		catch /^Vim\%((\a\+)\)\=:E474/
-			let msg = "Your version of Vim does not support ':sign unplace * file=filename' version of :sign command. "
-			let msg .= "You may want to re-compile vim with '--with-features=huge' or upgrade to a newer Vim version"
-			call apexUtil#warning( msg )
+			if !has('signs')
+				let msg = "Your version of Vim does not support ':sign unplace * file=filename' version of :sign command. "
+				let msg .= "You may want to re-compile vim with '--with-features=huge' or upgrade to a newer Vim version"
+				call apexUtil#warning( msg )
+			else
+				call apexUtil#warning( v:exception )
+			endif 
 		endtry
 	else
 		exe ":sign unplace *"
