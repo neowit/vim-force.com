@@ -91,6 +91,8 @@ function! apexCoverage#show(buffer)
 	endif
 	let s:display_state_by_file[filePath] = 0
 	call apexCoverage#toggle(filePath)
+	" switch to this buffer
+	exe "buffer ".buffer  
 endfunction
 "Param1: (optional) file path where signs must be cleared
 "					if not provided then clear signs in all files
