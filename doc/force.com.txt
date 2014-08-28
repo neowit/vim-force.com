@@ -376,12 +376,12 @@ ex: >
  :ApexTestWithCoverage checkOnly MyTestClass
  " before executing next line make sure that buffer with 'OtherClass.cls' is loaded
  " it does not have to be current buffer, but *must* be loaded
- :ApexTestCoverageShow OtherClass
+ :ApexTestCoverageShow OtherClass.cls
 <
 
 Note_1: :|ApexTestCoverageToggle| allows to pipe :|ApexTestCoverageShow| command
 ex: >
- :ApexTestWithCoverage checkOnly MyTestClass | ApexTestCoverageShow OtherClass
+ :ApexTestWithCoverage checkOnly MyTestClass | ApexTestCoverageShow OtherClass.cls
 <
 Note_2: piping is a bit tempremental, so if it does not work then use the
 generic (two commands, each on its own line) version shown above.

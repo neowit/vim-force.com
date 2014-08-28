@@ -65,24 +65,33 @@ endfunction
 "Args:
 "Param: buffer - number or name of buffer
 function! apexCoverage#show(buffer)
+	let l:buffer = -1
 	
 	if a:buffer == ''
 		" No buffer provided, use the current buffer.
-		let buffer = bufnr('%')
+		let l:buffer = bufnr('%')
 	elseif (a:buffer + 0) > 0
 		" A buffer number was provided.
-		let buffer = bufnr(a:buffer + 0)
+		let l:buffer = bufnr(a:buffer + 0)
 	else
 		" A buffer name was provided.
-		let buffer = bufnr(a:buffer)
+		let l:buffer = bufnr(a:buffer)
+		if l:buffer < 0
+			" try as class
+			let l:buffer = bufnr(a:buffer . ".cls")
+		endif
+		if l:buffer < 0
+			" try as trigger
+			let l:buffer = bufnr(a:buffer . ".trigger")
+		endif
 	endif
 	
-	if buffer < 0
-		call apexUtil#error("No matching buffer for " . a:buffer)
+	if l:buffer < 0
+		call apexUtil#error("No matching buffer for '" . a:buffer . "' Make sure that the target file is aclually open in one of vim buffers.")
 		return
 	endif
 	
-	let filePath = expand('#'.buffer.':p')
+	let filePath = expand('#'.l:buffer.':p')
 
 	" check if proivided file is a valid one (i.e. class or trigger)
 	if filePath !~ '\.cls$\|\.trigger$'
@@ -91,8 +100,9 @@ function! apexCoverage#show(buffer)
 	endif
 	let s:display_state_by_file[filePath] = 0
 	call apexCoverage#toggle(filePath)
+	
 	" switch to this buffer
-	exe "buffer ".buffer  
+	exe "buffer ".l:buffer  
 endfunction
 "Param1: (optional) file path where signs must be cleared
 "					if not provided then clear signs in all files
@@ -177,6 +187,7 @@ function! s:showSigns(filePath) abort
 			let s:display_state_by_file[filePath] = 1
 		endif
 	else
+		echo "\n"
 		call apexUtil#warning("No coverage data for " . apexOs#splitPath(filePath).tail)
 		let s:display_state_by_file[filePath] = 0
 	endif
