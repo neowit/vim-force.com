@@ -126,6 +126,49 @@ endfunction
 function! apexTooling#setLastCoverageReportFile(filePath)
 	let s:last_coverage_report_file = a:filePath
 endfunction
+
+
+" retrieve available code completion options
+"Args:
+"Param: filePath 
+"			path to current apex file
+"
+"Param: attributeMap - map {} of test attributes
+"			e.g.: {
+"					"line": 10, "column": 7, 
+"					"currentFilePath": "/path/to-MyClass.cls", 
+"					"currentFileContentPath": "/path/to/temp/file"
+"				  }
+"
+"			line: - current line
+"			column: - column where cursor is positioned
+"			currentFilePath: full path of current file
+"			currentFileContentPath: full path tu saved content of current file
+"					(when completion is called current version of the file may not be saved yet)
+"
+"
+"Param: orgName - given project name will be used as
+"						target Org name.
+"						must match one of .properties file with	login details
+"
+function apexTooling#listCompletions(filePath, attributeMap)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectPath = projectPair.path
+	let projectName = projectPair.name
+	let attributeMap = a:attributeMap
+
+	let l:extraParams = {}
+	let l:extraParams["isSilent"] = 1
+	let l:extraParams["line"] = attributeMap["line"]
+	let l:extraParams["column"] = attributeMap["column"]
+	let l:extraParams["currentFilePath"] = a:filePath
+	let l:extraParams["currentFileContentPath"] = attributeMap["currentFileContentPath"]
+
+	let resMap = apexTooling#execute("listCompletions", projectName, projectPath, l:extraParams, [])
+	let responseFilePath = resMap["responseFilePath"]
+	return responseFilePath
+endfunction
+
 "run unit tests
 "Args:
 "Param: filePath 
@@ -563,7 +606,7 @@ endfunction
 " returns: 
 " 0 - if RESULT=SUCCESS
 " any value > 0 - if RESULT <> SUCCESS
-function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes)
+function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilent)
 	"clear quickfix
 	call setqflist([])
 	call CloseEmptyQuickfixes()
@@ -581,7 +624,7 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes)
 
 	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
 		" check if we have messages
-		if s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1
+		if s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1 && !a:isSilent
 			call apexUtil#info("No errors found")
 		endif
 		return 0
@@ -596,6 +639,8 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes)
 
 endfunction
 
+"Param: displayMessageTypes list of message types to display, other types will
+"be ignored, e.g. ['ERROR'] - will display only errors
 "Returns: number of messages displayed
 function! s:displayMessages(logFilePath, projectPath, displayMessageTypes)
 	let prefix = 'MESSAGE: '
@@ -835,9 +880,12 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 		let l:command = l:command  . " --logLevel=" . g:apex_test_logType
 	endif
 
+	let l:EXCLUDE_KEYS = ["isSilent"]
 	if len(a:extraParams) > 0
 		for key in keys(a:extraParams)
-			let l:command = l:command  . " --" . key . "=" . a:extraParams[key]
+			if index(l:EXCLUDE_KEYS, key) < 0
+				let l:command = l:command  . " --" . key . "=" . a:extraParams[key]
+			endif
 		endfor
 	endif
 
@@ -859,15 +907,22 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	endif
 	
 	
+	let isSilent = 0 " do we need to run command in silent mode?
+	if has_key(a:extraParams, "isSilent") && a:extraParams["isSilent"]
+		let isSilent = 1
+	endif
+
 	" make console output start from new line and do not mix with whatever was
 	" previously on the same line
-	echo "\n"
-	
+	if !isSilent
+		echo "\n"
+	endif
+ 
 	" make sure we do not accidentally reuse old responseFile
 	call delete(responseFilePath)
 
 	"call apexOs#exe(l:command, 'M') "disable --more--
-	call s:runCommand(l:java_command, l:command)
+	call s:runCommand(l:java_command, l:command, isSilent)
 
 	let logFileRes = s:grepValues(responseFilePath, "LOG_FILE=")
 	
@@ -880,7 +935,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	elseif exists("s:apex_last_log")
 		unlet s:apex_last_log
 	endif
-	let errCount = s:parseErrorLog(responseFilePath, a:projectPath, a:displayMessageTypes)
+	let errCount = s:parseErrorLog(responseFilePath, a:projectPath, a:displayMessageTypes, isSilent)
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
 endfunction
 
@@ -896,14 +951,19 @@ endfunction
 " Global variables:
 " g:apex_use_server - if <> 0 then server will be used
 "
-function! s:runCommand(java_command, commandLine)
+function! s:runCommand(java_command, commandLine, isSilent)
 	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
+	let l:flags = 'M' "disable --more--
+	if a:isSilent
+		let l:flags .= 's' " silent
+	endif
+
 	if isServerEnabled && s:ensureServerRunning(a:java_command)
 		let l:command = s:prepareServerCommand(a:commandLine)
-		call apexOs#exe(l:command, 'M') "disable --more--
+		call apexOs#exe(l:command, l:flags)	
 	else
 		let l:command = a:java_command . a:commandLine
-		call apexOs#exe(l:command, 'M') "disable --more--
+		call apexOs#exe(l:command, l:flags)
 	endif
 endfunction
 
