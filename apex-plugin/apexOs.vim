@@ -260,6 +260,7 @@ endfunction
 " param 2: [optional] string of options - 
 "	b - command will be executed in background (ignored on MS Windows)
 "	M - disable --more-- prompt when screen fills up with messages
+"	s - run in silent mode
 function! apexOs#exe(command, ...)
 	let result = a:command
 	let disableMore = 0
@@ -284,7 +285,11 @@ function! apexOs#exe(command, ...)
 		"on windows attempt to use vimproc to prevent console window popup
 		call vimproc#cmd#system(a:command)
 	else
-		exe "!".result
+		if a:1 =~# "s"
+			silent exe "!".result
+		else
+			exe "!".result
+		endif
 	endif
 
 	if disableMore && reEnableMore
