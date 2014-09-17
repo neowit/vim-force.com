@@ -20,7 +20,6 @@ function! apexComplete#Complete(findstart, base)
 	let l:column = col('.')
 	let l:line = line('.')
 	if a:findstart
-		let l:start = reltime()
 		return l:column
 	else
 		let l:filePath = expand("%:p")
@@ -37,7 +36,12 @@ function! s:listOptions(filePath, line, column)
 	let attributeMap["line"] = a:line
 	let attributeMap["column"] = a:column
 	let attributeMap["currentFilePath"] = a:filePath
-	let attributeMap["currentFileContentPath"] = a:filePath "TODO
+
+	"save content of current buffer in a temporary file
+	let tempFilePath = tempname() . apexOs#splitPath(a:filePath).tail
+	silent exe ":w! " . tempFilePath
+	
+	let attributeMap["currentFileContentPath"] = tempFilePath
 
 	let responseFilePath = apexTooling#listCompletions(a:filePath, attributeMap)
 
