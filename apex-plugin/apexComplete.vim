@@ -56,6 +56,7 @@ function! s:listOptions(filePath, line, column)
 			let item = {}
 			let item["word"] = l:option["identity"]
 			let item["menu"] = l:option["signature"]
+			let item["info"] = l:option["doc"]
 			" let item["kind"] = l:option[""] " TODO
 			let item["icase"] = 1 " ignore case
 			let item["dup"] = 1 " allow methods with different signatures but same name
