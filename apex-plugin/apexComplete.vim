@@ -45,6 +45,8 @@ function! s:listOptions(filePath, line, column)
 
 	let responseFilePath = apexTooling#listCompletions(a:filePath, attributeMap)
 
+	let subtractLen = s:getSymbolLength(a:column) " this many characters user already entered
+	
 	let l:completionList = []
 	if filereadable(responseFilePath)
 		for jsonLine in readfile(responseFilePath)
@@ -52,9 +54,13 @@ function! s:listOptions(filePath, line, column)
 				continue " skip not JSON line
 			endif
 			let l:option = eval(jsonLine)
-			"echomsg string(l:option)
+			
 			let item = {}
 			let item["word"] = l:option["identity"]
+			if subtractLen > 0
+				let item["abbr"] = l:option["identity"]
+				let item["word"] = strpart(l:option["identity"], subtractLen-1, len(l:option["identity"]) - subtractLen + 1)
+			endif
 			let item["menu"] = l:option["signature"]
 			let item["info"] = l:option["doc"]
 			" let item["kind"] = l:option[""] " TODO
@@ -66,4 +72,28 @@ function! s:listOptions(filePath, line, column)
 		"echomsg "l:completionList=" . string(l:completionList)
 	endif
 	return l:completionList
+endfunction
+
+"Return: length of the symbol under cursor
+"e.g. if we are completing: Integer.va|
+"then return will be len("va") = 2
+function! s:getSymbolLength(column)
+	let l:column = a:column
+	let l:line = getline('.')
+	" move back until get to a character which can not be part of
+	" identifier
+	let i = l:column-1
+	let keepGoing = 1
+	
+	while keepGoing && i > 0
+		let chr = strpart(l:line, i-1, 1)
+		
+		if chr =~? "\\w\\|_"
+			let i -= 1
+		else
+			let keepGoing = 0
+		endif
+	endwhile
+
+	return l:column - i
 endfunction
