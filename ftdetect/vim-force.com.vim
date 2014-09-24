@@ -29,4 +29,7 @@ if &runtimepath !~ 'tern_for_vim'
 	au! BufRead,BufNewFile */resources_unpacked/*.js setlocal omnifunc=javascriptcomplete#CompleteJS
 endif
 
+if !exists('&omnifunc') || len(&omnifunc) < 1
+	autocmd FileType apexcode setlocal omnifunc=apexComplete#Complete
+endif
 

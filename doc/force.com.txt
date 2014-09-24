@@ -494,6 +494,28 @@ Useful when you want to re-run visual selection which is not currently selected,
 or you are not in the buffer where last :|ApexExecuteAnonymous| was run.
 
 ==============================================================================
+                                                                *auto-complete*
+Current version includes basic auto completion support for Apex classes and
+some standard Apex library namespaces.
+Current limitations:
+- works best in |server-mode|. 
+  In normal mode you have to wait for tooling-force.com.jar to load every time.
+- does not support completion of SObject fields
+  
+Usage:
+- configure |server-mode| try following in .cls file (do not type single quote characters)
+    'System.' Ctrl-X,Ctrl-U
+	'String str = "abc"; str.' Ctrl-X,Ctrl-U
+
+You may want to map Ctrl-X,Ctrl-U to something shorter, e.g. >
+	""""""""""""""""""""""""""""""""""""""""""
+	" map omni completion to Control + Space
+	""""""""""""""""""""""""""""""""""""""""""
+	inoremap <C-Space> <C-x><C-o>
+	inoremap <C-@> <C-Space>
+<
+  
+==============================================================================
 SETTINGS                                                   *force.com-settings*
 
 Before using force.com plgin following variables must be defined (ex: in .vimrc)
@@ -722,27 +744,31 @@ Optional.
 root folder to use when creating new project with :|ApexInitProject|
 
                                         *server-mode* *server* *'g:apex_server'*
-										*g:apex_server_timeoutSec*
+                                        *g:apex_server_timeoutSec*
 Optional.
 Use |'g:apex_server'| to enable/disable server mode.
+Warning: server mode uses substantial amount of RAM and not suitable for
+underpowered machines.
 Presently Server mode is only supported on *nix systems and not supported on MS
-WIdnows.
+Windows.
 In normal mode tooling-force.com.jar binary is loaded into memory every time
 when it is needed, e.g. every time when apex class is saved to SFDC.  This
 allows to minimise RAM usage but makes every operation slower by the number of
 seconds required to read from disk and load tooling-force.com.jar binary.
-Some operations (e.g. auto-completion) may not be practical in Normal mode due
+Some operations (e.g. auto-completion) may not be practical in non server mode due
 to the time it takes for operation to complete.
 
 Server mode allows to keep tooling-force.com binary in RAM after it was first
 loaded, so all subsequent operations use already loaded tooling-force.com.jar
 instance which may noticeably reduce the time taken by every operation
 involving tooling-force.com.jar binary.
+
 Once loaded tooling-force.com.jar will keep itself loaded until
-|'g:apex_server_timeoutSec'| timeout since last touch is reached.  For example
-if g:apex_server_timeoutSec is set to 1800 seconds then tooling-force.com.jar
+|'g:apex_server_timeoutSec'| timeout since last touch is reached.
+For example if g:apex_server_timeoutSec is set to 1800 seconds then tooling-force.com.jar
 will unload itself from memory when 30 minutes elapse since last time
 vim-force.com called it.
+
 Use |'g:apex_server_timeoutSec'| to set the timeout and minimise RAM usage when
 you are not working with vim-force.com plugin.
 e.g. >
@@ -864,6 +890,9 @@ Basic Visualforce code completion
       '<apex:' Ctrl-X,Ctrl-U
       '<chatter' Ctrl-X,Ctrl-U
 
+Basic Apex Code completion (not yet available on MS Windows)
+- see |*auto-complete*|
+
 - Handling content of zipped .resource files
 
                                         *resources_unpacked* *zipped-resources*
@@ -889,20 +918,10 @@ files. Use SFDC UI to create new static resource and then call
 ==============================================================================
 LIMITATIONS                                             *force.com-limitations*
 
-vim force.com plugin does not support creating force.com project. Use provided
-template instead.
-
 Salesforce Metadata API does not (in most cases) report error line numbers
 in Visualforce pages making it impossible to go-to actual problem line if
 compile/save fails due to syntax error. This is similar to Force.com IDE for
 Eclipse.
-
-Current version does not support environment aware code completion
-For example if you write >
-	String val = 'abc';
-< typing >
-	val.
-< will not bring the list of String methods as Force.com IDE may do.
 
 On MS Windows default configuration spawns separate DOS/CMD window on every call
 to command line utility.
