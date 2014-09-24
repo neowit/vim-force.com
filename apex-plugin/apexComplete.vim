@@ -15,7 +15,8 @@ let g:loaded_apexComplete = 1
 " This function is used for the 'omnifunc' option.		{{{1
 " :h complete-functions
 " :h complete-items - description of matches list
-function! apexComplete#Complete(findstart, base)
+function! apexComplete#Complete(findstart, base) abort
+	
 	"throw "called complete"
 	let l:column = col('.')
 	let l:line = line('.')
@@ -44,6 +45,9 @@ function! s:listOptions(filePath, line, column)
 	let attributeMap["currentFileContentPath"] = tempFilePath
 
 	let responseFilePath = apexTooling#listCompletions(a:filePath, attributeMap)
+
+	" temp file is no longer needed
+	call delete(tempFilePath)
 
 	let subtractLen = s:getSymbolLength(a:column) " this many characters user already entered
 	
