@@ -161,8 +161,8 @@ function apexTooling#listCompletions(filePath, attributeMap)
 	let l:extraParams["isSilent"] = 1
 	let l:extraParams["line"] = attributeMap["line"]
 	let l:extraParams["column"] = attributeMap["column"]
-	let l:extraParams["currentFilePath"] = a:filePath
-	let l:extraParams["currentFileContentPath"] = attributeMap["currentFileContentPath"]
+	let l:extraParams["currentFilePath"] = shellescape(a:filePath)
+	let l:extraParams["currentFileContentPath"] = shellescape(attributeMap["currentFileContentPath"])
 
 	let resMap = apexTooling#execute("listCompletions", projectName, projectPath, l:extraParams, [])
 	let responseFilePath = resMap["responseFilePath"]
