@@ -285,7 +285,7 @@ function! apexOs#exe(command, ...)
 		"on windows attempt to use vimproc to prevent console window popup
 		call vimproc#cmd#system(a:command)
 	else
-		if a:1 =~# "s"
+		if a:0 > 0 && a:1 =~# "s"
 			silent exe "!".result
 		else
 			exe "!".result
