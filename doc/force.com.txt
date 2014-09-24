@@ -540,6 +540,9 @@ Optional
 |'g:apex_workspace_path'|           root folder to use when creating new project
                                     with :|ApexInitProject|
 
+|'g:apex_server'|                   enable/disable server mode
+|'g:apex_server_timeoutSec'|        automatic server shutdown timeout
+
 
                                                         *'g:apex_backup_folder'*
 
@@ -708,11 +711,44 @@ Optional.
 In order to handle zipped *.resource files zip and unzip command line binaries
 must be available in $PATH or explicitly specified via 'g:zip_zipcmd' and
 'g:zip_unzipcmd' variables.
-e.g. 
+e.g. > 
  let g:zip_zipcmd = "/usr/local/bin/zip"
  let g:zip_unzipcmd = "/usr/local/bin/unzip"
 <
 see also |zipped-resources|
+
+                                                       *'g:apex_workspace_path'*
+Optional.
+root folder to use when creating new project with :|ApexInitProject|
+
+                                        *server-mode* *server* *'g:apex_server'*
+										*g:apex_server_timeoutSec*
+Optional.
+Use |'g:apex_server'| to enable/disable server mode.
+Presently Server mode is only supported on *nix systems and not supported on MS
+WIdnows.
+In normal mode tooling-force.com.jar binary is loaded into memory every time
+when it is needed, e.g. every time when apex class is saved to SFDC.  This
+allows to minimise RAM usage but makes every operation slower by the number of
+seconds required to read from disk and load tooling-force.com.jar binary.
+Some operations (e.g. auto-completion) may not be practical in Normal mode due
+to the time it takes for operation to complete.
+
+Server mode allows to keep tooling-force.com binary in RAM after it was first
+loaded, so all subsequent operations use already loaded tooling-force.com.jar
+instance which may noticeably reduce the time taken by every operation
+involving tooling-force.com.jar binary.
+Once loaded tooling-force.com.jar will keep itself loaded until
+|'g:apex_server_timeoutSec'| timeout since last touch is reached.  For example
+if g:apex_server_timeoutSec is set to 1800 seconds then tooling-force.com.jar
+will unload itself from memory when 30 minutes elapse since last time
+vim-force.com called it.
+Use |'g:apex_server_timeoutSec'| to set the timeout and minimise RAM usage when
+you are not working with vim-force.com plugin.
+e.g. >
+	let g:apex_server=1 " start server on first call
+	let g:apex_server_timeoutSec=60*30 " allow server to wait for new connections within 30 minutes
+<
 
 ==============================================================================
 RECOMMENDED KEYBOARD SHORTCUTS                     *force.com-shortcuts-example*
