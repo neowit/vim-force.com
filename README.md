@@ -100,7 +100,7 @@ Before vim-force.com plugin can be used the following requirements must be met:
 
 1. Vim version 7.3 or later with `:set nocompatible`  
 
-2. Java JDK/JRE, Version 6.1 or greater  
+2. Java JDK/JRE, Version 7 or greater  
    - Oracle JDK
      http://www.oracle.com/technetwork/java/javase/downloads/index.html       
 JDK is not strictly required, JRE will suffice.  
