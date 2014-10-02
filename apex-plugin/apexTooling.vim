@@ -219,7 +219,7 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 		endif
 	else
 		"run all tests in the deployment package
-		let l:extraParams["testsToRun"] = '*'
+		let l:extraParams["testsToRun"] = shellescape('*')
 	endif
 	"reportCoverage
 	if 'reportCoverage' == a:reportCoverage
