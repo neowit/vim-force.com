@@ -17,7 +17,10 @@ let g:loaded_apexCommands = 1
 """"""""""""""""""""""""""""""""""""""""""""""""
 " Apex commands 
 """"""""""""""""""""""""""""""""""""""""""""""""
-"staging
+" version of tooling-force.com
+command! ApexToolingVersion :call apexTooling#getVersion(expand("%:p"))
+
+" staging
 command! ApexStage :call apexStage#open(expand("%:p"))
 command! ApexStageAdd :call apexStage#add(expand("%:p"))
 command! ApexStageAddOpen :call apexStage#addOpen()

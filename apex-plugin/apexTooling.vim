@@ -576,6 +576,14 @@ function apexTooling#deleteMetadata(filePath, projectName, specificComponentsFil
 	return resMap
 endfunction	
 
+" get version of currently installed tooling-force.com
+"Args:
+"Param1: filePath - path to apex file in current project
+function apexTooling#getVersion(filePath)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let resMap = apexTooling#execute("version", projectPair.name, projectPair.path, {}, [])
+	let responsePath = resMap["responseFilePath"]
+endfunction
 
 " Backup files using provided relative paths
 " all file paths are relative to projectPath

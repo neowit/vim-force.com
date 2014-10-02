@@ -253,6 +253,8 @@ Plugin exposes following commands:                              *apex-commands*
 
 |ApexExecuteAnonymous|              run 'Execute Anonymous'
 |ApexExecuteAnonymousRepeat|        repeat last 'Execute Anonymous'
+
+|ApexToolingVersion|                show version of tooling-force.com.jar
 ------------------------------------------------------------------------------
                                                                   *ApexCompare*
 Imagine you have 2 sandboxes of the same Org and want to compare current file
