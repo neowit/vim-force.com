@@ -142,7 +142,7 @@ function! s:getBundlePath(unpackedFilePath) abort
 	endwhile
 
 	if len(bundlePath) < 1
-		call apexUtil#error("Failed to identify resource name for file " . a:filePath)
+		call apexUtil#error("Failed to identify resource name for file " . path)
 	endif
 	return bundlePath
 endfunction
