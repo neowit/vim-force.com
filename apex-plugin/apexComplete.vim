@@ -37,6 +37,7 @@ function! s:listOptions(filePath, line, column)
 	let attributeMap["line"] = a:line
 	let attributeMap["column"] = a:column
 	let attributeMap["currentFilePath"] = a:filePath
+	let wrapDocAfterLen = winwidth(0) - 1 "
 
 	"save content of current buffer in a temporary file
 	let tempFilePath = tempname() . apexOs#splitPath(a:filePath).tail
@@ -66,7 +67,8 @@ function! s:listOptions(filePath, line, column)
 				let item["word"] = strpart(l:option["identity"], subtractLen-1, len(l:option["identity"]) - subtractLen + 1)
 			endif
 			let item["menu"] = l:option["signature"]
-			let item["info"] = l:option["doc"]
+			let item["info"] = s:insertLineBreaks(l:option["doc"], wrapDocAfterLen)
+			"let item["info"] = l:option["doc"]
 			" let item["kind"] = l:option[""] " TODO
 			let item["icase"] = 1 " ignore case
 			let item["dup"] = 1 " allow methods with different signatures but same name
@@ -101,3 +103,32 @@ function! s:getSymbolLength(column)
 
 	return l:column - i
 endfunction
+
+"check if line is longer than N characters, and if it is then break it into
+"lines of no more than N characters each
+"this is used to wrap doc text in preview buffer as I do not know any way to
+"detect if a buffer is really 'preview' or just some other nofile '[Scratch]'
+function! s:insertLineBreaks(str, maxLen)
+	let maxlen = a:maxLen
+	let str = a:str
+	" do not modify string if it is short enough or contains line breaks
+	if strdisplaywidth(str) <= maxlen || stridx(str, "\n") > 0
+		return str
+	endif
+
+	let l:strLen = len(str)
+	let index = 0
+	while index < l:strLen
+		" find first ' ' starting maxlen, backwards
+		let breakAt = strridx(str, ' ', index + maxlen)
+		if breakAt > 0 && breakAt > (index + 1) && (l:strLen - index) > maxlen
+			let str = strpart(str, 0, index) . strpart(str, index, breakAt - index) . "\n" . strpart(str, breakAt+1)
+			let index = breakAt + 1
+		else
+			let index = index + maxlen
+		endif
+	endwhile
+
+	return str
+endfunction
+
