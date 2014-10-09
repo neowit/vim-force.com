@@ -65,6 +65,11 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
 * Syntax highlighting
   - supports syntax highlighting of Apex Classes, Triggers, Pages, JS Resources
 
+* List candidates for auto-completion in Apex classes
+	- try following in .cls file
+	  String str = 'abc'; str. `< Ctrl-X,Ctrl-O`	
+
+
 * Basic (really basic) Visualforce code completion
 	- try following in .page file  
       `< Ctrl-X,Ctrl-U`  
@@ -72,6 +77,7 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
       `<chatter Ctrl-X,Ctrl-U`
 
 * Handling content of zipped .resource files
+	- useful when working with rich UIs with lots of javascript and CSS files
 
 ## LIMITATIONS
 

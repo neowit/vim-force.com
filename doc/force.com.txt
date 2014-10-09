@@ -503,13 +503,13 @@ some standard Apex library namespaces.
 
 Current limitations:
 - works best in |server-mode|. 
-  In normal mode you have to wait for tooling-force.com.jar to load every time.
+  In non-server mode you have to wait for tooling-force.com.jar to load every time.
 - does not support completion of SObject fields inside SOQL statements
   
 Usage:
 - configure |server-mode| and try following in .cls file (do not type single quote characters)
-    'System.' Ctrl-X,Ctrl-U
-	'String str = "abc"; str.' Ctrl-X,Ctrl-U
+    'System.' Ctrl-X,Ctrl-O
+	'String str = "abc"; str.' Ctrl-X,Ctrl-O
 
 You may want to map Ctrl-X,Ctrl-U to something shorter, e.g. >
 	""""""""""""""""""""""""""""""""""""""""""
