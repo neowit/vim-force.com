@@ -951,7 +951,7 @@ endfunction
 
 " send server 'shutdown' command to stop it
 function! apexTooling#serverShutdown()
-	call system(s:prepareServerCommand("shutdown"))
+	call s:sendCommandToServer("shutdown")
 endfunction
 
 " depending on the configuration either spawn a brand new java process to run
@@ -967,8 +967,9 @@ function! s:runCommand(java_command, commandLine, isSilent)
 	endif
 
 	if isServerEnabled && s:ensureServerRunning(a:java_command)
-		let l:command = s:prepareServerCommand(a:commandLine)
-		call apexOs#exe(l:command, l:flags)	
+		"let l:command = s:prepareServerCommand(a:commandLine)
+		"call apexOs#exe(l:command, l:flags)	
+		call s:sendCommandToServer(a:commandLine)
 	else
 		let l:command = a:java_command . a:commandLine
 		call apexOs#exe(l:command, l:flags)
@@ -981,7 +982,8 @@ function! s:ensureServerRunning(java_command)
 		"server not enabled
 		return 0
 	else
-		let pong = system(s:prepareServerCommand("ping"))
+		let pong = s:sendCommandToServer("ping")
+		
 		if pong !~? "pong"
 			" start server
 			let l:command = a:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
@@ -989,7 +991,7 @@ function! s:ensureServerRunning(java_command)
 			"wait a little to make sure it had a chance to start
 			echo "wait for server to start..."
 			let l:count = 15 " wait for server to start no more than 15 seconds
-			while (system(s:prepareServerCommand("ping")) !~? "pong" ) && l:count > 0
+			while (s:sendCommandToServer("ping") !~? "pong" ) && l:count > 0
 				sleep 1
 				let l:count = l:count - 1
 			endwhile
@@ -1015,4 +1017,53 @@ endfunction
 
 function! s:getServerTimeoutSec()
 	return apexUtil#getOrElse("g:apex_server_timeoutSec", 60)
+endfunction
+
+function! s:sendCommandToServer(commandLine) abort
+	let l:host = s:getServerHost()
+	let l:port = s:getServerPort()
+	let l:usePython = has('python')
+	if l:usePython
+		return s:sendCommandToServerPython(a:commandLine, l:host, l:port)
+	else
+		return system(s:prepareServerCommand(a:commandLine))
+	endif
+endfunction
+
+
+" this function uses python to send stuff to socket
+function! s:sendCommandToServerPython(commandLine, host, port)
+python << endpython
+import vim
+commandLine = vim.eval("a:commandLine")
+
+import socket
+
+TCP_IP = vim.eval("a:host")
+TCP_PORT = int(vim.eval("a:port"))
+BUFFER_SIZE = 1024
+MESSAGE = commandLine
+
+allData = ""
+exception = ""
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((TCP_IP, TCP_PORT))
+    s.sendall(MESSAGE)
+    s.shutdown(socket.SHUT_WR)
+    while 1:
+        data = s.recv(BUFFER_SIZE)
+        if data == "":
+            break
+        allData += data
+    	#print "Received:", repr(data)
+    
+    #print "Connection closed."
+    #print "allData=", allData
+    s.close()
+except Exception  as e:
+    exception = e
+
+vim.command("return " + repr(allData)) # return from the Vim function!
+endpython
 endfunction
