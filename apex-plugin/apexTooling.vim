@@ -1024,11 +1024,16 @@ let s:is_windows = has("win32") || has("win64")
 function! s:sendCommandToServer(commandLine, flags) abort
 	let l:host = s:getServerHost()
 	let l:port = s:getServerPort()
+	let isSilent = a:flags =~# "s"
 	let l:usePython = has('python') && s:is_windows
+	
 	if l:usePython
-		return s:sendCommandToServerPython(a:commandLine, l:host, l:port)
+		if !isSilent
+			call s:updateProgress("working ...")
+		endif
+		return s:sendCommandToServerPython(a:commandLine, l:host, l:port, isSilent)
 	else
-		if a:flags =~# "s"
+		if isSilent
 			return system(s:prepareServerCommand(a:commandLine))
 		else
 			let l:command = s:prepareServerCommand(a:commandLine)
@@ -1037,9 +1042,13 @@ function! s:sendCommandToServer(commandLine, flags) abort
 	endif
 endfunction
 
+function! s:updateProgress(msg)
+	echo a:msg
+	sleep 1 " without sleep screen will not update, even when forced with :redraw!
+endfunction
 
 " this function uses python to send stuff to socket
-function! s:sendCommandToServerPython(commandLine, host, port)
+function! s:sendCommandToServerPython(commandLine, host, port, isSilent)
 python << endpython
 import vim
 commandLine = vim.eval("a:commandLine")
@@ -1050,6 +1059,7 @@ TCP_IP = vim.eval("a:host")
 TCP_PORT = int(vim.eval("a:port"))
 BUFFER_SIZE = 1024
 MESSAGE = commandLine
+isSilent = (1 == int(vim.eval("a:isSilent")) )
 
 allData = ""
 exception = ""
@@ -1064,6 +1074,8 @@ try:
             break
         allData += data
     	#print "Received:", repr(data)
+        if not isSilent:
+    	    vim.command("call s:updateProgress("+repr(data)+")")
     
     #print "Connection closed."
     #print "allData=", allData
