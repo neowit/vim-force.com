@@ -756,8 +756,9 @@ Warning: server mode uses substantial amount of RAM and is not suitable for
 underpowered machines.
 
 In order to use Server mode you either have to be on *nix system which has
-'echo' and 'nc' (netcat) commands, or have you vim instance compiled with
-"+python"
+'echo' and 'nc'(netcat) commands, or have your vim instance compiled with
+|+python| or |+python/dyn|. See |vim-python-ms-windows|.
+
 In the old (non server) mode tooling-force.com.jar binary is loaded into memory
 every time when it is needed, e.g. every time when apex class is saved to SFDC.
 This allows to minimise RAM usage but makes every operation slower by the
@@ -780,12 +781,34 @@ Use |'g:apex_server_timeoutSec'| to set the timeout and minimise RAM usage when
 you are not working with vim-force.com plugin.
 e.g. >
 	let g:apex_server=1 " start server on first call
-	let g:apex_server_timeoutSec=60*30 " allow server to wait for new connections within 30 minutes
+	" allow server to wait for new connections within 30 minutes
+	let g:apex_server_timeoutSec=60*30
 <
 
-Server is accessced via a TCP socket 8888. If you want to change the port then
-define |'g:apex_server_port'| global variable in your .vimrc, e.g. >
+Server is accessed via a TCP socket on port 8888. If you want to change the
+port then define |'g:apex_server_port'| global variable in your .vimrc, e.g. >
 	let g:apex_server_port = 65000
+<
+
+MS Windows: when executing first command and tooling-force.com server
+is not yet running you will see a new DOS/CMD window popup. Do NOT close it,
+just minimise and leave it running.
+
+                                                        *vim-python-ms-windows*
+In order to eliminate CMD.exe window popups on MS Windows current version of
+vim-force.com plugin (when run in |server-mode|) takes advantage of python
+support in vim.
+To check if your vim supports python run following in vim: >
+	:echo has("python")
+<line above must respond: 1 
+if it does then make further check: >
+	:python print 'hello'
+<
+If you get 'hello' in response (no quotes) and no error messages then you are
+good to go. If not then use your favourite search engine to find out how to
+install vim with python support and also check: >
+	:help python 
+	:help python-dynamic
 <
 
 ==============================================================================
@@ -937,8 +960,10 @@ Eclipse.
 
 On MS Windows default configuration spawns separate DOS/CMD window on every call
 to command line utility.
-It looks like there is a way to overcome this but I have not tried it
-@see shell.vim - http://peterodding.com/code/vim/shell/
+There are two ways to mitigate this:
+1. install vimproc: https://github.com/Shougo/vimproc.vim
+OR
+2. use |server-mode|
 
 ==============================================================================
 RECOMMENDED-PLUGINS                             *force.com-recommended-plugins*
