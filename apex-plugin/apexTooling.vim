@@ -161,8 +161,8 @@ function apexTooling#listCompletions(filePath, attributeMap)
 	let l:extraParams["isSilent"] = 1
 	let l:extraParams["line"] = attributeMap["line"]
 	let l:extraParams["column"] = attributeMap["column"]
-	let l:extraParams["currentFilePath"] = shellescape(a:filePath)
-	let l:extraParams["currentFileContentPath"] = shellescape(attributeMap["currentFileContentPath"])
+	let l:extraParams["currentFilePath"] = apexOs#shellescape(a:filePath)
+	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(attributeMap["currentFileContentPath"])
 
 	let resMap = apexTooling#execute("listCompletions", projectName, projectPath, l:extraParams, [])
 	let responseFilePath = resMap["responseFilePath"]
@@ -394,7 +394,7 @@ endfunction
 
 "load metadata description into a local file
 function apexTooling#loadMetadataList(projectName, projectPath, allMetaTypesFilePath)
-	return apexTooling#execute("describeMetadata", a:projectName, a:projectPath, {"allMetaTypesFilePath": shellescape(a:allMetaTypesFilePath)}, [])
+	return apexTooling#execute("describeMetadata", a:projectName, a:projectPath, {"allMetaTypesFilePath": apexOs#shellescape(a:allMetaTypesFilePath)}, [])
 endfunction	
 
 " retrieve members of specified metadata types
@@ -411,9 +411,9 @@ endfunction
 "Param5: targetFolder - if not blank then use this as retrieve destination
 "
 function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePath, typesFileFormat, targetFolder) abort
-	let extraParams = {"specificTypes": shellescape(a:specificTypesFilePath), "typesFileFormat" : a:typesFileFormat}
+	let extraParams = {"specificTypes": apexOs#shellescape(a:specificTypesFilePath), "typesFileFormat" : a:typesFileFormat}
 	if len(a:targetFolder) > 0
-		let extraParams["targetFolder"] = shellescape(a:targetFolder)
+		let extraParams["targetFolder"] = apexOs#shellescape(a:targetFolder)
 	endif
 	let resMap = apexTooling#execute("bulkRetrieve", a:projectName, a:projectPath, extraParams, [])
 	if "true" == resMap["success"]
@@ -427,7 +427,7 @@ endfunction
 
 "load list of components of specified metadata types into a local file
 function apexTooling#listMetadata(projectName, projectPath, specificTypesFilePath)
-	let resMap = apexTooling#execute("listMetadata", a:projectName, a:projectPath, {"specificTypes": shellescape(a:specificTypesFilePath)}, [])
+	let resMap = apexTooling#execute("listMetadata", a:projectName, a:projectPath, {"specificTypes": apexOs#shellescape(a:specificTypesFilePath)}, [])
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
 		let resultFile = s:grepValues(logFilePath, "RESULT_FILE=")
@@ -505,7 +505,7 @@ function s:executeAnonymous(filePath, projectName, codeFile)
 
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
-	let l:extraParams = {"codeFile": shellescape(a:codeFile)}
+	let l:extraParams = {"codeFile": apexOs#shellescape(a:codeFile)}
 	" another org?
 	if projectPair.name != a:projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
@@ -558,7 +558,7 @@ endfunction
 "
 function apexTooling#deleteMetadata(filePath, projectName, specificComponentsFilePath, mode, updateSessionDataOnSuccess)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let l:extraParams = {"specificComponents": shellescape(a:specificComponentsFilePath)}
+	let l:extraParams = {"specificComponents": apexOs#shellescape(a:specificComponentsFilePath)}
 	" another org?
 	if projectPair.name != a:projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
@@ -842,7 +842,7 @@ function! s:prepareSpecificFilesParams(relativePaths)
 		"dump file list into a temp file
 		let tempFile = tempname() . "-fileList.txt"
 		call writefile(relativePaths, tempFile)
-		let l:params["specificFiles"] = shellescape(tempFile)
+		let l:params["specificFiles"] = apexOs#shellescape(tempFile)
 	endif
 	return l:params
 endfunction
@@ -875,14 +875,14 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
 		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
 	endif
-	let l:java_command = l:java_command  . " -jar " . g:apex_tooling_force_dot_com_path
+	let l:java_command = l:java_command  . " -jar " . apexOs#shellescape(g:apex_tooling_force_dot_com_path)
 
 	let l:command = " --action=" . a:action
 	if exists("g:apex_temp_folder")
-		let l:command = l:command  . " --tempFolderPath=" . shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
+		let l:command = l:command  . " --tempFolderPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
 	endif
-	let l:command = l:command  . " --config=" . shellescape(projectPropertiesPath)
-	let l:command = l:command  . " --projectPath=" . shellescape(apexOs#removeTrailingPathSeparator(a:projectPath))
+	let l:command = l:command  . " --config=" . apexOs#shellescape(projectPropertiesPath)
+	let l:command = l:command  . " --projectPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(a:projectPath))
 	
 	if exists('g:apex_test_logType')
 		let l:command = l:command  . " --logLevel=" . g:apex_test_logType
@@ -902,7 +902,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	else
 		" default responseFilePath
 		let responseFilePath = apexOs#joinPath(a:projectPath, s:SESSION_FOLDER, "response_" . a:action)
-		let l:command = l:command  . " --responseFilePath=" . shellescape(responseFilePath)
+		let l:command = l:command  . " --responseFilePath=" . apexOs#shellescape(responseFilePath)
 	endif
 
 	" set default maxPollRequests and pollWaitMillis values if not specified
