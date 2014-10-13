@@ -257,6 +257,20 @@ function! apexOs#glob(expr)
   return split(glob(substitute(a:expr, '\', '/', 'g')), "\n")
 endfunction
 
+" check if python is available
+function! apexOs#isPythonAvailable()
+	return has('python3') || has('python')
+endfunction
+
+
+"when python is available it may be beneficial to run command using it
+function! s:runWithPython(command)
+python << endpython
+COMMAND = vim.eval("a:command")
+import subprocess
+subprocess.Popen(COMMAND)
+endpython
+endfunction
 
 " windows XP requires command which contains spaces to be enclosed in quotes
 " twice, ex:
@@ -267,13 +281,15 @@ endfunction
 "	b - command will be executed in background (ignored on MS Windows)
 "	M - disable --more-- prompt when screen fills up with messages
 "	s - run in silent mode
+"	p - use python if available
 function! apexOs#exe(command, ...)
 	let result = a:command
 	let disableMore = 0
+	let l:background = a:1 =~# "b"
 	if s:is_windows
 		let result = result
 	elseif a:0 > 0 
-		if a:1 =~# "b"
+		if l:background
 			let result .= ' &'
 		endif
 		let disableMore = a:1 =~# "M"
@@ -287,11 +303,15 @@ function! apexOs#exe(command, ...)
 		set nomore
 	endif
 
-	if s:is_windows && exists(':VimProcBang')
+	if s:is_windows && a:1 =~# "p" && apexOs#isPythonAvailable()
+		call s:runWithPython(result)
+	elseif s:is_windows && exists(':VimProcBang')
 		"on windows attempt to use vimproc to prevent console window popup
 		echo "working..."
 		sleep 100m " give vim a chance to refresh screen and display message
-		call vimproc#cmd#system(a:command)
+		"echo "command=" . result
+		"sleep 10m
+		call vimproc#cmd#system(result)
 	else
 		if a:0 > 0 && a:1 =~# "s"
 			silent exe "!".result
