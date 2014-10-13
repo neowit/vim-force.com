@@ -23,6 +23,12 @@ endfor
 
 let s:is_windows = has("win32") || has("win64")
 
+"Function: apexOs#isWindows() function {{{1
+" check if current machine is running MS Windows
+function! apexOs#isWindows()
+	return s:is_windows
+endfunction
+
 "Function: s:let() function {{{2
 " initialise given variable if it is not already set
 "
@@ -169,7 +175,7 @@ function! apexOs#shellescape(val)
 	if has("unix")
 		 "return escape(val, '%()')
 		 return escape(val, '%')
-	elseif s:is_windows
+	elseif s:is_windows && exists("*GetWin32ShortName")
 		return GetWin32ShortName(val)
 	endif
 	return val

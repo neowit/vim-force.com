@@ -987,7 +987,7 @@ function! s:ensureServerRunning(java_command)
 		if pong !~? "pong"
 			" start server
 			let l:command = a:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
-			call apexOs#exe(l:command, 'bM') "start in background, disable --more--
+			call apexOs#exe(l:command, 'bMp') "start in background, disable --more--, try to use python if MS Windows
 			"wait a little to make sure it had a chance to start
 			echo "wait for server to start..."
 			let l:count = 15 " wait for server to start no more than 15 seconds
@@ -1019,13 +1019,12 @@ function! s:getServerTimeoutSec()
 	return apexUtil#getOrElse("g:apex_server_timeoutSec", 60)
 endfunction
 
-let s:is_windows = has("win32") || has("win64")
 
 function! s:sendCommandToServer(commandLine, flags) abort
 	let l:host = s:getServerHost()
 	let l:port = s:getServerPort()
 	let isSilent = a:flags =~# "s"
-	let l:usePython = has('python') && s:is_windows
+	let l:usePython = apexOs#isPythonAvailable() && apexOs#isWindows()
 	
 	if l:usePython
 		if !isSilent
@@ -1049,8 +1048,9 @@ function! s:updateProgress(msg)
 	sleep 100m " without sleep screen will not update, even when forced with :redraw!
 endfunction
 
+
 " this function uses python to send stuff to socket
-function! s:sendCommandToServerPython(commandLine, host, port, isSilent)
+function! s:sendCommandToServerPython(commandLine, host, port, isSilent) abort
 python << endpython
 import vim
 commandLine = vim.eval("a:commandLine")
@@ -1084,6 +1084,8 @@ try:
     s.close()
 except Exception  as e:
     exception = e
+    #vim.command("call s:updateProgress('"+str(e)+"')")
+
 
 vim.command("return " + repr(allData)) # return from the Vim function!
 endpython
