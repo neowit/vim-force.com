@@ -285,7 +285,7 @@ endfunction
 function! apexOs#exe(command, ...)
 	let result = a:command
 	let disableMore = 0
-	let l:background = a:1 =~# "b"
+	let l:background = a:0 > 0 && a:1 =~# "b"
 	if s:is_windows
 		let result = result
 	elseif a:0 > 0 
@@ -303,7 +303,7 @@ function! apexOs#exe(command, ...)
 		set nomore
 	endif
 
-	if s:is_windows && a:1 =~# "p" && apexOs#isPythonAvailable()
+	if s:is_windows && a:0 > 0 && a:1 =~# "p" && apexOs#isPythonAvailable()
 		call s:runWithPython(result)
 	elseif s:is_windows && exists(':VimProcBang')
 		"on windows attempt to use vimproc to prevent console window popup
