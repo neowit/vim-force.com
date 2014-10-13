@@ -1043,8 +1043,10 @@ function! s:sendCommandToServer(commandLine, flags) abort
 endfunction
 
 function! s:updateProgress(msg)
-	echo a:msg
-	sleep 1 " without sleep screen will not update, even when forced with :redraw!
+	let l:msg = substitute(a:msg, "\\\\r\\\\n$", "", "")
+	let l:msg = substitute(l:msg, "\\\\n$", "", "")
+	echo l:msg
+	sleep 100m " without sleep screen will not update, even when forced with :redraw!
 endfunction
 
 " this function uses python to send stuff to socket
