@@ -283,6 +283,8 @@ function! apexOs#exe(command, ...)
 
 	if s:is_windows && exists(':VimProcBang')
 		"on windows attempt to use vimproc to prevent console window popup
+		echo "working..."
+		sleep 100m " give vim a chance to refresh screen and display message
 		call vimproc#cmd#system(a:command)
 	else
 		if a:0 > 0 && a:1 =~# "s"
