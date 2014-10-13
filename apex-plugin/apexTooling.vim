@@ -1024,7 +1024,7 @@ function! s:sendCommandToServer(commandLine, flags) abort
 	let l:host = s:getServerHost()
 	let l:port = s:getServerPort()
 	let isSilent = a:flags =~# "s"
-	let l:usePython = apexOs#isPythonAvailable() && apexOs#isWindows()
+    let l:usePython = apexOs#isPythonAvailable() && apexOs#isWindows()	
 	
 	if l:usePython
 		if !isSilent
@@ -1064,7 +1064,6 @@ MESSAGE = commandLine
 isSilent = (1 == int(vim.eval("a:isSilent")) )
 
 allData = ""
-exception = ""
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((TCP_IP, TCP_PORT))
@@ -1082,9 +1081,12 @@ try:
     #print "Connection closed."
     #print "allData=", allData
     s.close()
-except Exception  as e:
-    exception = e
-    #vim.command("call s:updateProgress('"+str(e)+"')")
+except socket.error as e:
+    #vim.command("call s:updateProgress('socket.error' . '"+str(msg)+"')")
+    allData = "socket.error: " + str(e)
+except Exception as e:
+    allData = "unexpected error: " + str(e)
+	#vim.command("call s:updateProgress('"+str(e)+"')")
 
 
 vim.command("return " + repr(allData)) # return from the Vim function!
