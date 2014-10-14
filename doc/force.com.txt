@@ -11,11 +11,12 @@ force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 |force.com-system-requirements|     Installation/System requirements
 |force.com-config-example|          Minimal config example
 
-|force.com-usage|         Usage
-    |apex-project-setup|  creating new force.com project
+|force.com-usage|          Usage
+    |apex-project-setup|   creating new force.com project
         |apex-with-eclipse|      using alongside Eclipse IDE
         |apex-plugin-standalone| using without Eclipse
-    |apex-commands|       supported commands
+    |apex-commands|        supported commands
+	|apex-code-completion| apex code completion configuration
 
 |force.com-settings|      Settings
 	|force.com-shortcuts-example| example of recommended keyboard shortcuts
@@ -35,7 +36,9 @@ force.com platform using only web browser and Vim
 It is designed for those who do not feel productive in Force.com IDE for Eclipse
 
 http://www.youtube.com/watch?v=x5zKA6V__co
-:ApexRetrieve command demo - http://youtu.be/umO86ji2Iqw
+:|ApexRetrieve| command demo - http://youtu.be/umO86ji2Iqw
+:|ApexStage| command demo - http://youtu.be/zQg8LORh8uc  
+|apex-code-completion| demo - http://youtu.be/u-6JQNuWRdE
 
 
 ==============================================================================
@@ -57,8 +60,16 @@ Before vim-force.com plugin can be used following requirements must be met:
 3. tooling-force.com.jar
    See releases page here: https://github.com/neowit/tooling-force.com
 
-4. On MS Windows Install shortname.vim 
-    http://www.vim.org/scripts/script.php?script_id=433
+4. On MS Windows 
+	Make sure that all paths in your configuration are as short as possible.
+	vim-force.com will be calling tooling-force.com.jar and passing many
+	parameters via command line and some MS Window version struggle with long
+	command lines. 
+	Consider installing python and configuring your vim with |+python|
+	support, this will help to remove annoying CMD/DOS popups on every
+	operation. See also |vim-python-ms-windows|
+	If you do not want to go with python then consider vimproc, see
+	|force.com-limitations|
 
 5. Unpack vim-force.com plugin archive anywhere you like
 
@@ -72,8 +83,8 @@ e.g. add these lines into .vimrc (or _vimrc on windows) >
 	syntax on
 <
 
-7. Below lines added on step 6, add 'vim-force.com' folder to vim runtime path
-   and make sure it loads apexcode filetype detection
+7. If not using pathogen - below lines added on step 6, add 'vim-force.com'
+   folder to vim runtime path and make sure it loads apexcode filetype detection
 
 e.g. >
 	if has("unix")
@@ -85,12 +96,15 @@ e.g. >
 	runtime ftdetect/vim-force.com.vim
 <
 
+	Alternatively, if using pathogen - drop 'vim-force.com' folder into
+	~/.vim/bundle folder as usual.
+
 8. Index help file
 
 e.g. >
     :helptags ~/vim/vim-force.com/doc
 
-<    Or if using with pathogen.vim plugin and vim-force.com is in .vim/bundle run >
+<    Or if using with pathogen.vim plugin and vim-force.com is in ~/.vim/bundle run >
     :Helptags
 <
 
@@ -109,6 +123,7 @@ Example of minimal _vimrc configuration for win32    *force.com-config-example*
  filetype plugin on
  syntax on
  
+ " two lines below are only needed if plugin is installed without using pathogen
  let &runtimepath=&runtimepath . ',c:\Documents and Settings\user\vimfiles\vim-force.com'
  runtime ftdetect/vim-force.com.vim
  
@@ -130,6 +145,10 @@ Example of minimal _vimrc configuration for win32    *force.com-config-example*
  	let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
  	let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
  endif	
+ 
+ " (optional) if you want to enable server mode, uncoment 2 lines below
+ "let g:apex_server=1 " start server on first call
+ "let g:apex_server_timeoutSec=60*30 " allow server to wait for new connections within 30 minutes
 <
 """""""""""""""""""""" end config example """"""""""""""""""""""""""""""""""""
 
@@ -498,6 +517,7 @@ or you are not in the buffer where last :|ApexExecuteAnonymous| was run.
 
 ==============================================================================
                                                                 *auto-complete*
+                                                         *apex-code-completion*
 Current version includes basic auto completion support for Apex classes and
 some standard Apex library namespaces.
 
@@ -519,6 +539,26 @@ You may want to map Ctrl-X,Ctrl-U to something shorter, e.g. >
 	inoremap <C-@> <C-Space>
 <
   
+                                        *resources_unpacked* *zipped-resources*
+Work with zipped content of "staticresources/*.resource" files is done as
+follows:
+- open any class/page/trigger in Vim as normal to let Vim load vim-force.com
+  plugin
+- navigate to .resource file and open it as you would open normal file in vim
+- if selected .resource file is a valid ZIP archive then vim-force.com will
+  extract content of .resource file in a separate folder and will open
+  directory listing for that folder so you can select relevant file from
+  archive to work with
+- now you can modify unpacked files from the .resource you have just "opened"
+  Every time you save such unpacked file - the corresponding .resource will be
+  updated and changes re-packed
+- deployment of such modified .resource files is done same way as with any
+  other Apex file, using commands like :|ApexDeploy|, :|ApexSave|, etc.
+
+Note: current version of vim-force.com does not support creating new .resource
+files. Use SFDC UI to create new static resource and then call
+:|ApexRefreshProject|.
+
 ==============================================================================
 SETTINGS                                                   *force.com-settings*
 
@@ -546,7 +586,7 @@ Optional
 |'g:apex_diff_cmd'|                 path to file comparison tool
 |'g:apex_ctags_cmd'|                path to exuberant ctags 
 |'g:apex_syntax_case_sensitive'|    defines whether Apex syntax highlighting is case sensitive 
-|'g:apex_API_version'|              force.com API version to use when create new files, ex: 25.0
+|'g:apex_API_version'|              force.com API version to use when create new files, ex: "29.0"
 |'g:apex_pollWaitMillis'|           number of milliseconds to wait between each
                                     poll of Salesforce to retrieve the results
 |'g:apex_maxPollRequests'|          The number of times to poll Salesforce for
@@ -925,30 +965,10 @@ Basic Visualforce code completion
       '<apex:' Ctrl-X,Ctrl-U
       '<chatter' Ctrl-X,Ctrl-U
 
-Basic Apex Code completion (not yet available on MS Windows)
+Basic Apex Code completion 
 - see |*auto-complete*|
 
 - Handling content of zipped .resource files
-
-                                        *resources_unpacked* *zipped-resources*
-Work with zipped content of "staticresources/*.resource" files is done as
-follows:
-- open any class/page/trigger in Vim as normal to let Vim load vim-force.com
-  plugin
-- navigate to .resource file and open it as you would open normal file in vim
-- if selected .resource file is a valid ZIP archive then vim-force.com will
-  extract content of .resource file in a separate folder and will open
-  directory listing for that folder so you can select relevant file from
-  archive to work with
-- now you can modify unpacked files from the .resource you have just "opened"
-  Every time you save such unpacked file - the corresponding .resource will be
-  updated and changes re-packed
-- deployment of such modified .resource files is done same way as with any
-  other Apex file, using commands like :|ApexDeploy|, :|ApexSave|, etc.
-
-Note: current version of vim-force.com does not support creating new .resource
-files. Use SFDC UI to create new static resource and then call
-:|ApexRefreshProject|.
 
 ==============================================================================
 LIMITATIONS                                             *force.com-limitations*
