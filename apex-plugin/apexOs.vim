@@ -173,10 +173,7 @@ endfunction
 function! apexOs#shellescape(val)
 	let val = shellescape(a:val)
 	if has("unix")
-		 "return escape(val, '%()')
-		 return escape(val, '%')
-	elseif s:is_windows && exists("*GetWin32ShortName")
-		return GetWin32ShortName(val)
+		return escape(val, '%')
 	endif
 	return val
 endfunction
