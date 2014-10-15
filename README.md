@@ -3,6 +3,7 @@
 salesforce.com / force.com plugin for Vim version 7.3 or later.  
 
 #### Update Oct. 2014  
+Best way to take advantage of [Apex code completion](http://youtu.be/u-6JQNuWRdE) is to use server mode.  
 If you are using server mode on MS Windows then you must have python available to vim.
 Read `:help server-mode` in vim-force.com documentation carefully.
 
