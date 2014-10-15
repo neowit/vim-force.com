@@ -1,14 +1,18 @@
 # Vim plugin for developing on force.com      
 
-### Update June 2014  
+salesforce.com / force.com plugin for Vim version 7.3 or later.  
+
+#### Update Oct. 2014  
+If you are using server mode on MS Windows then you must have python available to vim.
+Read `:help server-mode` in vim-force.com documentation carefully.
+
+##### Update June 2014  
 If you are getting `java.lang.ClassCastException: scala.util.parsing.json.JSONArray cannot be cast to java.lang.String` when trying to deploy Apex Class with syntax error(s) then you are most likely affected by what appears to be a backwards compatibility bug in Summer'14. Upgrade of `tooling-force.com` jar to [v0.1.4.2](https://github.com/neowit/tooling-force.com/releases/tag/v0.1.4.2) should fix this.
 
-Update Feb. 2014  
+##### Update Feb. 2014  
 'master' branch of vim-force.com is no longer based on Ant and [force.com migration tool](http://www.salesforce.com/us/developer/docs/daas/). This version requires config changes, see `:help force.com-installation`, `:help g:apex_tooling_force_dot_com_path` and `:help force.com-config-example`.  
 If you want to continue using Ant + ant-salesforce.jar then switch to [ant-based](https://github.com/neowit/vim-force.com/tree/ant-based) branch.  
 
-salesforce.com / force.com plugin for Vim version 7.3 or later.  
-Requires `:set nocompatible`
 
 
 ## DESCRIPTION                                             
@@ -20,7 +24,8 @@ It is designed for those who do not feel productive in Force.com IDE for Eclipse
 
 General vim-force.com overview - http://www.youtube.com/watch?v=x5zKA6V__co  
 `:ApexRetrieve` command demo - http://youtu.be/umO86ji2Iqw  
-`:ApexStage` command demo - http://youtu.be/zQg8LORh8uc
+`:ApexStage` command demo - http://youtu.be/zQg8LORh8uc  
+Apex Code completion demo - http://youtu.be/u-6JQNuWRdE
 
 Other vim plugins recommended for use alongside vim-force.com plugin  
 * FuzzyFinder - http://www.youtube.com/watch?v=EtiaXVnTA4g  
@@ -65,9 +70,10 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
 * Syntax highlighting
   - supports syntax highlighting of Apex Classes, Triggers, Pages, JS Resources
 
-* List candidates for auto-completion in Apex classes
-	- try following in .cls file
-	  String str = 'abc'; str. `< Ctrl-X,Ctrl-O`	
+* List candidates for [auto-completion](http://youtu.be/u-6JQNuWRdE) in Apex classes
+	- try following in .cls file  
+	  String str = 'abc';  
+	  str. `Ctrl-X,Ctrl-O`	
 
 
 * Basic (really basic) Visualforce code completion
@@ -89,17 +95,6 @@ in Visualforce pages, making it impossible to go-to actual problem line if
 compile/save fails due to syntax error. This is similar to Force.com IDE for
 Eclipse.
 
-Current version does not support environment aware code completion.  
-For example if you write:  
-	`String val = 'abc';`  
-typing  
-	`val.`  
-will not bring the list of String methods as Force.com IDE may do.
-
-On MS Windows default configuration spawns separate DOS/CMD window on every call
-to command line utility.  
-This annoyance can be somewhat mitigated by installing [vimproc](https://github.com/Shougo/vimproc.vim) plugin. When vimproc is installed vim-force.com will use it to run commands on MS Windows.
-
 ## Installation/System requirements 
 
 Before vim-force.com plugin can be used the following requirements must be met:
@@ -115,49 +110,14 @@ JDK is not strictly required, JRE will suffice.
    [download jar from 'releases' page](https://github.com/neowit/tooling-force.com) 
    
 
-4. On MS Windows Install shortname.vim  
-    http://www.vim.org/scripts/script.php?script_id=433
-
-5. Unpack force.com plugin archive anywhere you like  
-	ex: ~/vim/force.com
-
-6. Enable filetype plugin and syntax highlighting  
-e.g. add these lines into .vimrc (or _vimrc on windows)<pre>
-	set nocompatible
-	filetype plugin on
-	syntax on
-</pre>
-
-7. Add 'vim-force.com' folder to vim runtime path and make sure it loads apexcode filetype detection.  
-  Important - this part must go after (not before) lines added on step 6.  
-e.g.<pre>
-    if has("unix")
-		let &runtimepath=&runtimepath . ',~/vim/vim-force.com'
-    elseif has("win32")
-		let &runtimepath=&runtimepath . ',c:\Documents and Settings\username\vimfiles\vim-force.com'
-    endif
-    " make sure vim loads apexcode filetype detection
-    runtime! ftdetect/vim-force.com.vim 
-</pre>
-
-8. Open Vim and index help file  
-e.g.
-    `:helptags ~/vim/force.com/doc`
-
-    Or if using with pathogen.vim plugin and vim-force.com is in `.vim/bundle` run  
-    `:Helptags`
-
-9. Configure required variables: `:help force.com-settings`
-10. Have a look at the config example: `:help force.com-config-example`
-11. Read: `:help force.com-usage`  
-    Important: if you are working with existing src/ project structure, make sure that you backup the original sources first and then issue command `:ApexRefreshProject`.
+4. the rest see in vim doc `:help force.com-system-requirements` or directly in [force.com.txt](https://github.com/neowit/vim-force.com/blob/master/doc/force.com.txt).
 
 
 ## RECOMMENDED-PLUGINS                             
 
 There is a number of great Vim plugins which you may want to consider  
 - Fugitive - git support  
-- unite.vim - quick file/buffer open  
+- unite.vim or ctrl-p - quick file/buffer open  
 - NERDTree - project/file-system browsing  
 - Pathogen - manage individually installed plugins in ~/.vim/bundle  
 - Session - save/restore open files, like IDE Project  
