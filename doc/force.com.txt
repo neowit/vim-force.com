@@ -600,6 +600,9 @@ Optional
 |'g:apex_tooling_force_dot_com_java_params'|      
                                     pass extra JVM params to tooling jar
 
+|'g:apex_tooling_force_dot_com_extra_params'|      
+                                    pass extra params to tooling jar, e.g. proxy
+
 |'g:zip_zipcmd'|                    path to zip program
 |'g:zip_unzipcmd'|                  path to unzip program
 
@@ -772,12 +775,20 @@ e.g. change default stdout log level to 'info' >
  let g:apex_tooling_force_dot_com_java_params = "-Dorg.apache.commons.logging.simplelog.defaultlog=info"
 <
 
+                                   *'g:apex_tooling_force_dot_com_extra_params'*
+Optional.
+Allows to pass extra parameters to tooling-force.com.jar every time when it is
+called.
+e.g. set proxy >
+ let g:apex_tooling_force_dot_com_extra_params = "--http.proxyHost=localhost --http.proxyPort=8888 --http.proxyUser=some --http.proxyPassword=pass"
+<
+
                                              *'g:zip_zipcmd'* *'g:zip_unzipcmd'*
 Optional.
 In order to handle zipped *.resource files zip and unzip command line binaries
 must be available in $PATH or explicitly specified via 'g:zip_zipcmd' and
 'g:zip_unzipcmd' variables.
-e.g. > 
+e.g. >
  let g:zip_zipcmd = "/usr/local/bin/zip"
  let g:zip_unzipcmd = "/usr/local/bin/unzip"
 <
