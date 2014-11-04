@@ -294,7 +294,7 @@ function apexTooling#refreshProject(filePath, ...)
 	if len(modifiedFiles) > 0
 		" modified files detected
 		call apexUtil#warning("Modified file(s) detected..")
-		reportModifiedFiles(modifiedFiles)
+		call s:reportModifiedFiles(modifiedFiles)
 		echohl WarningMsg
 		let response = input('Are you sure you want to lose local changes [y/N]? ')
 		echohl None 
