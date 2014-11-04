@@ -257,6 +257,23 @@ function apexTooling#printChangedFiles(filePath)
 	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {}, [])
 endfunction	
 
+function s:reportModifiedFiles(modifiedFiles)
+	let modifiedFiles = a:modifiedFiles
+	" show first 5
+	let index = 0
+	for fName in modifiedFiles
+		let index += 1
+		if index > 5
+			call apexUtil#warning("+ " . (len(modifiedFiles) - index) . " more")
+			break
+		endif
+		if fName =~ "package.xml$"
+			continue " skip package.xml
+		endif
+
+		call apexUtil#warning("    " . fName)
+	endfor
+endfunction
 "Args:
 "Param: filePath: path to file which belongs to apex project
 "Param1: skipModifiedFiles: (optional) 0 for false, anything else for true
@@ -269,21 +286,8 @@ function apexTooling#refreshProject(filePath, ...)
 	let modifiedFiles = s:grepValues(logFilePath, "MODIFIED_FILE=")
 	if len(modifiedFiles) > 0
 		" modified files detected
-		call apexUtil#warning("Modified file(s) detected.")
-		" show first 5
-		let index = 0
-		for fName in modifiedFiles
-			let index += 1
-			if index > 5
-				call apexUtil#warning("+ " . (len(modifiedFiles) - index) . " more")
-				break
-			endif
-			if fName =~ "package.xml$"
-				continue " skip package.xml
-			endif
-
-			call apexUtil#warning("    " . fName)
-		endfor
+		call apexUtil#warning("Modified file(s) detected..")
+		reportModifiedFiles(modifiedFiles)
 		echohl WarningMsg
 		let response = input('Are you sure you want to lose local changes [y/N]? ')
 		echohl None 
