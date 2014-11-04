@@ -260,6 +260,10 @@ endfunction
 " default - if provided then this option is used instead of blank selection
 "			if Not provided then prompt will be repeated
 " Return: - selected option or default [if provided default is not blank]		
+"
+" Usage example:
+"let overwrite = apexUtil#input("Overwrite package.xml [y/N]? ", "YynN", "N") ==? 'y'
+"
 function! apexUtil#input(prompt, options, default)
 	while 1
 		echohl WarningMsg

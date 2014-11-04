@@ -25,7 +25,7 @@ for varName in s:requiredVariables
 endfor	
 
 "let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
-let s:MAKE_MODES = ['Modified', 'All', 'Open', 'Staged', 'One'] "supported Deploy modes
+let s:MAKE_MODES = ['Modified', 'ModifiedDestructive', 'All', 'Open', 'Staged', 'One'] "supported Deploy modes
 
 function! s:isNeedConflictCheck()
 	let doCheck = 1
@@ -44,6 +44,7 @@ endfunction
 "			'save' - use tooling api
 "Param: mode:
 "			'Modified' - all changed files
+"			'ModifiedDestructive' - all changed files
 "			'Open' - deploy only files from currently open Tabs or Buffers (if
 "					less than 2 tabs open)
 "			'Confirm' - TODO - all changed files with confirmation for every file
@@ -60,6 +61,12 @@ endfunction
 function apexTooling#deploy(action, mode, bang, ...)
 	let filePath = expand("%:p")
 	let l:mode = len(a:mode) < 1 ? 'Modified' : a:mode
+
+	if "ModifiedDestructive" == l:mode && apexUtil#input("If there are any files removed locally then they will be deleted from SFDC as well. No backup will be made. Are you sure? [y/N]? ", "YynN", "N") !=? 'y'
+		redraw! " clear prompt from command line area
+		return
+	endif
+
 	let l:subMode = a:0 > 0? a:1 : 'deploy'
 
 	if index(['deploy', 'save'], a:action) < 0
