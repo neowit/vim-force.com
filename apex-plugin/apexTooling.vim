@@ -419,6 +419,8 @@ function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePat
 	if len(a:targetFolder) > 0
 		let extraParams["targetFolder"] = apexOs#shellescape(a:targetFolder)
 	endif
+	let extraParams["updateSessionDataOnSuccess"] = "true"
+	
 	let resMap = apexTooling#execute("bulkRetrieve", a:projectName, a:projectPath, extraParams, [])
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
