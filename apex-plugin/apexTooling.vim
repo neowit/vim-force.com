@@ -263,6 +263,13 @@ function apexTooling#printChangedFiles(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {}, [])
 endfunction	
+"
+"Args:
+"Param1: path to file which belongs to apex project
+function apexTooling#diffWithRemote(filePath)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	call apexTooling#execute("diffWithRemote", projectPair.name, projectPair.path, {}, [])
+endfunction	
 
 function s:reportModifiedFiles(modifiedFiles)
 	let modifiedFiles = a:modifiedFiles

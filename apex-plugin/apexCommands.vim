@@ -63,6 +63,7 @@ function! s:toolingJarSpecific()
 
 	command! ApexPrintChanged :call apexTooling#printChangedFiles(expand("%:p"))
 	command! ApexPrintConflicts :call apexTooling#printConflicts(expand("%:p"))
+	command! ApexDiffWithRemote :call apexTooling#diffWithRemote(expand("%:p"))
 
 
 	"Unit testing
