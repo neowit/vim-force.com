@@ -281,6 +281,7 @@ function s:reportModifiedFiles(modifiedFiles)
 		call apexUtil#warning("    " . fName)
 	endfor
 endfunction
+
 "Args:
 "Param: filePath: path to file which belongs to apex project
 "Param1: skipModifiedFiles: (optional) 0 for false, anything else for true
@@ -710,6 +711,11 @@ function! s:displayMessageDetails(logFilePath, projectPath, message)
 		let detail = eval(line)
 		if detail["messageId"] == a:message["id"]
 			let text = "  " . detail["text"]
+			if has_key(detail, "echoText")
+				" for messages we do not need to display full text if short
+				" version is available
+				let text = "  " . detail["echoText"]
+			endif
 			let msgType = has_key(detail, "type")? detail.type : a:message["type"]
 			if "ERROR" == msgType
 				call apexUtil#error(text)
