@@ -25,7 +25,7 @@ for varName in s:requiredVariables
 endfor	
 
 "let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
-let s:MAKE_MODES = ['Modified', 'ModifiedDestructive', 'All', 'Open', 'Staged', 'One'] "supported Deploy modes
+let s:MAKE_MODES = ['Modified', 'ModifiedDestructive', 'All', 'AllDestructive', 'Open', 'Staged', 'One'] "supported Deploy modes
 
 function! s:isNeedConflictCheck()
 	let doCheck = 1
@@ -49,6 +49,7 @@ endfunction
 "					less than 2 tabs open)
 "			'Confirm' - TODO - all changed files with confirmation for every file
 "			'All' - all files under ./src folder
+"			'AllDestructive' - all files under ./src folder
 "			'Staged' - all files listed in stage-list.txt file
 "			'One' - single file from current buffer
 "Param: bang - if 1 then skip conflicts check with remote
@@ -63,6 +64,11 @@ function apexTooling#deploy(action, mode, bang, ...)
 	let l:mode = len(a:mode) < 1 ? 'Modified' : a:mode
 
 	if "ModifiedDestructive" == l:mode && apexUtil#input("If there are any files removed locally then they will be deleted from SFDC as well. No backup will be made. Are you sure? [y/N]? ", "YynN", "N") !=? 'y'
+		redraw! " clear prompt from command line area
+		return
+	endif
+
+	if "AllDestructive" == l:mode && apexUtil#input("DANGER!\nAny files that you do not have locally will be removed from Remote. \nRun :ApexDiffWithRemote to check what will be removed.\nProceed with destruction? [y/N]? ", "YynN", "N") !=? 'y'
 		redraw! " clear prompt from command line area
 		return
 	endif
