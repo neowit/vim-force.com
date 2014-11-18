@@ -243,6 +243,9 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexSave|                          save modified files to SFDC (Tooling API)
 |ApexDeployOpen|                    deploy all open files
 |ApexDeployAll|                     deploy all files in current project
+|ApexDeployAllDestructive|          deploy all files in current project
+                                    if there are deleted local files then remove
+                                    them from remote as well
 |ApexDeployStaged|                  deploy all files listed in Stage cache
 |ApexTest|                          run Unit Tests 
 |ApexTestWithCoverage|              run Unit Tests and generate per-line coverage
@@ -394,6 +397,20 @@ will complain that it can not rename it, even if you are not trying to rename.
 If there are Objects and Workflows in current project then SFDC may complain
 that Objects have to be created before workflows, even if all objects already
 exist in SFDC.
+
+                                                      *ApexDeployAllDestructive*
+**WARNING**
+This is a dangerous and destructive operation - use it at your peril!
+
+In addition to behaving like :|ApexDeployAll|, it also removes files that live
+remotely but that do not live locally. The files which this applies to is
+determined by your package.xml file.
+
+It is wise to check :|ApexDiffWithRemote| to see what files have changed, and
+what files will be removed.
+
+This command is useful when you are using version control systems like git and
+treat them as your source of truth.
 
                                                               *ApexDeployStaged*
 Deploy all files previously added by :|ApexStageAdd| command.
