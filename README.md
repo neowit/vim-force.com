@@ -31,6 +31,7 @@ Apex Code completion demo - http://youtu.be/u-6JQNuWRdE
 Other vim plugins recommended for use alongside vim-force.com plugin  
 * FuzzyFinder - http://www.youtube.com/watch?v=EtiaXVnTA4g  
 * SnipMate - http://www.youtube.com/watch?v=Ri_DP1sRn2o  
+  - or [UltiSnips](http://vimcasts.org/episodes/meet-ultisnips/) - a more advanced alternative to SnipMate  
 * NERDTree - http://www.youtube.com/watch?v=d93o9qAqIhE  
 * TagList - http://www.youtube.com/watch?v=Suk45FHU6s8  
 * TagBar (alternative to TagList) - [screenshot](https://f.cloud.github.com/assets/115889/378070/f8d241b0-a513-11e2-802e-d4419aac586d.png)
@@ -88,13 +89,11 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
 
 ## LIMITATIONS
 
-vim force.com plugin does not support creating force.com project. Use provided
-template instead.
-
 Salesforce.com API does not (in most cases) report error line numbers
 in Visualforce pages, making it impossible to go-to actual problem line if
-compile/save fails due to syntax error. This is similar to Force.com IDE for
-Eclipse.
+compile/save fails due to a syntax error.
+
+Apex [auto-completion](http://youtu.be/u-6JQNuWRdE) is a work in progress and there are many  cases when it may not work as expected.
 
 ## Installation/System requirements 
 
