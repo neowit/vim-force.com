@@ -1,17 +1,17 @@
-" File: apexExecuteAnonymous.vim
+" File: apexExecuteSnippet.vim
 " This file is part of vim-force.com plugin
 "   https://github.com/neowit/vim-force.com
 " Author: Andrey Gavrikov 
 " Maintainers: 
 " Last Modified: 2014-11-27
 "
-" apexExecuteAnonymous.vim - support for calling 'executeAnonymous' &
+" apexExecuteSnippet.vim - support for calling 'executeAnonymous' &
 " 'soqlQuery' commands
 "
-if exists("g:loaded_apexExecuteAnonymous") || &compatible
+if exists("g:loaded_apexExecuteSnippet") || &compatible
 	  finish
 endif
-let g:loaded_apexExecuteAnonymous = 1
+let g:loaded_apexExecuteSnippet = 1
 
 let s:lastExecuteAnonymousFilePath = ''
 "execute piece of code via executeAnonymous
@@ -19,7 +19,7 @@ let s:lastExecuteAnonymousFilePath = ''
 "runs executeAnonymous on that code
 "Args:
 "Param: filePath - file which contains the code to be executed
-function apexExecuteAnonymous#run(method, filePath, ...) range
+function apexExecuteSnippet#run(method, filePath, ...) range
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectName = projectPair.name
 	if a:0 > 0 && len(a:1) > 0
@@ -31,6 +31,7 @@ function apexExecuteAnonymous#run(method, filePath, ...) range
 
 	if len(lines) < totalLines
 		"looks like we are working with visual selection, not whole buffer
+		let lines = s:getVisualSelection()
 		"with visual selection we often select lines which are commented out
 		"inside * block
 		" pre-process lines - remove comment character '*'
@@ -61,7 +62,7 @@ endfunction
 
 "re-run last block of code executed with ExecuteAnonymous
 "Param1: (optional) - project name
-function apexExecuteAnonymous#repeat(method, filePath, ...)
+function apexExecuteSnippet#repeat(method, filePath, ...)
 	let codeFile = s:lastExecuteAnonymousFilePath
 	if 'soqlQuery' == a:method
 		let codeFile = s:lastSoqlQueryFilePath
@@ -121,3 +122,13 @@ function s:executeSoqlQuery(filePath, projectName, codeFile)
 		endif
 	endif
 endfunction	
+
+" http://stackoverflow.com/a/6271254
+function! s:getVisualSelection()
+  let [lnum1, col1] = getpos("'<")[1:2]
+  let [lnum2, col2] = getpos("'>")[1:2]
+  let lines = getline(lnum1, lnum2)
+  let lines[-1] = lines[-1][: col2 - (&selection == 'inclusive' ? 1 : 2)]
+  let lines[0] = lines[0][col1 - 1:]
+  return lines
+endfunction

@@ -79,11 +79,11 @@ function! s:toolingJarSpecific()
 
 	command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
 
-	command! -nargs=? -complete=customlist,apex#listProjectNames -range=% ApexExecuteAnonymous <line1>,<line2>call apexExecuteAnonymous#run('executeAnonymous', expand("%:p"), <f-args>)
-	command! -nargs=? -complete=customlist,apex#listProjectNames ApexExecuteAnonymousRepeat call apexExecuteAnonymous#repeat('executeAnonymous', expand("%:p"), <f-args>)
+	command! -nargs=? -complete=customlist,apex#listProjectNames -range=% ApexExecuteAnonymous <line1>,<line2>call apexExecuteSnippet#run('executeAnonymous', expand("%:p"), <f-args>)
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexExecuteAnonymousRepeat call apexExecuteSnippet#repeat('executeAnonymous', expand("%:p"), <f-args>)
 
-	command! -nargs=? -complete=customlist,apex#listProjectNames -range=% ApexQuery <line1>,<line2>call apexExecuteAnonymous#run('soqlQuery', expand("%:p"), <f-args>)
-	command! -nargs=? -complete=customlist,apex#listProjectNames ApexQueryRepeat call apexExecuteAnonymous#repeat('soqlQuery', expand("%:p"), <f-args>)
+	command! -nargs=? -complete=customlist,apex#listProjectNames -range=% ApexQuery <line1>,<line2>call apexExecuteSnippet#run('soqlQuery', expand("%:p"), <f-args>)
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexQueryRepeat call apexExecuteSnippet#repeat('soqlQuery', expand("%:p"), <f-args>)
 
 	" display last log
 	command! ApexLog :call apexTooling#openLastLog()
