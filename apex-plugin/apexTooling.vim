@@ -25,7 +25,7 @@ for varName in s:requiredVariables
 endfor	
 
 "let s:MAKE_MODES = ['open', 'modified', 'confirm', 'all', 'staged', 'onefile'] "supported Deploy modes
-let s:MAKE_MODES = ['Modified', 'All', 'Open', 'Staged', 'One'] "supported Deploy modes
+let s:MAKE_MODES = ['Modified', 'ModifiedDestructive', 'All', 'AllDestructive', 'Open', 'Staged', 'One'] "supported Deploy modes
 
 function! s:isNeedConflictCheck()
 	let doCheck = 1
@@ -44,10 +44,12 @@ endfunction
 "			'save' - use tooling api
 "Param: mode:
 "			'Modified' - all changed files
+"			'ModifiedDestructive' - all changed files
 "			'Open' - deploy only files from currently open Tabs or Buffers (if
 "					less than 2 tabs open)
 "			'Confirm' - TODO - all changed files with confirmation for every file
 "			'All' - all files under ./src folder
+"			'AllDestructive' - all files under ./src folder
 "			'Staged' - all files listed in stage-list.txt file
 "			'One' - single file from current buffer
 "Param: bang - if 1 then skip conflicts check with remote
@@ -60,6 +62,17 @@ endfunction
 function apexTooling#deploy(action, mode, bang, ...)
 	let filePath = expand("%:p")
 	let l:mode = len(a:mode) < 1 ? 'Modified' : a:mode
+
+	if "ModifiedDestructive" == l:mode && apexUtil#input("If there are any files removed locally then they will be deleted from SFDC as well. No backup will be made. Are you sure? [y/N]? ", "YynN", "N") !=? 'y'
+		redraw! " clear prompt from command line area
+		return
+	endif
+
+	if "AllDestructive" == l:mode && apexUtil#input("DANGER!\nAny files that you do not have locally will be removed from Remote. \nRun :ApexDiffWithRemote to check what will be removed.\nProceed with destruction? [y/N]? ", "YynN", "N") !=? 'y'
+		redraw! " clear prompt from command line area
+		return
+	endif
+
 	let l:subMode = a:0 > 0? a:1 : 'deploy'
 
 	if index(['deploy', 'save'], a:action) < 0
@@ -256,6 +269,13 @@ function apexTooling#printChangedFiles(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {}, [])
 endfunction	
+"
+"Args:
+"Param1: path to file which belongs to apex project
+function apexTooling#diffWithRemote(filePath)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	call apexTooling#execute("diffWithRemote", projectPair.name, projectPair.path, {}, [])
+endfunction	
 
 function s:reportModifiedFiles(modifiedFiles)
 	let modifiedFiles = a:modifiedFiles
@@ -274,6 +294,7 @@ function s:reportModifiedFiles(modifiedFiles)
 		call apexUtil#warning("    " . fName)
 	endfor
 endfunction
+
 "Args:
 "Param: filePath: path to file which belongs to apex project
 "Param1: skipModifiedFiles: (optional) 0 for false, anything else for true
@@ -703,6 +724,11 @@ function! s:displayMessageDetails(logFilePath, projectPath, message)
 		let detail = eval(line)
 		if detail["messageId"] == a:message["id"]
 			let text = "  " . detail["text"]
+			if has_key(detail, "echoText")
+				" for messages we do not need to display full text if short
+				" version is available
+				let text = "  " . detail["echoText"]
+			endif
 			let msgType = has_key(detail, "type")? detail.type : a:message["type"]
 			if "ERROR" == msgType
 				call apexUtil#error(text)

@@ -237,9 +237,15 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexStageClear|                    clear Stage buffer
 
 |ApexDeploy|                        deploy modified files to SFDC (Metadata API)
+|ApexDeployDestructive|             deploy modified files to SFDC (Metadata API)
+                                    if there are deleted local files then remove
+                                    them from remote as well.
 |ApexSave|                          save modified files to SFDC (Tooling API)
 |ApexDeployOpen|                    deploy all open files
 |ApexDeployAll|                     deploy all files in current project
+|ApexDeployAllDestructive|          deploy all files in current project
+                                    if there are deleted local files then remove
+                                    them from remote as well
 |ApexDeployStaged|                  deploy all files listed in Stage cache
 |ApexTest|                          run Unit Tests 
 |ApexTestWithCoverage|              run Unit Tests and generate per-line coverage
@@ -316,8 +322,8 @@ See also :|ApexRemoveStaged| and :|ApexDeployStaged|.
 Add current file to |ApexStage|.
 
                                                               *ApexStageAddOpen*
-Cycle through open buffers and add their files to |ApexStage|, provided that these
-are supported apex file types.
+Cycle through open buffers and add their files to |ApexStage|, provided that
+these are supported apex file types.
 
                                                                     *ApexDeploy*
 Use :|ApexDeploy| to deploy all modified files of current project to SFDC.
@@ -344,6 +350,33 @@ For instance, using project names from the example above >
 All commands in :|ApexDeploy|* family support <bang>, see |'g:apex_conflict_check'|
 for more details.
 
+                                                         *ApexDeployDestructive*
+**WARNING** 
+This is a dangerous and destructive operation - use it at your peril!
+
+You can think of :ApexDeployDestructive as a combination of :|ApexDeploy| and
+:|ApexRemoveStaged| executed in one go. 
+Unlike :|ApexRemoveStaged| you do not have to add anything manually to the
+Stage and the Stage is not used/touched.
+
+In addition to deploying modified files there will be a check done to see if
+local session contains information about local files that no longer exist on
+the local machine.  If such files detected then they will be deleted from SFDC
+as well.
+
+It is always a good idea to run :|ApexPrintChanged| before
+:ApexDeployDestructive to make sure that you know what files will be deleted in
+"Destructive" part
+
+Example:
+- create file MyClass.cls using :|ApexNewFile|
+- run :ApexDeploy
+  this will upload MyClass to SFDC and record MyClass.cls in the local session store
+- delete local file MyClass.cls & MyClass.cls-meta.xml from your drive
+- run :ApexDeployDestructive
+  this will deploy any modifications to existing files and also remove
+  MyClass.cls from SFDC
+
                                                                       *ApexSave*
 
 Similar to :|ApexDeploy| but uses Tooling API instead of Metadata API.
@@ -364,6 +397,20 @@ will complain that it can not rename it, even if you are not trying to rename.
 If there are Objects and Workflows in current project then SFDC may complain
 that Objects have to be created before workflows, even if all objects already
 exist in SFDC.
+
+                                                      *ApexDeployAllDestructive*
+**WARNING**
+This is a dangerous and destructive operation - use it at your peril!
+
+In addition to behaving like :|ApexDeployAll|, it also removes files that live
+remotely but that do not live locally. The files which this applies to is
+determined by your package.xml file.
+
+It is wise to check :|ApexDiffWithRemote| to see what files have changed, and
+what files will be removed.
+
+This command is useful when you are using version control systems like git and
+treat them as your source of truth.
 
                                                               *ApexDeployStaged*
 Deploy all files previously added by :|ApexStageAdd| command.
@@ -467,10 +514,10 @@ File will be created with API version defined by |g:apex_API_version| variable.
                                                                  *ApexRetrieve*
 Invoke metadata types list "menu" and load data of specified types.  
 Usually :|ApexRefreshProject| will retrieve all types defined in package.xml.
-:|ApexRetrieve| can be used to load types which are not part of current package.xml
-Use this command when package.xml does not yet contain necessary metadata type(s).
-If retrieved type is not part of the package.xml system will offer to
-update package.xml accordingly. 
+:|ApexRetrieve| can be used to load types which are not part of current
+package.xml Use this command when package.xml does not yet contain necessary
+metadata type(s).  If retrieved type is not part of the package.xml system will
+offer to update package.xml accordingly. 
 *WARNING* :|ApexRetrieve| command is Experimental. You may want to backup your
 project before running :|ApexRetrieve|.
 
@@ -498,6 +545,8 @@ Example 1: >
 Example 2: >
 	:ApexRemoveStaged My Other Org
 < will remove staged files from "My Other Org"
+
+See also :|ApexDeployDestructive|
 
                                                                       *ApexLog*
 A shortcut to open (if available) log file generated by last Apex* command.

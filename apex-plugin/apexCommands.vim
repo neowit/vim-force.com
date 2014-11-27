@@ -51,7 +51,9 @@ function! s:toolingJarSpecific()
 	"
 	" Deployment
 	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apexTooling#deploy('deploy', 'Modified', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployDestructive :call apexTooling#deploy('deploy', 'ModifiedDestructive', <bang>0, <f-args>)
 	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAll :call apexTooling#deploy('deploy', 'All', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAllDestructive :call apexTooling#deploy('deploy', 'AllDestructive', <bang>0, <f-args>)
 	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOpen :call apexTooling#deploy('deploy', 'Open', <bang>0, <f-args>)
 	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexTooling#deploy('deploy', 'Staged', <bang>0, <f-args>)
 	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOne :call apexTooling#deploy('deploy', 'One', <bang>0, <f-args>)
@@ -62,6 +64,7 @@ function! s:toolingJarSpecific()
 
 	command! ApexPrintChanged :call apexTooling#printChangedFiles(expand("%:p"))
 	command! ApexPrintConflicts :call apexTooling#printConflicts(expand("%:p"))
+	command! ApexDiffWithRemote :call apexTooling#diffWithRemote(expand("%:p"))
 
 
 	"Unit testing
