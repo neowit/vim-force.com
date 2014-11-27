@@ -53,6 +53,8 @@ Other vim plugins recommended for use alongside vim-force.com plugin
 
 * Execute Anonymous
   - whole buffer or selected lines  
+
+* Execute SOQL query
           
 * Persistent "Stage" for cherry-picking and re-using list of components to be deployed or deleted
 
