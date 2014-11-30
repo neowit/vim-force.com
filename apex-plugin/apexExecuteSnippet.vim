@@ -116,9 +116,11 @@ function s:executeSoqlQuery(filePath, projectName, codeFile)
 	endif
 	let resMap = apexTooling#execute("soqlQuery", a:projectName, projectPath, l:extraParams, [])
 	if "true" == resMap.success
+		" delete query file
+		call delete(a:codeFile)
 		" load result file if available and show it in a read/only buffer
 		if len(apexUtil#grepFile(resMap.responseFilePath, 'RESULT_FILE')) > 0
-			execute "edit " . fnameescape(outputFilePath)
+			execute "view " . fnameescape(outputFilePath)
 		endif
 	endif
 endfunction	
