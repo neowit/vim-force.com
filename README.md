@@ -54,7 +54,7 @@ Other vim plugins recommended for use alongside vim-force.com plugin
 * Execute Anonymous
   - whole buffer or selected lines  
 
-* Execute [SOQL query](http://youtu.be/VRm_JXlVFGU)
+* Execute [SOQL query](http://youtu.be/RhjJVMh-50I)
           
 * Persistent "Stage" for cherry-picking and re-using list of components to be deployed or deleted
 
@@ -78,16 +78,22 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
 	- try following in .cls file  
 	  String str = 'abc';  
 	  str. `Ctrl-X,Ctrl-O`	
+  
+* Most commands (where it makes sence) can be run against different orgs without leaving current project.  
+e.g.   
+`:ApexQuery` will run selected SOQL query against the Org configured for current project  
+`:ApexQuery MyOtherOrg` will run the same query against 'MyOtherOrg'  
+Org name supports auto completion.
 
+* Handling content of zipped .resource files
+	- useful when working with rich UIs with lots of javascript and CSS files   
 
 * Basic (really basic) Visualforce code completion
 	- try following in .page file  
       `< Ctrl-X,Ctrl-U`  
       `<apex: Ctrl-X,Ctrl-U`  
       `<chatter Ctrl-X,Ctrl-U`
-
-* Handling content of zipped .resource files
-	- useful when working with rich UIs with lots of javascript and CSS files
+	
 
 ## LIMITATIONS
 
