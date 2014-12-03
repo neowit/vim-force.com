@@ -447,28 +447,30 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 		for l:type in keys(selectedTypes)
 			let typeDef = s:CACHED_META_TYPES[l:type]
 			let dirName = typeDef["DirName"]
-			let sourceFolder = apexOs#joinPath(outputDir, "unpackaged", dirName)
+			let sourceRoot = apexOs#joinPath(outputDir, "unpackaged")
+			let sourceFolder = apexOs#joinPath(sourceRoot, dirName)
+			let sourceFolderPathLen = len(sourceFolder)
 			let targetFolder = apexOs#joinPath(b:SRC_PATH, dirName)
 			"echo "sourceFolder=" . sourceFolder
 			"echo "targetFolder=" . targetFolder
 
-			let sourceFiles = apexOs#glob(sourceFolder . "/*")
-			let targetFiles = apexOs#glob(targetFolder . "/*")
+			let sourceFiles = apexOs#glob(sourceFolder . "/**")
+			let targetFiles = apexOs#glob(targetFolder . "/**")
 			"echo "sourceFiles=" . string(sourceFiles)
 			"echo "targetFiles=" . string(targetFiles)
 			if len(sourceFiles) < 1
 				call apexUtil#warning("[1] " . l:type . " has no members. SKIP.")
 			else	
 				" copy files
-				" check that target folder exists
-				if !isdirectory(targetFolder)
-					call apexOs#createDir(targetFolder)
-				endif
-
 				let allConfirmed = 0
 				for fPath in sourceFiles
 					let fName = apexOs#splitPath(fPath).tail
-					let targetFilePath = apexOs#joinPath([targetFolder, fName])
+					" calculate path relative sourceFolder
+					" i.e. if source path is
+					" /some/folder/unpackaged/classes/myclass.cls
+					" then we need relativeTargetPath = classes/myclass.cls 
+					let relativeTargetPath = strpart(fPath, sourceFolderPathLen + 1)
+					let targetFilePath = apexOs#joinPath(targetFolder, relativeTargetPath)
 					"echo "check ".targetFilePath
 					if filereadable(targetFilePath)
 						" compare sizes
@@ -508,16 +510,23 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 							endif	
 						endif
 					endif	
-					call apexOs#copyFile(fPath, targetFilePath)
-					" check if copy succeeded
-					if !filereadable(targetFilePath)
-						echoerr "Something went wrong, failed to write file ".targetFilePath.". Process aborted."
-						checktime "make sure that external changes are reported
-						return 
+					" echo "fPath=" . fPath . "; targetFilePath=" .targetFilePath
+					if isdirectory(fPath)
+						if !isdirectory(targetFilePath)
+							call apexOs#createDir(targetFilePath)
+						endif
 					else
-						"mark current type is retrieved
-						let members = selectedTypes[l:type]
-						let retrievedTypes[l:type] = members
+						call apexOs#copyFile(fPath, targetFilePath)
+						" check if copy succeeded
+						if !filereadable(targetFilePath)
+							echoerr "Something went wrong, failed to write file ".targetFilePath.". Process aborted."
+							checktime "make sure that external changes are reported
+							return 
+						else
+							"mark current type is retrieved
+							let members = selectedTypes[l:type]
+							let retrievedTypes[l:type] = members
+						endif
 					endif
 
 				endfor
