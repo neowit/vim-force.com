@@ -10,7 +10,6 @@
 "force.com related file types
 au! BufRead,BufNewFile *.cls,*.trigger,*.resource set filetype=apexcode
 " set two file types for apex page: html (for syntax) and apexcode (for compilation and tags)
-" use <C-0> for Javascript and <C-U> for html complete
 au! BufRead,BufNewFile *.page,*.component,*.scf	set filetype=visualforce | setlocal omnifunc=htmlcomplete#CompleteTags | setlocal completefunc=visualforcecomplete#Complete
 " scratch buffer needs 'apexcode' highlighting
 au! BufRead,BufNewFile vim-force.com-scratch.txt set filetype=apexcode
@@ -22,6 +21,18 @@ au! BufRead,BufNewFile *JS.resource set filetype=apexcode.javascript | set synta
 " see also end of apexResource.vim, where handling of .resource and its unpacked content is defined
 au! BufRead,BufNewFile */resources_unpacked/*.js set filetype=apexcode.javascript | set syntax=javascript
 au! BufRead,BufNewFile */resources_unpacked/*.html set filetype=apexcode.html | set syntax=html | setlocal omnifunc=htmlcomplete#CompleteTags
+
+" aura files
+augroup aura
+	au!
+	au! BufRead,BufNewFile */src/aura/*.app set filetype=apexcode.aura.html | set syntax=html
+	au! BufRead,BufNewFile */src/aura/*.cmp set filetype=apexcode.aura.html | set syntax=html
+	au! BufRead,BufNewFile */src/aura/*.evt set filetype=apexcode.aura.html | set syntax=html
+	au! BufRead,BufNewFile */src/aura/*.intf set filetype=apexcode.aura.html | set syntax=html
+	au! BufRead,BufNewFile */src/aura/*.js set filetype=apexcode.aura.javascript | set syntax=javascript
+	au! BufRead,BufNewFile */src/aura/*.css set filetype=apexcode.aura.css | set syntax=css
+	au! BufRead,BufNewFile */src/aura/*.auradoc set filetype=apexcode.aura.html | set syntax=html
+augroup END
 
 " check if we shall let tern_for_vim to become javascript 'omnifunc'
 if &runtimepath !~ 'tern_for_vim'
