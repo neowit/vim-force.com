@@ -591,7 +591,7 @@ Usage:
     'System.' Ctrl-X,Ctrl-O
 	'String str = "abc"; str.' Ctrl-X,Ctrl-O
 
-You may want to map Ctrl-X,Ctrl-U to something shorter, e.g. >
+You may want to map Ctrl-X,Ctrl-O to something shorter, e.g. >
 	""""""""""""""""""""""""""""""""""""""""""
 	" map omni completion to Control + Space
 	""""""""""""""""""""""""""""""""""""""""""
