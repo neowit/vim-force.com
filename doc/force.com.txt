@@ -227,7 +227,8 @@ Once project is setup you can proceed with creation of Class/Page/Trigger using
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*
 
-|ApexCompare|                       compare two projects
+|ApexCompare|                       compare files in two projects
+|ApexCompareLocalProjects|          compare two projects
 |ApexCompareWithPreRefreshVersion|  compare with pre refresh project state
 
 |ApexStage|                         show/switch-to "Stage" buffer
@@ -298,6 +299,22 @@ Assume following salesforce project folder structure
 Assuming current project is 'sandbox 1' select 'prod org' folder and system will 
 open specified (|'g:apex_diff_cmd'|) diff tool with both files 
 
+                                                      *ApexCompareLocalProjects*
+Similar to :|ApexCompare| but instead of individual files this command calls
+external diff tool on "src" folders of two projects.
+Imagine you have 2 sandboxes of the same Org and want to compare current project
+with its counterpart in another sandbox file list wise.
+
+Example:
+Assume following salesforce project folder structure:
+    .../some-path/sandbox 1/src
+    .../some-path/prod org/src
+'some-path' may be root of eclipse workspace or any other folder
+
+':ApexCompareLocalProjects' will open directory selection dialogue.
+Assuming current project is 'sandbox 1' select 'prod org' folder and system
+will open specified (|'g:apex_diff_cmd'|) diff tool with "src" folders of both
+projects.
 
                                              *ApexCompareWithPreRefreshVersion*
 Every time before refresh from SFDC is executed system backs up modified files
