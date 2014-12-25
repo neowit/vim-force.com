@@ -34,15 +34,17 @@ command! ApexNewFile :call apexMetaXml#createFileAndSwitch(expand("%:p"))
 " before refresh all changed files are backed up, so we can compare refreshed
 " version with its pre-refresh condition
 command! ApexCompareWithPreRefreshVersion :call apexUtil#compareWithPreRefreshVersion(apexOs#getBackupFolder())
-command! ApexCompare :call ApexCompare()
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Apex Code - compare current file or src folder with their counterpart in
+" another Apex Project
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+command! ApexCompare :call apexUtil#compareFiles(expand("%:p"))
+command! ApexCompareLocalProjects :call apexUtil#compareProjects(expand("%:p"))
 
 " initialise Git repository and add files
 command! ApexGitInit :call apexUtil#gitInit()
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Apex Code - compare current file with its own in another Apex Project
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-command! DiffUnderEclipse :ApexCompare
 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " tooling-force.com specific

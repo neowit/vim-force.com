@@ -21,11 +21,11 @@ if !exists("g:apex_diff_cmd")
 	endif 
 endif	
 
-" compare file give as argument a:1 with its version given as a:2
+" compare file given as argument a:1 with its version given as a:2
 " If a:2 is not specified then compare source file with same file from another
 " project, assuming project structure of left and right projects is equal and
 " they have common parent folder
-function! ApexCompare(...)
+function! apexUtil#compareFiles(...)
 	let leftFilePath = '' 
 	if a:0 >0
 		let leftFilePath = a:1
@@ -59,6 +59,36 @@ function! ApexCompare(...)
 endfunction
 " define command to call for current file
 "command! -nargs=? ApexCompare :call ApexCompare(<args>)
+
+" browse to root of another project and call external diff tool on two folders:
+" <external diff> current-project/src selected-project/src
+function! apexUtil#compareProjects(leftFilePath)
+	let leftFile = a:leftFilePath
+	
+	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
+	let leftProjectPath = projectPair.path
+	let rootDir = apexOs#splitPath(leftProjectPath).head
+	let rightProjectPath = apexOs#browsedir('Please select project to compare with:', rootDir)
+	if len(rightProjectPath) < 1
+		echo 'comparison cancelled'
+		return ""
+	endif
+
+	if executable(g:apex_diff_cmd)
+		let leftSrcPath = apexOs#joinPath(leftProjectPath, "src")
+		let rightSrcPath = rightProjectPath
+		if "src" != apexOs#splitPath(rightSrcPath).tail
+			let rightSrcPath = apexOs#joinPath(rightProjectPath, "src")
+		endif
+		let scriptPath = shellescape(g:apex_diff_cmd)
+
+		let command = scriptPath.' '.apexOs#shellescape(leftSrcPath).' '.apexOs#shellescape(rightSrcPath)
+		
+		call apexOs#exe(command, 'b')
+	else
+		call apexUtil#error("For project comparison external diff tool must be defined via 'g:apex_diff_cmd' ")
+	endif
+endfunction
 
 " utility function to display highlighted warning message
 function! apexUtil#warning(text)
