@@ -2,7 +2,7 @@
 "   https://github.com/neowit/vim-force.com
 " File:  vim-force.com.vim
 " Author: Andrey Gavrikov 
-" Last Modified: 2014-03-10
+" Last Modified: 2015-01-04
 "
 " filetype.vim - detect SFDC Filetypes
 "
@@ -25,9 +25,9 @@ au! BufRead,BufNewFile */resources_unpacked/*.html set filetype=apexcode.html | 
 " aura files
 augroup aura
 	au!
-	au! BufRead,BufNewFile */src/aura/*.app set filetype=apexcode.aura.html | set syntax=html
-	au! BufRead,BufNewFile */src/aura/*.cmp set filetype=apexcode.aura.html | set syntax=html
-	au! BufRead,BufNewFile */src/aura/*.evt set filetype=apexcode.aura.html | set syntax=html
+	au! BufRead,BufNewFile */src/aura/*.app set filetype=apexcode.aura.html | set syntax=aura
+	au! BufRead,BufNewFile */src/aura/*.cmp set filetype=apexcode.aura.html | set syntax=aura
+	au! BufRead,BufNewFile */src/aura/*.evt set filetype=apexcode.aura.html | set syntax=aura
 	au! BufRead,BufNewFile */src/aura/*.intf set filetype=apexcode.aura.html | set syntax=html
 	au! BufRead,BufNewFile */src/aura/*.js set filetype=apexcode.aura.javascript | set syntax=javascript
 	au! BufRead,BufNewFile */src/aura/*.css set filetype=apexcode.aura.css | set syntax=css
