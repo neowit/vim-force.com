@@ -94,6 +94,8 @@ Org name supports auto completion.
       `<apex: Ctrl-X,Ctrl-U`  
       `<chatter Ctrl-X,Ctrl-U`
 	
+* Initial support for aura/lightning
+	- insert/delete/update/query for all aura file types is fully supported but there is currently no file templates or wizard to create various types of aura files. Use standard vim/file-system tools to create relevant files/folders.
 
 ## LIMITATIONS
 
