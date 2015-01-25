@@ -471,6 +471,8 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 					" then we need relativeTargetPath = classes/myclass.cls 
 					let relativeTargetPath = strpart(fPath, sourceFolderPathLen + 1)
 					let targetFilePath = apexOs#joinPath(targetFolder, relativeTargetPath)
+					let targetFileParentDir = apexOs#splitPath(targetFilePath).head
+					
 					"echo "check ".targetFilePath
 					if filereadable(targetFilePath)
 						" compare sizes
@@ -510,12 +512,17 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 							endif	
 						endif
 					endif	
-					" echo "fPath=" . fPath . "; targetFilePath=" .targetFilePath
+					
+					"echo "fPath=" . fPath . "; targetFilePath=" .targetFilePath
+
 					if isdirectory(fPath)
 						if !isdirectory(targetFilePath)
 							call apexOs#createDir(targetFilePath)
 						endif
 					else
+						if !isdirectory(targetFileParentDir)
+							call apexOs#createDir(targetFileParentDir)
+						endif
 						call apexOs#copyFile(fPath, targetFilePath)
 						" check if copy succeeded
 						if !filereadable(targetFilePath)
