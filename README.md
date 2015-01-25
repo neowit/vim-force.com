@@ -3,7 +3,7 @@
 salesforce.com / force.com plugin for Vim version 7.3 or later.  
 
 #### Update Oct. 2014  
-Best way to take advantage of [Apex code completion](http://youtu.be/u-6JQNuWRdE) is to use server mode.  
+Best way to take advantage of [Apex code completion](http://youtu.be/u-6JQNuWRdE) is to use "server" mode.  
 If you are using server mode on MS Windows then you must have python available to vim.
 Read `:help server-mode` in vim-force.com documentation carefully.
 
@@ -77,7 +77,9 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
 * List candidates for [auto-completion](http://youtu.be/u-6JQNuWRdE) in Apex classes
 	- try following in .cls file  
 	  String str = 'abc';  
-	  str. `Ctrl-X,Ctrl-O`	
+	  str. `Ctrl-X,Ctrl-O`  
+
+* List candidates (field names, object types, relationships, etc) for [auto-completion](http://youtu.be/rzqgXV3Gx0s) in SOQL expressions (requires [tooling-force.com v0.3.3.0](https://github.com/neowit/tooling-force.com/releases) or above). Invoked using vim omni-completion: `Ctrl-X,Ctrl-O`
   
 * Most commands (where it makes sence) can be run against different orgs without leaving current project.  
 e.g.   
@@ -103,7 +105,7 @@ Salesforce.com API does not (in most cases) report error line numbers
 in Visualforce pages, making it impossible to go-to actual problem line if
 compile/save fails due to a syntax error.
 
-Apex [auto-completion](http://youtu.be/u-6JQNuWRdE) is a work in progress and there are many  cases when it may not work as expected.
+Apex/SOQL auto-completion is a work in progress and there are many cases when it may not work as expected.
 
 ## Installation/System requirements 
 
