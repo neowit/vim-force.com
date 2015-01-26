@@ -130,6 +130,13 @@ function! <SID>ToggleSelected()
 		"add mark
 		let lineStr = s:setSelection(lineStr, 1)
 		let removeParentMark = 1
+
+		if "*CustomObject" == lineStr
+			call apexUtil#warning("You used wildcard (*) against 'CustomObject' type.")
+			call apexUtil#warning(" Please note - this will NOT include any standard objects.")
+			call apexUtil#warning(" To retrieve Standard objects you must call :Expand and select each object type explicitly.")
+			call apexUtil#warning(" See more details here: http://www.salesforce.com/us/developer/docs/daas/Content/commondeploymentissues.htm")
+		endif	
 	endif
 	call s:setCurrentLine(lineStr)
 
