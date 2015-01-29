@@ -47,6 +47,12 @@ http://www.youtube.com/watch?v=x5zKA6V__co
 
 Installation/System requirements 
 
+Note 1: vim config folder location
+in some examples below you may notice ~/vim instead of ~/.vim, 
+if you are using ~/.vim then make sure to adjust paths according to your config
+
+Note 2: it is recommended to use absolute paths in your config to avoid problems
+
 Before vim-force.com plugin can be used following requirements must be met:
 
 1. Vim version 7.3 or later with :set nocompatible
@@ -586,7 +592,7 @@ or you are not in the buffer where last :|ApexExecuteAnonymous| was run.
 
                                                                     *ApexQuery*
 Execute block of code as SOQL query.
-Block can be either whole current buffer or visual selection
+Block can be either whole current buffer or visual selection.
 
                                                               *ApexQueryRepeat*
 A shortcut to repeat last :|ApexQuery| command.
@@ -1100,4 +1106,5 @@ Copyright (c) Andrey Gavrikov.
 Distributed under the same terms as Vim itself.
 See :help license
 ===============================================================================
-vim:textwidth=78:ts=4:ft=help:norl:wrap:
+
+# vim:textwidth=78:ts=4:ft=help:norl:wrap:expandtab:shiftwidth=4:
