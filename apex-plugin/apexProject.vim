@@ -70,6 +70,9 @@ function s:buildPropertiesFile(projectName) abort
 		call add(fileLines, 'sf.username = ' . username)
 		call add(fileLines, 'sf.password = ' . password . token)
 		call add(fileLines, 'sf.serverurl = https://' . orgType . '.salesforce.com')
+		" make sure properties folder exists
+		call apexOs#createDir(g:apex_properties_folder)
+		
 		call writefile(fileLines, propertiesFilePath)
 	endif
 endfunction
