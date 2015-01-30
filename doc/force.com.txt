@@ -123,7 +123,7 @@ e.g. >
 ==============================================================================
 Example of minimal _vimrc configuration for win32    *force.com-config-example*
 
-""""""""""""""""""""""""""""""""" _vimrc """"""""""""""""""""""""""""""""""""" >
+""""""""""""""""""""""""""""""""" _vimrc """""""""""""""""""""""""""""""""""""  >
  set nocompatible
  
  filetype plugin on
@@ -151,7 +151,11 @@ Example of minimal _vimrc configuration for win32    *force.com-config-example*
  	let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
  	let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
  endif	
- 
+
+ set autowrite " not strictly required, but without it you will be getting
+               " errors when running commands that open new buffer 
+			   " (e.g. :ApexQuery or :ApexExecuteAnonymous) on unsaved file
+
  " (optional) if you want to enable server mode, uncoment 2 lines below
  "let g:apex_server=1 " start server on first call
  "let g:apex_server_timeoutSec=60*30 " allow server to wait for new connections within 30 minutes
