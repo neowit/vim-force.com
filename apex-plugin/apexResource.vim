@@ -100,6 +100,13 @@ function! apexResource#write(filePath)
 	endif
 
 	if !existingResource && !filereadable(resourcePath . "-meta.xml")
+        let l:cacheControl = apexUtil#menu('Select Cache Control', ['Private (for internal applications)', 'Public (un-authenticated force.com sites)'], 'Private')
+        if l:cacheControl =~? "public"
+            let l:cacheControl = "Public"
+        else
+            let l:cacheControl = "Private"
+        endif
+		call s:writeStaticResourceMetaXml(resourcePath, l:cacheControl)
 	endif
 
 	"echomsg "wrote ".a:filePath
@@ -175,11 +182,11 @@ function! apexResource#getApexProjectSrcPath(unpackedFilePath)
 	return apexOs#joinPath(projectFolder, 'src')
 endfunction
 
-function s:writeStaticResourceMetaXml(resourcePath)
+function s:writeStaticResourceMetaXml(resourcePath, cacheControl)
 	let metaContent = []
 	let metaContent = metaContent + ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>"]
 	let metaContent = metaContent + ["<StaticResource xmlns=\"http://soap.sforce.com/2006/04/metadata\">"]
-	let metaContent = metaContent + ["    <cacheControl>Private</cacheControl>"]
+	let metaContent = metaContent + ["    <cacheControl>" . a:cacheControl . "</cacheControl>"]
 	let metaContent = metaContent + ["    <contentType>application/zip</contentType>"]
 	let metaContent = metaContent + ["</StaticResource>"]
 
