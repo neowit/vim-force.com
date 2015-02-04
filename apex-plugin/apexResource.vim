@@ -99,8 +99,7 @@ function! apexResource#write(filePath)
 		endif
 	endif
 
-	if !existingResource
-		call s:writeStaticResourceMetaXml(resourcePath)
+	if !existingResource && !filereadable(resourcePath . "-meta.xml")
 	endif
 
 	"echomsg "wrote ".a:filePath
