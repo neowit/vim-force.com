@@ -103,7 +103,7 @@ syn match 	apexcodeVisualforceClasses	"ApexPages\.\(StandardController\|Standard
 " apexcode System methods
 syn match 	apexcodeSystemKeywords	"\<Database\.\(insert\|update\|delete\|undelete\|upsert\)\>"
 syn match 	apexcodeSystemKeywords	"Database\.\(convertLead\|countQuery\|emptyRecycleBin\|executeBatch\|getQueryLocator\|query\|rollback\|setSavepoint\)"
-syn match 	apexcodeSystemKeywords	"Test\.\(isRunningTest\|setCurrentPage\|setCurrentPageReference\|setFixedSearchResults\|setReadOnlyApplicationMode\|startTest\|stopTest\)"
+syn match 	apexcodeSystemKeywords	"Test\.\<\(isRunningTest\|setCurrentPage\|setCurrentPageReference\|setFixedSearchResults\|setReadOnlyApplicationMode\|startTest\|stopTest\)\>"
 
 " apexcode Trigger context variables and events
 syn match   apexcodeTriggerDecl		"^trigger\>"
