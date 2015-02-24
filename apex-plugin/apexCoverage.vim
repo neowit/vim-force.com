@@ -42,12 +42,22 @@ function apexCoverage#quickFixOpen(...) abort
 			" call apexCoverage#toggle(fullPathName)
 
 		endfor
+        " sort by file name
+        call sort(l:coverageList, "s:fileNameComparator")
+        
 		call setqflist(l:coverageList)
 		if len(l:coverageList) > 0
 			copen
 		endif
 	endif
 	
+endfunction
+
+" helper to sort list of coverage data objects in file name order
+function s:fileNameComparator(jsonLeft, jsonRight)
+    let l:leftFilename = a:jsonLeft.filename
+    let l:rightFilename = a:jsonRight.filename
+    return l:leftFilename == l:rightFilename ? 0 : l:leftFilename >l:rightFilename ? 1 : -1 
 endfunction
 
 function! apexCoverage#toggle(filePath)
