@@ -468,16 +468,29 @@ Differences to :|ApexDeploy|
   code coverage then SFDC rejects changes and you files are NOT saved in SFDC.
 
                                                       *ApexTestWithCoverage*
-Similar to :|ApexTest| but also generates line-by-line report of code coverage.
-Later coverage can be displayed using :|ApexTestCoverageToggle| command.
+Similar to :|ApexTest| but also generates line-by-line report of code coverage
+in quickfix buffer.
+
+Coverage signs can be displayed using following methods:
+
+Method 2 - using :|ApexTestCoverageShow| or :|ApexTestCoverageToggle| command
+           manually without file name
 ex: >
  :ApexTestWithCoverage checkOnly MyTestClass
- " before executing next line make sure that buffer with 'OtherClass.cls' is loaded
- " it does not have to be current buffer, but *must* be loaded
+    " open the file where you want to see coverage signs
+ :ApexTestCoverageShow
+<
+
+Method 3 - using :|ApexTestCoverageShow| or :|ApexTestCoverageToggle| command
+           manually with file name
+ex: >
+ :ApexTestWithCoverage checkOnly MyTestClass
+    " before executing next line make sure that buffer with 'OtherClass.cls' is loaded
+    " it does not have to be current buffer, but *must* be loaded
  :ApexTestCoverageShow OtherClass.cls
 <
 
-Note_1: :|ApexTestCoverageToggle| allows to pipe :|ApexTestCoverageShow| command
+Note_1: :|ApexTestWithCoverage| allows to pipe :|ApexTestCoverageShow| command
 ex: >
  :ApexTestWithCoverage checkOnly MyTestClass | ApexTestCoverageShow OtherClass.cls
 <
@@ -492,8 +505,12 @@ function.
 Note: this command accepts command line parameter - name of open buffer.
 If provided then coverage will be shown for file open in the specified buffer
 instead of current file.
-ex: >
+
+ex 1: with file name (file must be loaded in current or other buffer) >
  :ApexTestCoverageShow MyClass.cls
+<
+ex 2: without file name (this will attempt to show coverage signs in the current file) >
+ :ApexTestCoverageShow
 <
 
                                                        *ApexTestCoverageToggle*
