@@ -57,8 +57,6 @@ function! apexUtil#compareFiles(...)
 		:exe "vert diffsplit ".substitute(rightFilePath, " ", "\\\\ ", "g")
 	endif
 endfunction
-" define command to call for current file
-"command! -nargs=? ApexCompare :call ApexCompare(<args>)
 
 " browse to root of another project and call external diff tool on two folders:
 " <external diff> current-project/src selected-project/src
@@ -165,6 +163,7 @@ function! apexUtil#compareWithPreRefreshVersion (apexBackupFolder)
 	" use current file
 	let leftFilePath = expand("%:p")
 	let leftFileName = expand("%:t")
+	let filePathRelativeProjectFolder = s:getFilePathRelativeProjectFolder(leftFilePath)
 
 	if len(a:apexBackupFolder) <1
 		echoerr "parameter 1: apexBackupFolder is required"
@@ -182,30 +181,27 @@ function! apexUtil#compareWithPreRefreshVersion (apexBackupFolder)
 		return
 	endif
 
-	let rightFilePath = apexOs#joinPath([rightProjectPath, leftFileName])
+	let rightFilePath = apexOs#joinPath(rightProjectPath, filePathRelativeProjectFolder)
 	if !filereadable(rightFilePath)
 		echohl WarningMsg | echo "file ".rightFilePath." is not readable or does not exist" | echohl None
 		return
 	endif	
-
-	call ApexCompare(leftFilePath, rightFilePath)
+    
+	call apexUtil#compareFiles(leftFilePath, rightFilePath)
 
 endfunction	
 
 " using given filepath return path to the same file but in another project
 " selected by user via Folder selection dialogue
-function! apexUtil#selectCounterpartFromAnotherProject(filepath)
-	let leftFile = a:filepath
-	"echo "leftFile=".leftFile
-	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
-	let leftProjectName = projectPair.name
-	let filePathRelativeProjectFolder = strpart(leftFile, len(projectPair.path))
-	"echo "projectPair.path=".projectPair.path
+function! apexUtil#selectCounterpartFromAnotherProject(filePath)
+	let leftFile = a:filePath
 
+	let filePathRelativeProjectFolder = s:getFilePathRelativeProjectFolder(leftFile)
+
+	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
 	let rootDir = apexOs#splitPath(projectPair.path).head
 	"let rightProjectPath = browsedir("Select Root folder of the Project to compare with", rootDir)
 	let rightProjectPath = apexOs#browsedir('Please select project to compare with:', rootDir)
-	"echo "rightProjectPath ".rightProjectPath
 
 	if len(rightProjectPath) <1 
 		" cancelled
@@ -214,6 +210,14 @@ function! apexUtil#selectCounterpartFromAnotherProject(filepath)
 	let rightFilePath = apexOs#joinPath([rightProjectPath, filePathRelativeProjectFolder])
 	"echo "rightFilePath=".rightFilePath
 	return rightFilePath
+endfunction
+
+function! s:getFilePathRelativeProjectFolder(filePath)
+	let leftFile = a:filePath
+	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
+	let leftProjectName = projectPair.name
+	let filePathRelativeProjectFolder = strpart(leftFile, len(projectPair.path))
+    return filePathRelativeProjectFolder
 endfunction
 
 "	@deprecated, use apexOs#hasTrailingPathSeparator instead
