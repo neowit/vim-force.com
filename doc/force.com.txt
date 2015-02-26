@@ -473,6 +473,16 @@ in quickfix buffer.
 
 Coverage signs can be displayed using following methods:
 
+Method 1 - from quickfix buffer
+- in your .vimrc set g:apex_quickfix_coverage_toggle_shortcut to a desired key
+  e.g. >
+  let g:apex_quickfix_coverage_toggle_shortcut = "<CR>"
+<
+  using mapping in the above example - when you press Enter on a coverage line
+  (in quickfix buffer) two things will happen:
+  a. as usual you will be taken to the buffer under cursor 
+  b. :|ApexTestCoverageToggle| will be immediately executed on that file
+
 Method 2 - using :|ApexTestCoverageShow| or :|ApexTestCoverageToggle| command
            manually without file name
 ex: >

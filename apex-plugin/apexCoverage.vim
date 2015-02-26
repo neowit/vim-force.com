@@ -53,13 +53,6 @@ function apexCoverage#quickFixOpen(...) abort
 	
 endfunction
 
-" helper to sort list of coverage data objects in file name order
-function s:fileNameComparator(jsonLeft, jsonRight)
-    let l:leftFilename = a:jsonLeft.filename
-    let l:rightFilename = a:jsonRight.filename
-    return l:leftFilename == l:rightFilename ? 0 : l:leftFilename >l:rightFilename ? 1 : -1 
-endfunction
-
 function! apexCoverage#toggle(filePath)
 	let isDisplayed = has_key(s:display_state_by_file, a:filePath) &&  s:display_state_by_file[a:filePath]
 	if isDisplayed
@@ -203,3 +196,20 @@ function! s:showSigns(filePath) abort
 	endif
 endfunction
 
+" helper to sort list of coverage data objects in file name order
+function! s:fileNameComparator(jsonLeft, jsonRight)
+    let l:leftFilename = a:jsonLeft.filename
+    let l:rightFilename = a:jsonRight.filename
+    return l:leftFilename == l:rightFilename ? 0 : l:leftFilename >l:rightFilename ? 1 : -1 
+endfunction
+
+" map user defined key to open file under cursor and toggle Test Coverage signs if current file is apex file
+if exists("g:apex_quickfix_coverage_toggle_shortcut")
+    exe "autocmd! BufReadPost quickfix nmap <buffer> " . g:apex_quickfix_coverage_toggle_shortcut." <CR>:call <SID>quickfixActionOverride()<CR>"
+endif
+
+function! s:quickfixActionOverride()
+    if &ft == "apexcode"
+        call apexCoverage#toggle(expand("%:p"))
+    endif
+endfunction
