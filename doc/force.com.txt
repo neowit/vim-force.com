@@ -645,12 +645,17 @@ Usage:
     'System.' Ctrl-X,Ctrl-O
 	'String str = "abc"; str.' Ctrl-X,Ctrl-O
 
-You may want to map Ctrl-X,Ctrl-O to something shorter, e.g. >
+Recommended .vimrc config for apex completion:
+1. shortcut key
+    You may want to map Ctrl-X,Ctrl-O to something shorter, e.g. >
 	""""""""""""""""""""""""""""""""""""""""""
 	" map omni completion to Control + Space
 	""""""""""""""""""""""""""""""""""""""""""
 	inoremap <C-Space> <C-x><C-o>
 	inoremap <C-@> <C-Space>
+<
+2. completion menu popup >
+    set completeopt=menu,preview,longest
 <
   
                                         *resources_unpacked* *zipped-resources*
