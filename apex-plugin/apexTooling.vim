@@ -274,7 +274,18 @@ endfunction
 "Param1: path to file which belongs to apex project
 function apexTooling#diffWithRemote(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	call apexTooling#execute("diffWithRemote", projectPair.name, projectPair.path, {}, [])
+    let resMap = apexTooling#execute("diffWithRemote", projectPair.name, projectPair.path, {}, [])
+	if "true" == resMap["success"]
+        let responseFilePath = resMap["responseFilePath"]
+        let l:values = s:grepValues(responseFilePath, "REMOTE_SRC_FOLDER_PATH=")
+        echo "\n"
+        if len(l:values) > 0 && apexUtil#input("Run diff tool on local and remote folders [y/N]? ", "YynN", "N") ==? 'y'
+            echo "\n"
+            let remoteSrcFolderPath = l:values[0]
+            let srcPath = apex#getApexProjectSrcPath(a:filePath)
+            call apexUtil#compareFiles(srcPath, remoteSrcFolderPath)
+        endif
+    endif
 endfunction	
 
 function s:reportModifiedFiles(modifiedFiles)
