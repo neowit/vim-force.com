@@ -271,10 +271,15 @@ function apexTooling#printChangedFiles(filePath)
 endfunction	
 "
 "Args:
-"Param1: path to file which belongs to apex project
-function apexTooling#diffWithRemote(filePath)
+"Param1: path to file which belongs to current apex project
+"Param2: [optional] name of remote <project>.properties file
+function apexTooling#diffWithRemote(filePath, ...)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-    let resMap = apexTooling#execute("diffWithRemote", projectPair.name, projectPair.path, {}, [])
+	let projectName = projectPair.name
+	if a:0 > 0 && len(a:1) > 0
+		let projectName = apexUtil#unescapeFileName(a:1)
+	endif
+    let resMap = apexTooling#execute("diffWithRemote", projectName, projectPair.path, {}, [])
 	if "true" == resMap["success"]
         let responseFilePath = resMap["responseFilePath"]
         let l:values = s:grepValues(responseFilePath, "REMOTE_SRC_FOLDER_PATH=")

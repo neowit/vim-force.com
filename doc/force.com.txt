@@ -442,6 +442,14 @@ what files will be removed.
 This command is useful when you are using version control systems like git and
 treat them as your source of truth.
 
+                                                            *ApexDiffWithRemote*
+List file differences between local and remote project.
+Params:
+- [optional] - name of remote project (e.g. another sandbox)
+  Name must match .properties file
+  If provided then differences will be listed between current (local) project
+  files and files in the specified remote Org.
+
                                                               *ApexDeployStaged*
 Deploy all files previously added by :|ApexStageAdd| command.
 
