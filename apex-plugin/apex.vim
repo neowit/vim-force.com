@@ -167,6 +167,14 @@ function! apex#getApexProjectSrcPath(...)
 	return apexOs#joinPath([projectPair.path, s:SRC_DIR_NAME])
 endfunction
 
+function! apex#getFilePathRelativeProjectFolder(filePath)
+	let leftFile = a:filePath
+	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
+	let leftProjectName = projectPair.name
+	let filePathRelativeProjectFolder = strpart(leftFile, len(projectPair.path))
+    return filePathRelativeProjectFolder
+endfunction
+
 " get all available buffers which have file path relative current project
 " Param1: projectPath - full path to project
 " Param2: [optional] deployable extensions only

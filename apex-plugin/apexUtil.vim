@@ -163,7 +163,7 @@ function! apexUtil#compareWithPreRefreshVersion (apexBackupFolder)
 	" use current file
 	let leftFilePath = expand("%:p")
 	let leftFileName = expand("%:t")
-	let filePathRelativeProjectFolder = s:getFilePathRelativeProjectFolder(leftFilePath)
+	let filePathRelativeProjectFolder = apex#getFilePathRelativeProjectFolder(leftFilePath)
 
 	if len(a:apexBackupFolder) <1
 		echoerr "parameter 1: apexBackupFolder is required"
@@ -196,7 +196,7 @@ endfunction
 function! apexUtil#selectCounterpartFromAnotherProject(filePath)
 	let leftFile = a:filePath
 
-	let filePathRelativeProjectFolder = s:getFilePathRelativeProjectFolder(leftFile)
+	let filePathRelativeProjectFolder = apex#getFilePathRelativeProjectFolder(leftFile)
 
 	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
 	let rootDir = apexOs#splitPath(projectPair.path).head
@@ -210,14 +210,6 @@ function! apexUtil#selectCounterpartFromAnotherProject(filePath)
 	let rightFilePath = apexOs#joinPath([rightProjectPath, filePathRelativeProjectFolder])
 	"echo "rightFilePath=".rightFilePath
 	return rightFilePath
-endfunction
-
-function! s:getFilePathRelativeProjectFolder(filePath)
-	let leftFile = a:filePath
-	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
-	let leftProjectName = projectPair.name
-	let filePathRelativeProjectFolder = strpart(leftFile, len(projectPair.path))
-    return filePathRelativeProjectFolder
 endfunction
 
 "	@deprecated, use apexOs#hasTrailingPathSeparator instead
