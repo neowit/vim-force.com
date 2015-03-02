@@ -68,7 +68,8 @@ function apexTooling#deploy(action, mode, bang, ...)
 		return
 	endif
 
-	if "AllDestructive" == l:mode && apexUtil#input("DANGER!\nAny files that you do not have locally will be removed from Remote. \nRun :ApexDiffWithRemote to check what will be removed.\nProceed with destruction? [y/N]? ", "YynN", "N") !=? 'y'
+	if "AllDestructive" == l:mode && apexUtil#input("DANGER!\nAny files that you do not have locally will be removed from Remote.".
+                \ "\nRun :ApexDiffWithRemoteProject to check what will be removed.\nProceed with destruction? [y/N]? ", "YynN", "N") !=? 'y'
 		redraw! " clear prompt from command line area
 		return
 	endif

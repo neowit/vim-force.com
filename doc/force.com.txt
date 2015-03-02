@@ -237,10 +237,11 @@ Once project is setup you can proceed with creation of Class/Page/Trigger using
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*
 
-|ApexCompare|                       compare files in two projects
-|ApexCompareLocalProjects|          compare two projects
+|ApexCompare|                       compare files in two local projects
+|ApexCompareLocalProjects|          compare two local projects
 |ApexCompareWithPreRefreshVersion|  compare with pre refresh project state
 
+|ApexDiffWithRemoteProject|                compare local project with its remote version
 |ApexStage|                         show/switch-to "Stage" buffer
 |ApexStageAdd|                      add to Stage file in the current buffer
 |ApexStageAddOpen|                  add to Stage files from all open buffers
@@ -436,13 +437,13 @@ In addition to behaving like :|ApexDeployAll|, it also removes files that live
 remotely but that do not live locally. The files which this applies to is
 determined by your package.xml file.
 
-It is wise to check :|ApexDiffWithRemote| to see what files have changed, and
+It is wise to check :|ApexDiffWithRemoteProject| to see what files have changed, and
 what files will be removed.
 
 This command is useful when you are using version control systems like git and
 treat them as your source of truth.
 
-                                                            *ApexDiffWithRemote*
+                                                     *ApexDiffWithRemoteProject*
 List file differences between local and remote project.
 Params:
 - [optional] - name of remote project (e.g. another sandbox)
