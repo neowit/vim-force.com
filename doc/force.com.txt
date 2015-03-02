@@ -242,6 +242,8 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexCompareWithPreRefreshVersion|  compare with pre refresh project state
 
 |ApexDiffWithRemoteProject|                compare local project with its remote version
+|ApexDiffWithRemoteFile|            compare local file with its remote version
+
 |ApexStage|                         show/switch-to "Stage" buffer
 |ApexStageAdd|                      add to Stage file in the current buffer
 |ApexStageAddOpen|                  add to Stage files from all open buffers
@@ -450,6 +452,14 @@ Params:
   Name must match .properties file
   If provided then differences will be listed between current (local) project
   files and files in the specified remote Org.
+
+                                                        *ApexDiffWithRemoteFile*
+Compare current file with its remote counterpart.
+Params:
+- [optional] - name of remote project (e.g. another sandbox)
+  Name must match .properties file
+  If provided then difference will be shown between current (local) project
+  file and file in the specified remote Org.
 
                                                               *ApexDeployStaged*
 Deploy all files previously added by :|ApexStageAdd| command.

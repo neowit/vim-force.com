@@ -273,23 +273,61 @@ endfunction
 "
 "Args:
 "Param1: path to file which belongs to current apex project
-"Param2: [optional] name of remote <project>.properties file
-function apexTooling#diffWithRemote(filePath, ...)
-	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+"Param2: mode: 'project' or 'file'
+"       - 'project' - will compare local project with its remote counterpart
+"       - 'file' - will compare only current file with its remote counterpart
+"Param3: [optional] name of remote <project>.properties file
+function apexTooling#diffWithRemote(filePath, mode, ...)
+    let leftFile = a:filePath
+    let l:mode = a:mode
+    
+	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
 	let projectName = projectPair.name
+    
 	if a:0 > 0 && len(a:1) > 0
 		let projectName = apexUtil#unescapeFileName(a:1)
 	endif
-    let resMap = apexTooling#execute("diffWithRemote", projectName, projectPair.path, {}, [])
+
+
+    let l:extraParams = {"typesFileFormat" : "packageXml"}
+
+
+    if 'file' == l:mode
+
+		let filePair = apexOs#splitPath(leftFile)
+		let fName = filePair.tail
+		let folder = apexOs#splitPath(filePair.head).tail
+		"file path in stage always uses / as path separator
+		let relPath = apexOs#removeTrailingPathSeparator(folder) . "/" . fName
+        
+		"dump file list into a temp file
+		let tempFile = tempname() . "-fileList.txt"
+		call writefile([relPath], tempFile)
+
+        let l:extraParams = {"typesFileFormat" : "file-paths", "specificTypes" : tempFile}
+    endif
+    
+    let resMap = apexTooling#execute("diffWithRemote", projectName, projectPair.path, l:extraParams, [])
 	if "true" == resMap["success"]
         let responseFilePath = resMap["responseFilePath"]
         let l:values = s:grepValues(responseFilePath, "REMOTE_SRC_FOLDER_PATH=")
         echo "\n"
-        if len(l:values) > 0 && apexUtil#input("Run diff tool on local and remote folders [y/N]? ", "YynN", "N") ==? 'y'
+        let modeMsg = 'file' == l:mode ? "files" : "folders"
+        if len(l:values) > 0 && apexUtil#input("Run diff tool to compare local and remote ". modeMsg ." [y/N]? ", "YynN", "N") ==? 'y'
             echo "\n"
             let remoteSrcFolderPath = l:values[0]
             let srcPath = apex#getApexProjectSrcPath(a:filePath)
-            call apexUtil#compareFiles(srcPath, remoteSrcFolderPath)
+            if 'file' == l:mode
+                " compare single files
+                let rightProjectFolder = apexOs#splitPath(remoteSrcFolderPath).head
+                let filePathRelativeProjectFolder = apex#getFilePathRelativeProjectFolder(leftFile)
+                let rightFile = apexOs#joinPath(rightProjectFolder, filePathRelativeProjectFolder)
+                call apexUtil#compareFiles(leftFile, rightFile)
+
+            else
+                " compare top of local and retrieved projects
+                call apexUtil#compareFiles(srcPath, remoteSrcFolderPath)
+            endif
         endif
     endif
 endfunction	
@@ -824,8 +862,6 @@ function! s:prepareSpecificFilesParams(relativePaths)
 	endif
 	return l:params
 endfunction
-
-
 
 "Returns: dictionary/pair: 
 "	{
