@@ -298,7 +298,14 @@ function apexTooling#diffWithRemote(filePath, mode, ...)
 		let fName = filePair.tail
 		let folder = apexOs#splitPath(filePair.head).tail
 		"file path in stage always uses / as path separator
-		let relPath = apexOs#removeTrailingPathSeparator(folder) . "/" . fName
+        let srcPath = apex#getApexProjectSrcPath(leftFile)
+        " get path relative src/ folder
+        let relPath = strpart(leftFile, len(srcPath) + 1) " +1 to remove / at the end of src/
+        " if current file is in aura bundle then we only need bundle name, not
+        " file name
+        if relPath =~ "^aura/"
+            let relPath = apexOs#removeTrailingPathSeparator(apexOs#splitPath(relPath).head)
+        endif
         
 		"dump file list into a temp file
 		let tempFile = tempname() . "-fileList.txt"
@@ -316,7 +323,7 @@ function apexTooling#diffWithRemote(filePath, mode, ...)
         if len(l:values) > 0 && apexUtil#input("Run diff tool to compare local and remote ". modeMsg ." [y/N]? ", "YynN", "N") ==? 'y'
             echo "\n"
             let remoteSrcFolderPath = l:values[0]
-            let srcPath = apex#getApexProjectSrcPath(a:filePath)
+            let srcPath = apex#getApexProjectSrcPath(leftFile)
             if 'file' == l:mode
                 " compare single files
                 let rightProjectFolder = apexOs#splitPath(remoteSrcFolderPath).head
