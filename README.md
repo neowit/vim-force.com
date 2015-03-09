@@ -2,13 +2,14 @@
 
 salesforce.com / force.com plugin for Vim version 7.3 or later.  
 
+##### Update March 2015  
+If you are getting `Internal Server Error` when trying to deploy/save list of files which contain both Aura bundle(s) and Apex Class/Page then you are most likely affected by what appears to be a bug in Spring'15. 
+Current workaround is to deploy Apex Classes/Pages first (:ApexDeployOne or :ApexDeployOpen or :ApexDeployStaged) and then call :ApexDeploy or :ApexSave as usual.
+
 #### Update Oct. 2014  
 Best way to take advantage of [Apex code completion](http://youtu.be/u-6JQNuWRdE) is to use "server" mode.  
 If you are using server mode on MS Windows then you must have python available to vim.
 Read `:help server-mode` in vim-force.com documentation carefully.
-
-##### Update June 2014  
-If you are getting `java.lang.ClassCastException: scala.util.parsing.json.JSONArray cannot be cast to java.lang.String` when trying to deploy Apex Class with syntax error(s) then you are most likely affected by what appears to be a backwards compatibility bug in Summer'14. Upgrade of `tooling-force.com` jar to [v0.1.4.2](https://github.com/neowit/tooling-force.com/releases/tag/v0.1.4.2) should fix this.
 
 ##### Update Feb. 2014  
 'master' branch of vim-force.com is no longer based on Ant and [force.com migration tool](http://www.salesforce.com/us/developer/docs/daas/). This version requires config changes, see `:help force.com-installation`, `:help g:apex_tooling_force_dot_com_path` and `:help force.com-config-example`.  
