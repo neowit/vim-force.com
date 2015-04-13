@@ -102,7 +102,7 @@ syn keyword apexcodeVisualforceClasses	PageReference SelectOption Savepoint
 syn match 	apexcodeVisualforceClasses	"ApexPages\.\(StandardController\|StandardSetController\|Message\)"
 " apexcode System methods
 syn match 	apexcodeSystemKeywords	"\<Database\.\(insert\|update\|delete\|undelete\|upsert\)\>"
-syn match 	apexcodeSystemKeywords	"Database\.\(convertLead\|countQuery\|emptyRecycleBin\|executeBatch\|getQueryLocator\|query\|rollback\|setSavepoint\)"
+syn match 	apexcodeSystemKeywords	"Database\.\<\(convertLead\|countQuery\|emptyRecycleBin\|executeBatch\|getQueryLocator\|query\|rollback\|setSavepoint\)\>"
 syn match 	apexcodeSystemKeywords	"Test\.\<\(isRunningTest\|setCurrentPage\|setCurrentPageReference\|setFixedSearchResults\|setReadOnlyApplicationMode\|startTest\|stopTest\)\>"
 
 " apexcode Trigger context variables and events
@@ -110,7 +110,9 @@ syn match   apexcodeTriggerDecl		"^trigger\>"
 syn match 	apexcodeTriggerType		"\(after\|before\) \(insert\|update\|delete\|undelete\)"
 syn match 	apexcodeTriggerKeywords	"Trigger\.\(newMap\|oldMap\|new\|old\)"
 syn match 	apexcodeTriggerKeywords	"Trigger\.is\(Before\|After\|Insert\|Update\|Delete\|UnDelete\|Undelete\)"
-syn match 	apexcodeDatabaseClasses	"Database\.\<\(DeletedRecord\|DeleteResult\|DMLOptions\|DmlOptions\.AssignmentRuleHeader\|DmlOptions\.EmailHeader\|EmptyRecycleBinResult\|Error\|GetDeletedResult\|GetUpdatedResult\|LeadConvert\|LeadConvertResult\|MergeResult\|QueryLocator\|QueryLocatorIterator\|SaveResult\|UndeleteResult\|UpsertResult\)\>"
+syn match 	apexcodeDatabaseClasses	"Database\.\<\(DeletedRecord\|DeleteResult\|DMLOptions\|DmlOptions\.AssignmentRuleHeader\|DmlOptions\.EmailHeader\)\>"
+syn match 	apexcodeDatabaseClasses	"Database\.\<\(EmptyRecycleBinResult\|Error\|GetDeletedResult\|GetUpdatedResult\|LeadConvert\|LeadConvertResult\|MergeResult\)\>"
+syn match 	apexcodeDatabaseClasses	"Database\.\<\(QueryLocator\|QueryLocatorIterator\|SaveResult\|UndeleteResult\|UpsertResult\)\>"
 
 
 " Color definition
