@@ -496,7 +496,7 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 								else
 									if 'c' ==? response
 										"run file comparison tool
-										call ApexCompare(fPath, targetFilePath)
+										call apexUtil#compareFiles(fPath, targetFilePath)
 									else
 										echo "\n"
 										call apexUtil#warning("Permitted answers are: Y/N/A/all")
