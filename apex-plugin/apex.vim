@@ -63,17 +63,25 @@ endfunction
 " line: CmdLine - the entire command line
 " pos: CursorPos - the cursor position in it (byte index)
 "
-function! apex#completeDeployParams(arg, line, pos)
+function! s:completeSaveOrDeployParams(funcs, arg, line, pos)
 	let l = split(a:line[:a:pos-1], '\%(\%(\%(^\|[^\\]\)\\\)\@<!\s\)\+', 1)
 	"let n = len(l) - index(l, 'ApexDeploy') - 2
 	let n = len(l) - 0 - 2
 	"echomsg 'arg='.a:arg.'; n='.n.'; pos='.a:pos.'; line='.a:line
-	let funcs = ['s:listModeNames', 'apex#listProjectNames']
+	let funcs = a:funcs
 	if n >= len(funcs)
 		return ""
 	else
 		return call(funcs[n], [a:arg, a:line, a:pos])
 endfunction	
+
+function! apex#completeDeployParams(arg, line, pos)
+    return s:completeSaveOrDeployParams(['s:listModeNames', 'apex#listProjectNames'], a:arg, a:line, a:pos)
+endfunction
+
+function! apex#completeSaveParams(arg, line, pos)
+    return s:completeSaveOrDeployParams(['s:listModeNames'], a:arg, a:line, a:pos)
+endfunction
 
 
 " use this method to validate existance of .properties file for specified
