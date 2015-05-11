@@ -117,7 +117,7 @@ function apexTooling#deploy(action, mode, bang, ...)
 			return
 		endif
 		call extend(l:extraParams, deployOpenParams)
-		let l:action = "deploySpecificFiles"
+		let l:action = a:action . "SpecificFiles"
 
 	endif
 	" another org?
@@ -855,11 +855,11 @@ function! s:prepareSpecificFilesParams(relativePaths)
 	let relativePaths = a:relativePaths
 	let l:params = {}
 	if len(relativePaths) > 0
-		call apexUtil#warning('Following files will be deployed')
+		call apexUtil#warning('Following files will be included')
 		for path in relativePaths
 			call apexUtil#warning('  ' . path)
 		endfor
-		if apexUtil#input('Deploy [y/N]? ', 'yYnN', 'N') !=? 'y'
+		if apexUtil#input('Proceed [y/N]? ', 'yYnN', 'N') !=? 'y'
 			return {} "user cancelled
 		endif
 		"dump file list into a temp file

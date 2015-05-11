@@ -96,6 +96,8 @@ function! s:toolingJarSpecific()
 
 	" Tooling API commands
 	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexSave :call apexTooling#deploy('save', 'Modified', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexSaveOpen :call apexTooling#deploy('save', 'Open', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexSaveOne :call apexTooling#deploy('save', 'One', <bang>0, <f-args>)
 	
 endfunction
 
