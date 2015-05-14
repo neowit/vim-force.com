@@ -747,9 +747,11 @@ Optional
 |'g:apex_workspace_path'|           root folder to use when creating new project
                                     with :|ApexInitProject|
 
+|'g:apex_OnCommandComplete'|        script to execute at the end of long running
+                                    command
+
 |'g:apex_server'|                   enable/disable server mode
 |'g:apex_server_timeoutSec'|        automatic server shutdown timeout
-
 
                                                         *'g:apex_backup_folder'*
 
@@ -931,6 +933,30 @@ e.g. >
  let g:zip_unzipcmd = "/usr/local/bin/unzip"
 <
 see also |zipped-resources|
+
+                                                    *'g:apex_OnCommandComplete'*
+Optional.
+Can be used to execute a shell command upon completion of long running
+Apex command.
+'g:apex_OnCommandComplete' is a dictionary which accepts two values:
+- script: full command line
+- timeoutSec: how long command needs to run for script to be executed
+
+Example 1: (OSX, MacVim) >
+    let g:apex_OnCommandComplete = {'script': 'osascript -e "tell application \"MacVim\" to activate"', 'timeoutSec': 10}
+<
+if Apex command (e.g. :|ApexTest|) runs for more than 10 seconds then upon
+completion MacVim window will be brought back to focus. May be useful if you
+want to switch to another application while vim is working, but want to go back
+to vim as soon as command execution is done.
+
+Example 2: (OSX) if you want to announce completion of long running :|ApexDeploy|
+then g:apex_OnCommandComplete can be configured like so: >
+   let g:apex_OnCommandComplete = {'script': 'say "Job finished"', 'timeoutSec': 10}  
+<
+if command runs for more than 10 seconds then upon completion you will hear
+"Job finished" from computer speaker.
+
 
                                                        *'g:apex_workspace_path'*
 Optional.

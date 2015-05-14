@@ -632,10 +632,19 @@ endfunction
 " returns: 
 " 0 - if RESULT=SUCCESS
 " any value > 0 - if RESULT <> SUCCESS
-function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilent)
+function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilent, disableMorePrompt)
 	"clear quickfix
 	call setqflist([])
 	call CloseEmptyQuickfixes()
+
+	"temporarily disable more if enabled
+	"also see :help hit-enter
+	let disableMore = a:disableMorePrompt
+	let reEnableMore = 0
+	if disableMore
+		let reEnableMore = &more
+		set nomore
+	endif
 
 	let fileName = a:logFilePath
 	if bufexists(fileName)
@@ -653,6 +662,9 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 		if s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1 && !a:isSilent
 			call apexUtil#info("No errors found")
 		endif
+        if disableMore && reEnableMore
+            set more
+        endif
 		return 0
 	endif
 
@@ -661,6 +673,9 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 	call s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes)
 	
 	call s:fillQuickfix(a:logFilePath, a:projectPath)
+	if disableMore && reEnableMore
+		set more
+	endif
 	return 1
 
 endfunction
@@ -954,6 +969,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	" make sure we do not accidentally reuse old responseFile
 	call delete(responseFilePath)
 
+    let l:startTime = reltime()
 	"call apexOs#exe(l:command, 'M') "disable --more--
 	call s:runCommand(l:java_command, l:command, isSilent)
 
@@ -968,10 +984,37 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	elseif exists("s:apex_last_log")
 		unlet s:apex_last_log
 	endif
-	let errCount = s:parseErrorLog(responseFilePath, a:projectPath, a:displayMessageTypes, isSilent)
+    let l:disableMorePrompt = s:hasOnCommandComplete()
+
+	let errCount = s:parseErrorLog(responseFilePath, a:projectPath, a:displayMessageTypes, isSilent, l:disableMorePrompt)
+    "echo "l:startTime=" . string(l:startTime)
+    call s:onCommandComplete(reltime(l:startTime))
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
 endfunction
 
+" check if user has defined g:apex_OnCommandComplete
+function! s:hasOnCommandComplete()
+    return exists('g:apex_OnCommandComplete') && type({}) == type(g:apex_OnCommandComplete)
+endfunction
+
+" if user defined custom function to run on command complete then run it
+function! s:onCommandComplete(timeElapsed)
+    if s:hasOnCommandComplete()
+        let l:command = g:apex_OnCommandComplete['script']
+        if len(l:command) > 0
+            let l:flags = 's' " silent
+            "echo "a:timeElapsed=" . string(a:timeElapsed)
+            if has_key(g:apex_OnCommandComplete, 'timeoutSec')
+                if a:timeElapsed[0] > str2nr(g:apex_OnCommandComplete['timeoutSec'])
+                    call apexOs#exe(l:command, l:flags)
+                endif
+            else
+                call apexOs#exe(l:command, l:flags)
+            endif
+        endif
+            
+    endif
+endfunction
 "================= server mode commands ==========================
 
 " send server 'shutdown' command to stop it
