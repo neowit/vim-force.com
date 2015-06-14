@@ -55,7 +55,16 @@ function apexExecuteSnippet#run(method, filePath, ...) range
 		if 'executeAnonymous' == a:method
 			call s:executeAnonymous(a:filePath, projectName, codeFile)
 		elseif 'soqlQuery' == a:method
-			call s:executeSoqlQuery(a:filePath, projectName, codeFile)
+            let l:api = 'Partner'
+            if a:0 > 0 && len(a:1) > 0
+                let l:api = a:1
+            endif
+            if a:0 > 1 && len(a:2) > 1
+                let projectName = apexUtil#unescapeFileName(a:2)
+            else
+                let projectName = projectPair.name
+            endif
+			call s:executeSoqlQuery(a:filePath, l:api, projectName, codeFile)
 		endif
 	endif
 endfunction	
@@ -67,7 +76,7 @@ function apexExecuteSnippet#repeat(method, filePath, ...)
 	if 'soqlQuery' == a:method
 		let codeFile = s:lastSoqlQueryFilePath
 	endif
-	if len(codeFile) < 1
+	if len(codeFile) < 1 || !filereadable(codeFile)
 		call apexUtil#warning('Nothing to repeat')
 		return -1
 	endif
@@ -80,7 +89,16 @@ function apexExecuteSnippet#repeat(method, filePath, ...)
 	if 'executeAnonymous' == a:method
 		call s:executeAnonymous(a:filePath, projectName, codeFile)
 	elseif 'soqlQuery' == a:method
-		call s:executeSoqlQuery(a:filePath, projectName, codeFile)
+        let l:api = 'Partner'
+        if a:0 > 0 && len(a:1) > 0
+            let l:api = a:1
+        endif
+        if a:0 > 1 && len(a:2) > 1
+            let projectName = apexUtil#unescapeFileName(a:2)
+        else
+            let projectName = projectPair.name
+        endif
+		call s:executeSoqlQuery(a:filePath, l:api, projectName, codeFile)
 	endif
 endfunction
 
@@ -102,8 +120,8 @@ function s:executeAnonymous(filePath, projectName, codeFile)
 	endif
 endfunction	
 
-let s:lastSoqlQueryFilePath = ''
-function s:executeSoqlQuery(filePath, projectName, codeFile)
+let s:lastSoqlQueryFilePath = ""
+function s:executeSoqlQuery(filePath, api, projectName, codeFile)
 	"call apexTooling#askLogLevel()
 
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
@@ -114,10 +132,10 @@ function s:executeSoqlQuery(filePath, projectName, codeFile)
 	if projectPair.name != a:projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
 	endif
+    let l:extraParams["api"] = a:api
 	let resMap = apexTooling#execute("soqlQuery", a:projectName, projectPath, l:extraParams, [])
 	if "true" == resMap.success
-		" delete query file
-		call delete(a:codeFile)
+        let s:lastSoqlQueryFilePath = a:codeFile
 		" load result file if available and show it in a read/only buffer
 		if len(apexUtil#grepFile(resMap.responseFilePath, 'RESULT_FILE')) > 0
 			execute "view " . fnameescape(outputFilePath)

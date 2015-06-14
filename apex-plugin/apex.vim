@@ -53,6 +53,37 @@ function! apex#listProjectNames(arg, line, pos)
 	return res
 endfunction	
 
+function! apex#completeQueryParams(arg, line, pos)
+    "call writefile(["arg=" . a:arg, "line=".a:line, "pos=".a:pos], "~/temp/params.txt")
+	let l:argList = split(a:line[:a:pos-1], '\%(\%(\%(^\|[^\\]\)\\\)\@<!\s\)\+', 1)
+	let l:command = 'ApexQuery'
+    let l:commandIndex = index(l:argList, l:command)
+    if l:commandIndex < 0
+        " no exact match, try to find "contains(l:command)" match
+        let l:i = 0
+        for str in l:argList
+            if str =~ l:command
+                let l:commandIndex = l:i
+                break
+            endif
+            let l:i += 1
+        endfor
+    endif    
+	let n = len(l:argList) - l:commandIndex - 2
+
+	let funcs = ['s:completeAPIs', 'apex#listProjectNames']
+    echo "funcs=" . funcs[n] . "; line=".a:line. "; pos=".a:pos . "; n=" .n . "; l=".string(l:argList) . "; commandIndex=".l:commandIndex
+	if n >= len(funcs)
+		return ""
+	else
+		return call(funcs[n], [a:arg, a:line, a:pos])
+
+endfunction
+
+function! s:completeAPIs(arg, line, pos)
+	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, ['Partner', 'Tooling'])
+endfunction	
+
 function! s:listModeNames(arg, line, pos)
 	return ['deploy', 'checkOnly']
 endfunction	

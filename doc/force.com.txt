@@ -643,11 +643,18 @@ or you are not in the buffer where last :|ApexExecuteAnonymous| was run.
                                                                     *ApexQuery*
 Execute block of code as SOQL query.
 Block can be either whole current buffer or visual selection.
-
+Supports 2 (optional) parameters:
+- API: Partner or Tooling
+- project-name
+Example >
+    :ApexQuery Tooling MyOrg
+<
                                                               *ApexQueryRepeat*
 A shortcut to repeat last :|ApexQuery| command.
 Useful when you want to re-run visual selection which is not currently selected,
 or you are not in the buffer where last :|ApexQuery| was run.
+Supports 2 (optional) parameters, see :|ApexQuery|
+
 ==============================================================================
                                                                 *auto-complete*
                                                          *apex-code-completion*

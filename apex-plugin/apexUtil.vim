@@ -247,7 +247,7 @@ function! apexUtil#menu(prompt, options, default)
 	let i = 1
 	for elem in a:options
 		let item = []
-		let isList = (3 == type(elem))
+		let isList = (type([]) == type(elem))
 		if !isList
 			" this is a string value, so use it as 'value' and as 'label'
 			let item = [elem, elem]
@@ -261,7 +261,6 @@ function! apexUtil#menu(prompt, options, default)
 		echo i.". ".itemText
 		let i += 1
 	endfor
-
 
 	let res = 'nothing'
 	while len(res) > 0
