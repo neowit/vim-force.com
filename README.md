@@ -82,7 +82,7 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
 
 * List candidates (field names, object types, relationships, etc) for [auto-completion](http://youtu.be/rzqgXV3Gx0s) in SOQL expressions (requires [tooling-force.com v0.3.3.0](https://github.com/neowit/tooling-force.com/releases) or above). Invoked using vim omni-completion: `Ctrl-X,Ctrl-O`
   
-* Most commands (where it makes sence) can be run against different orgs without leaving current project.  
+* Most commands (where it makes sense) can be run against different orgs without leaving current project.  
 e.g.   
 `:ApexQuery` will run selected SOQL query against the Org configured for current project  
 `:ApexQuery MyOtherOrg` will run the same query against 'MyOtherOrg'  
