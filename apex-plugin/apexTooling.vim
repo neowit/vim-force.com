@@ -183,19 +183,24 @@ function apexTooling#listCompletions(filePath, attributeMap)
 	return responseFilePath
 endfunction
 
+
 "run unit tests
 "Args:
 "Param: filePath 
 "			path to file which belongs to apex project
 "
 "Param: attributeMap - map {} of test attributes
-"			e.g.: {"checkOnly": 0, "className": "Test.cls", "methodName": "mytest1"}
+"			e.g.: {"checkOnly": 0, "testsToRun": "TestClass,OtherTestClass"}
+"			e.g.: {"checkOnly": 1, "testsToRun": "TestClass.method1,TestClass.method2"}
 "
-"			className: (optional) - if provided then only run tests in the specified class
+"			testsToRun: (optional) - if provided then only run tests in the specified class(es)
 "									otherwise all test classes listed in
 "									deployment package
-"			methodName:(optional) - if provided then only run specified method in the class
 "			checkOnly:(optional) - can be either 0(false) or 1(true)
+"			tooling:(optional) - can be either 'sync' or 'async'.
+"			                        if specified then Tooling API will be
+"			                        used, instead of Metadata API
+"
 "
 "Param: orgName - given project name will be used as
 "						target Org name.
@@ -223,14 +228,9 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 	if has_key(attributeMap, "checkOnly")
 		let l:extraParams["checkOnly"] = attributeMap["checkOnly"]? "true" : "false"
 	endif
-	" className
-	if has_key(attributeMap, "className")
-		if has_key(attributeMap, "methodName")
-			" specific method in given class, format: ClassName.methodName
-			let l:extraParams["testsToRun"] = attributeMap["className"] . "." . attributeMap["methodName"]
-		else "all methods in given class
-			let l:extraParams["testsToRun"] = shellescape(attributeMap["className"])
-		endif
+	" testsToRun
+	if has_key(attributeMap, "testsToRun")
+        let l:extraParams["testsToRun"] = shellescape(attributeMap["testsToRun"])
 	else
 		"run all tests in the deployment package
 		let l:extraParams["testsToRun"] = shellescape('*')
@@ -244,8 +244,21 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 		let l:extraParams["ignoreConflicts"] = "true"
 	endif
 
-	call apexTooling#askLogLevel()
-	let resMap = apexTooling#execute("deployModified", projectName, projectPath, l:extraParams, [])
+    let l:command = "deployModified"
+	if has_key(attributeMap, "tooling") 
+        let l:command = "runTestsTooling"
+        if 'async' == attributeMap["tooling"]
+		    let l:extraParams["async"] = "true"
+        else
+		    let l:extraParams["async"] = "false"
+        endif    
+    endif
+    if "deployModified" == l:command
+        " current version only asks Metadata API log level
+        call apexTooling#askLogLevel()
+    endif    
+
+	let resMap = apexTooling#execute(l:command, projectName, projectPath, l:extraParams, [])
 	let responsePath = resMap["responseFilePath"]
 	let coverageFiles = s:grepValues(responsePath, "COVERAGE_FILE=")
 	if len(coverageFiles) > 0

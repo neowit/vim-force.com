@@ -465,7 +465,8 @@ Params:
 Deploy all files previously added by :|ApexStageAdd| command.
 
                                                                       *ApexTest*
-Very basic function that is similar to :|ApexDeploy| but runs unit tests.  
+Similar to :|ApexDeploy| but runs unit tests using either Metadata or Tooling
+API.
 If no class name specified then will run tests in all modified classes that
 contain 'testMethod'.
 
@@ -473,9 +474,36 @@ By default no debug log is generated. Default Log level can be configured via
 |'g:apex_test_logType'| variable.
 
 :|ApexTest| supports command line parameters (and their completion)
-Param: 1 - mode: 'testAndDeploy' or 'checkOnly', default 'testAndDeploy'
+Param: 1 - mode: 'meta-testAndDeploy', 'meta-checkOnly', 
+                'tooling-sync', 'tooling-async'
+            default: 'testAndDeploy'
+           Note: 
+            - 'meta-testAndDeploy' runs all test methods in a specified class(es)
+            - 'meta-checkOnly' 
+              - can run all or specific test method(s) in a class
+              - does not save modified files to SFDC regardless of test
+                outcome  
+            - 'tooling-sync' and 'tooling-async' can only work with files
+               already saved in remote SFDC. For this reason
+               tooling-force.com.jar will try to save modified files (if any)
+               before attempting to run the test.
+            - 'tooling-sync' runs all test method(s) in specified class(es)
+            - 'tooling-async' can run all or specific test method(s) in
+              specified class(es)
+
 Param: 2 - class name - use this parameter to run only unit tests in a specific
-           class
+           class. Multiple test class names can be specified separated by ','.
+           In this case 'param 3' has to be '*' or 'param 3' and 'param 4'
+           must be omitted. 
+           If need to specify particular test method(s) for several classes
+           then use following syntax: >
+ :ApexTest meta-checkonly TestClass1.method1,TestClass1.method2,TestClass3
+<
+    Note: there are no spaces between class/method names.
+           The above command will run 
+           - tests method1() and method2() in test class TestClass1
+           - all tests in TestClass3
+             
 Param: 3 - method name - if test class contains several 'testMethod'-s then
            this parameter allows to specify single method to run. Body of all other
            methods will be skipped. This is particularly useful when you want to see log

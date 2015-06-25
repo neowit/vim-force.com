@@ -17,39 +17,61 @@ let s:ALL = '*ALL*'
 "Param: reportCoverage: 'reportCoverage' (means load lines report), anything
 "				        else means do not load lines coverage report
 "Params: (optional)
-" Param 1: [optional] mode name: ['testAndDeploy', 'checkOnly']
-" Param 2: [optional] class name
-" Param 3: [optional] method name
-" Param 4: [optional] destination project name, must match one of .properties file with
+" Param 1: [optional] mode name: ['meta-testAndDeploy', 'meta-checkOnly', 'tooling-sync', 'tooling-async']
+" Param 2: [optional] classname[.methodname][,classname[.methodname]]
+" Param 3: [optional] destination project name, must match one of .properties file with
 "		login details
 function! apexTest#runTest(reportCoverage, bang, ...)
 	let filePath = expand("%:p")
 
-	let modeName = a:0 > 0? a:1 : 'testAndDeploy'
-	let className = a:0 > 1? a:2 : ''
-	let methodName = a:0 > 2? a:3 : ''
-	let projectName = a:0 > 3? a:4 : ''
+	let modeName = a:0 > 0? a:1 : 'meta-testAndDeploy'
+	let testsToRun = a:0 > 1? a:2 : ''
+	let projectName = a:0 > 2? a:3 : ''
 
-	let projectSrcPath = apex#getApexProjectSrcPath()
+    let attributes = {}
+    
+    if empty(testsToRun)
+        call apexUtil#warning("Please specify test(s) to run or * to run all unpackaged tests in the Org")
+        return
+    endif    
+    let attributes['testsToRun'] = testsToRun
 
-	let isCheckOnly = 'checkOnly' == modeName
-	if strlen(methodName) > 0 && s:ALL != methodName
-		if !isCheckOnly
-			call apexUtil#warning('Single method test is experimental and only supported in "checkOnly" mode.')
-			if 'y' !~# apexUtil#input('Switch to "checkOnly" and continue? [Y/n]: ', 'YyNn', 'y')
-				return
-			endif
-		endif
+	let isCheckOnly = 'meta-checkOnly' == modeName
+    let attributes['checkOnly'] = isCheckOnly
+    
 
-		call apexTooling#deployAndTest(filePath, {'checkOnly': 1, 'className': className, 'methodName': methodName}, projectName, a:reportCoverage, a:bang)
-	elseif strlen(className) > 0
-		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly, 'className': className}, projectName, a:reportCoverage, a:bang)
-	else 
-		call apexTooling#deployAndTest(filePath, {'checkOnly': isCheckOnly}, projectName, a:reportCoverage, a:bang)
-	endif
+    if modeName == 'tooling-sync'
+        let attributes['tooling'] = 'sync'
+    elseif modeName == 'tooling-async'
+        let attributes['tooling'] = 'async'
+    endif
+
+    " check if classNames contains something like: MyClass.method1
+    let l:hasMethodName = (testsToRun  =~? '\w\.\w\w*')
+
+    if l:hasMethodName && (modeName !~ '^tooling-async')
+        if modeName =~ '^meta-' && !isCheckOnly
+            call apexUtil#warning('Specific method test with Metadata API is experimental and only supported in "checkOnly" mode.')
+            if 'y' !~# apexUtil#input('Switch to "meta-checkOnly" and continue? [Y/n]: ', 'YyNn', 'y')
+                return
+            endif
+
+            let attributes['checkOnly'] = 1
+        endif    
+        if modeName == 'tooling-sync'
+            call apexUtil#warning('Specific method test with Tooling API is only supported in "async" mode.')
+            if 'y' !~# apexUtil#input('Switch to "tooling-async" and continue? [Y/n]: ', 'YyNn', 'y')
+                return
+            endif
+
+            let attributes['tooling'] = 'async'
+        endif    
+
+    endif
+
+    call apexTooling#deployAndTest(filePath, attributes, projectName, a:reportCoverage, a:bang)
 
 endfunction
-
 
 " Args:
 " arg: ArgLead - the leading portion of the argument currently being
@@ -71,6 +93,11 @@ function! apexTest#completeParams(arg, line, pos)
 	else
 		return call(funcs[n], [a:arg, a:line, a:pos])
 endfunction	
+
+function! apexTest#completeClassNames(arg, line, pos)
+	return call('s:listClassNames', [a:arg, a:line, a:pos])
+endfunction	
+
 
 " list classes that contain 'testMethod' token for argument auto-completion
 function! s:listClassNames(arg, line, pos)
@@ -116,7 +143,7 @@ function! s:listMethodNames(arg, line, pos)
 endfunction	
 
 function! s:listModeNames(arg, line, pos)
-	let candidates = ['testAndDeploy', 'checkOnly']
+	let candidates = ['meta-testAndDeploy', 'meta-checkOnly', 'tooling-sync', 'tooling-async']
 	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, candidates)
 endfunction	
 
