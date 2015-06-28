@@ -499,10 +499,18 @@ Param: 2 - class name - use this parameter to run only unit tests in a specific
            then use following syntax: >
  :ApexTest meta-checkonly TestClass1.method1,TestClass1.method2,TestClass3
 <
-    Note: there are no spaces between class/method names.
+    Note 1: There are no spaces between class/method names.
            The above command will run 
            - tests method1() and method2() in test class TestClass1
            - all tests in TestClass3
+
+    Note 2: If using wildmenu then command line completion candidates may look
+           unusual at first glance - instead of just last method or class name
+           string the menu of completions will include full text of Param 2
+           entered so far plus new suggestions.
+
+    Note 3: 'meta-checkOnly' does not always return coverage data. This is a
+            limitation on SFDC Metadata API side.     
              
 Param: 3 - method name - if test class contains several 'testMethod'-s then
            this parameter allows to specify single method to run. Body of all other

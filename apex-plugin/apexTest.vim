@@ -87,19 +87,42 @@ function! apexTest#completeParams(arg, line, pos)
 	endif
 	let n = len(l) - index(l, command) - 2
 	"echomsg 'arg='.a:arg.'; n='.n.'; pos='.a:pos.'; line='.a:line
-	let funcs = ['s:listModeNames', 's:listClassNames', 's:listMethodNames', 'apex#listProjectNames']
+	"let funcs = ['s:listModeNames', 's:listClassNames', 's:listMethodNames', 'apex#listProjectNames']
+	let funcs = ['s:listModeNames', 's:listClassOrMethodNames', 'apex#listProjectNames']
 	if n >= len(funcs)
 		return ""
 	else
 		return call(funcs[n], [a:arg, a:line, a:pos])
 endfunction	
 
-function! apexTest#completeClassNames(arg, line, pos)
-	return call('s:listClassNames', [a:arg, a:line, a:pos])
-endfunction	
+" if previous character is nothing or ',' then list class names
+" if previous character is '.' then take previous word, use it as a class name
+" and list method names in that class
+" 
+" Args:
+" arg: ArgLead - the leading portion of the argument currently being
+"			   completed on
+" line: CmdLine - the entire command line
+" pos: CursorPos - the cursor position in it (byte index)
+function! s:listClassOrMethodNames(arg, line, pos)
+    if empty(a:arg)
+        return s:listClassNames(a:arg, a:line, a:pos)
+    else    
+        if a:arg =~ '\w\.\w*$'
+            return s:listMethodNames(a:arg, a:line, a:pos)
+        else     
+            return s:listClassNames(a:arg, a:line, a:pos)
+        endif    
+    endif    
 
+endfunction
 
 " list classes that contain 'testMethod' token for argument auto-completion
+" arg mey look like so
+" 
+" <Cla>
+" <Class.method,>
+" <Class.method,Cla>
 function! s:listClassNames(arg, line, pos)
 	let projectSrcPath = apex#getApexProjectSrcPath()
 	
@@ -111,8 +134,25 @@ function! s:listClassNames(arg, line, pos)
 			let fName = apexOs#splitPath(fullName).tail
 			let fName = fnamemodify(fName, ":r") " remove .cls
 			"take into account file prefix which user have already entered
-			if 0 == len(a:arg) || match(fName, a:arg) >= 0 
-				call add(candidates, fName)
+            let l:str = a:arg
+            let l:prevStr = '' " stuff which was entered before class name currently being completed
+
+            if len(l:str) > 0
+                let l:strings = split(a:arg, ',')
+                if a:arg =~ '\w.*,$' " <Something,>
+                    let l:prevStr = join(l:strings, ',') . ','
+                    let l:str = ''
+                else    " <Something,Some>
+                    let l:str = l:strings[len(strings)-1]
+                    if len(l:strings) > 1
+                        " have class names before current
+                        let l:prevStr = join(l:strings[0:len(strings)-2], ",") . ","
+                    endif    
+                endif
+            endif
+
+			if 0 == len(l:str) || match(fName, l:str) >= 0 
+				call add(candidates, l:prevStr . fName)
 			endif
 		endif
 	endfor
@@ -123,20 +163,39 @@ endfunction
 " 'testMethod'-s
 " Args:
 " arg: ArgLead - the leading portion of the argument currently being
-"			   completed on
+"			   completed on, all previous class.method pairs removed
 " line: CmdLine - the entire command line
 " pos: CursorPos - the cursor position in it (byte index)
+" originalArg: full text of current parameter
 function! s:listMethodNames(arg, line, pos)
-	"figure out current class name
-	let l = split(a:line[:a:pos-1], '\%(\%(\%(^\|[^\\]\)\\\)\@<!\s\)\+', 1)
-	let className = l[2] " class name is second parameter
+    "figure out current class name
+    let l:str = a:arg
+    let l:prevStr = '' " stuff which was entered before class name currently being completed
+    if empty(l:str)
+        return []
+    endif
+
+    let l:strings = split(a:arg, ',')
+    if len(l:strings) > 1
+        let l:prevStr = join(l:strings[0:len(l:strings) - 2], ',') . ','
+    endif
+    let l:lastStr = l:strings[-1]
+	
+    let l = split(l:lastStr, '\.')
+
+	let className = l[0]
+    let methodNameSoFar = len(l) > 1 ? l[1] : ""
+
 	let projectSrcPath = apex#getApexProjectSrcPath()
 	let filePath = apexOs#joinPath([projectSrcPath, 'classes', className.'.cls'])
 	let candidates = [s:ALL]
+    let adddedValues = [] " track added values to avoid duplicates
 	for lineNum in apexUtil#grepFileLineNums(filePath, '\<testmethod\>\|@\<isTest\>')
 		let methodName = s:getMethodName(filePath, lineNum - 1)
-		if len(methodName) > 0
-			call add(candidates, methodName)
+        let l:classMethod = className . '.' . methodName
+		if len(methodName) > 0 && index(adddedValues, l:classMethod) < 0
+			call add(candidates, l:prevStr . l:classMethod)
+            call add(adddedValues, l:classMethod)
 		endif	
 	endfor
 	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, candidates)
