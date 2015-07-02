@@ -560,7 +560,6 @@ function! apexTooling#openLastLog()
     elseif exists("s:apex_last_log_by_class_name")    
         if type({}) == type(s:apex_last_log_by_class_name)
             " s:apex_last_log_by_class_name contans map: {class-name -> file-path}
-            " 
             "fill location list with this information
             let l:logList = []
             for fName in sort(keys(s:apex_last_log_by_class_name))
@@ -569,8 +568,14 @@ function! apexTooling#openLastLog()
                 let l:line = {"filename": l:filePath, "lnum": 1, "col": 1, "text": l:text}
                 call add(l:logList, l:line)
             endfor
-            call setloclist(0, l:logList)
-            :lopen
+            if 1 == len(l:logList)
+                " open the only log immediately, there is no point in filling
+                " in location list
+                :execute "e " . fnameescape(l:logList[0].filename)
+            else    
+                call setloclist(0, l:logList)
+                :lopen
+            endif    
         endif
 	else
 		call apexUtil#info('No Log file available')
