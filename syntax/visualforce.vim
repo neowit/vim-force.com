@@ -22,3 +22,8 @@ syn match htmlTagName contained "\(c\|apex\|chatter\|flow\|ideas\|knowledge\|mes
 syn match htmlSpecialChar contained "&{"
 syn region htmlSpecialChar start=+{!+ end=+}+
 
+" fix syntax breakage when using CSS url("{!merge expression}")
+syn region cssURL contained matchgroup=cssFunctionName start="\<url\s*('{!" end="}')" oneline extend
+syn region cssURL contained matchgroup=cssFunctionName start="\<url\s*(\"{!" end="}\")" oneline extend
+
+
