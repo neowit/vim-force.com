@@ -244,7 +244,9 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 	endif
 
     let l:command = "deployModified"
-	if has_key(attributeMap, "tooling") 
+    let l:isTooling = has_key(attributeMap, "tooling")
+
+	if l:isTooling 
         let l:command = "runTestsTooling"
         if 'async' == attributeMap["tooling"]
 		    let l:extraParams["async"] = "true"
@@ -255,6 +257,16 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
     if "deployModified" == l:command
         " current version only asks Metadata API log level
         call apexLogActions#askLogLevel(a:filePath, 'meta')
+        
+    elseif has_key(attributeMap, "tooling")
+
+        call apexLogActions#askLogLevel(a:filePath, 'tooling')
+        if exists('g:apex_test_traceFlag')
+            let tempTraceConfigFilePath = apexLogActions#saveTempTraceFlagConfig(g:apex_test_traceFlag)
+		    
+            let l:extraParams["traceFlagConfig"] = apexOs#shellescape(tempTraceConfigFilePath)
+            "let l:extraParams["scope"] = "user"
+        endif
     endif    
 
 	let resMap = apexTooling#execute(l:command, projectName, projectPath, l:extraParams, [])
@@ -543,7 +555,23 @@ endfunction
 
 function! apexTooling#openLastLog()
 	if exists("s:apex_last_log")
-		:execute "e " . fnameescape(s:apex_last_log)
+        "s:apex_last_log contains path to single log file
+        :execute "e " . fnameescape(s:apex_last_log)
+    elseif exists("s:apex_last_log_by_class_name")    
+        if type({}) == type(s:apex_last_log_by_class_name)
+            " s:apex_last_log_by_class_name contans map: {class-name -> file-path}
+            " 
+            "fill location list with this information
+            let l:logList = []
+            for fName in sort(keys(s:apex_last_log_by_class_name))
+                let l:text = fName
+                let l:filePath = s:apex_last_log_by_class_name[fName]
+                let l:line = {"filename": l:filePath, "lnum": 1, "col": 1, "text": l:text}
+                call add(l:logList, l:line)
+            endfor
+            call setloclist(0, l:logList)
+            :lopen
+        endif
 	else
 		call apexUtil#info('No Log file available')
 	endif
@@ -986,9 +1014,25 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 			call apexUtil#info("Log file is available, use :ApexLog to open it")
 			let s:show_log_hint = 0
 		endif
-	elseif exists("s:apex_last_log")
-		unlet s:apex_last_log
+	else
+        if exists("s:apex_last_log")
+		    unlet s:apex_last_log
+        endif    
+
+        "try LOG_FILE_BY_CLASS_NAME map
+        let logFileRes = s:grepValues(responseFilePath, "LOG_FILE_BY_CLASS_NAME=")
+
+        if !empty(logFileRes)
+            let s:apex_last_log_by_class_name = eval(logFileRes[0])
+            if s:show_log_hint
+                call apexUtil#info("Log file is available, use :ApexLog to open it")
+                let s:show_log_hint = 0
+            endif
+        elseif exists("s:apex_last_log_by_class_name")
+		    unlet s:apex_last_log_by_class_name
+        endif    
 	endif
+
     let l:disableMorePrompt = s:hasOnCommandComplete()
 
 	let errCount = s:parseErrorLog(responseFilePath, a:projectPath, a:displayMessageTypes, isSilent, l:disableMorePrompt)
