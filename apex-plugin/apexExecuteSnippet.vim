@@ -103,7 +103,7 @@ function apexExecuteSnippet#repeat(method, filePath, ...)
 endfunction
 
 function s:executeAnonymous(filePath, projectName, codeFile)
-	call apexTooling#askLogLevel()
+	call apexLogActions#askLogLevel(a:filePath, 'meta')
 
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
@@ -122,7 +122,6 @@ endfunction
 
 let s:lastSoqlQueryFilePath = ""
 function s:executeSoqlQuery(filePath, api, projectName, codeFile)
-	"call apexTooling#askLogLevel()
 
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path

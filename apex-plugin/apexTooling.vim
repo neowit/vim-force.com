@@ -15,7 +15,6 @@ let g:loaded_apexTooling = 1
 let s:SESSION_FOLDER = ".vim-force.com"
 
 let s:show_log_hint = 1 " first time log is available tell user about that
-let s:LOG_LEVEL = 'None'
 " check that required global variables are defined
 let s:requiredVariables = ["g:apex_tooling_force_dot_com_path"]
 for varName in s:requiredVariables
@@ -255,7 +254,7 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
     endif
     if "deployModified" == l:command
         " current version only asks Metadata API log level
-        call apexTooling#askLogLevel()
+        call apexLogActions#askLogLevel(a:filePath, 'meta')
     endif    
 
 	let resMap = apexTooling#execute(l:command, projectName, projectPath, l:extraParams, [])
@@ -574,15 +573,6 @@ function apexTooling#openScratchFile(filePath)
 	endif
 	:execute "e " . fnameescape(scratchFilePath)
 
-endfunction
-
-" ask user which log type to use for running unit tests 
-" result is assigned value of g:apex_test_logType variable
-function! apexTooling#askLogLevel()
-	if exists('g:apex_test_logType')
-		let s:LOG_LEVEL = g:apex_test_logType
-	endif
-	let g:apex_test_logType = apexUtil#menu('Select Log Type', ['None', 'Debugonly', 'Db', 'Profiling', 'Callout', 'Detail'], s:LOG_LEVEL)
 endfunction
 
 " delete members of specified metadata types
