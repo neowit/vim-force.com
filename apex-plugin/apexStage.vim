@@ -20,13 +20,13 @@ let b:PROJECT_NAME = ""
 let b:PROJECT_PATH = ""
 let s:BUFFER_NAME = 'vim-force.com Staged Files'
 
-let s:instructionPrefix = '||'
-let s:instructionFooter = '='
+let s:commentedLine = '#'
 let s:header = [
-			\ "|| vim-force.com plugin - managing staged files",
-			\ "||",
-			\ "|| review staged files and run :Write when done" ,
-			\ "============================================================================="
+			\ "# vim-force.com plugin - managing staged files",
+			\ "# ..........................................................................",
+			\ "# Review staged files and run :Write when done" ,
+            \ "# You can comment out lines by putting hash # in front of the line",
+			\ "# =========================================================================="
 			\ ]
 let s:headerLineCount = len(s:header)  
 
@@ -81,14 +81,10 @@ function! apexStage#open(filePath)
 	" syntax highlight
 	if has("syntax")
 		syntax on
-		exec "syn match ApexStageInstructionsText '^\s*".s:instructionPrefix.".*'"
-		exec "syn match ApexStageInstructionsFooter '^\s*".s:instructionFooter."*$'"
-		"exec 'syn match ApexStageModifiedItem /'.s:SELECTED_LINE_REGEX.'/'
+		exec "syn match ApexStageCommentedLine '^\s*".s:commentedLine.".*$'"
 	endif
 
-	exec "highlight link ApexStageInstructionsText Constant"
-	exec "highlight link ApexStageInstructionsFooter Comment"
-	"exec "highlight link ApexStageModifiedItem Keyword"
+	exec "highlight link ApexStageCommentedLine Comment"
 endfunction	
 
 function! s:SID()
@@ -141,8 +137,11 @@ function! apexStage#list(projectPath)
 
 	let stageFilePath = apexStage#getStageFilePath(a:projectPath)
 	if filereadable(stageFilePath)
-		for line in readfile(stageFilePath, '', 10000) " assuming stage file will never contain more than 10K lines
-			call add(lines, line)
+		for line in readfile(stageFilePath, '', 10000) " assuming stage file will never contain more than 10K lines 
+            " remove commented out lines
+            if line  !~ "^\\W*#"
+                call add(lines, line)
+            endif
 		endfor
 	endif
 	return lines
