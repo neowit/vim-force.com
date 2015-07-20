@@ -270,7 +270,7 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
     endif    
 
 	let resMap = apexTooling#execute(l:command, projectName, projectPath, l:extraParams, [])
-    if "true" == resMap["success"]
+    if has_key(resMap, "responseFilePath")
         let responsePath = resMap["responseFilePath"]
         let coverageFiles = s:grepValues(responsePath, "COVERAGE_FILE=")
         if len(coverageFiles) > 0
