@@ -478,18 +478,29 @@ Param: 1 - mode: 'meta-testAndDeploy', 'meta-checkOnly',
                 'tooling-sync', 'tooling-async'
             default: 'testAndDeploy'
            Note: 
-            - 'meta-testAndDeploy' runs all test methods in a specified class(es)
+            - 'meta-testAndDeploy' runs all test methods in a specified class(es).
+            
             - 'meta-checkOnly' 
-              - can run all or specific test method(s) in a class
+              - can run all or specific test method(s) in a class(es)
               - does not save modified files to SFDC regardless of test
-                outcome  
-            - 'tooling-sync' and 'tooling-async' can only work with files
-               already saved in remote SFDC. For this reason
-               tooling-force.com.jar will try to save modified files (if any)
-               before attempting to run the test.
-            - 'tooling-sync' runs all test method(s) in specified class(es)
-            - 'tooling-async' can run all or specific test method(s) in
-              specified class(es)
+                outcome.
+            
+            - 'tooling-sync' and 'tooling-async' use Tooling API and can only
+              work with files already saved in remote SFDC. For this reason
+              tooling-force.com.jar will try to save modified files (if any)
+              before attempting to run the test(s).
+
+            - depending on current SFDC system load you may find that in some
+              cases 'tooling-sync' completes faster than 'tooling-async' even
+              though 'tooling-async' is advertised in the documentation as
+              "allows methods to process in parallel".
+            
+            - 'tooling-sync' runs all test method(s) in specified class(es).
+              Execution is synchronous.
+
+            - 'tooling-async' runs one or more methods within one or more Apex
+              classes, using the asynchronous test execution mechanism.
+              - can run all or specific test method(s) in a class(es)
 
 Param: 2 - class name - use this parameter to run only unit tests in a specific
            class. Multiple test class names can be specified separated by ','.
