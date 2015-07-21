@@ -56,6 +56,7 @@ Other vim plugins recommended for use alongside vim-force.com plugin
   - whole buffer or selected lines  
 
 * Execute [SOQL query](http://youtu.be/RhjJVMh-50I)
+  - supports Partner and Tooling APIs
           
 * Persistent "Stage" for cherry-picking and re-using list of components to be deployed or deleted
 
