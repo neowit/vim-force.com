@@ -2,6 +2,14 @@
 
 salesforce.com / force.com plugin for Vim version 7.3 or later.  
 
+##### Update July 2015  
+If you do not get code coverage data when running `:ApexTestWithCoverage` using
+one of `meta-*` flags then you are most likely affected by a 
+[bug in Metadata API Summer'15](http://salesforce.stackexchange.com/questions/84797/metadata-deploy-test-code-coverage-report-is-broken-in-metadata-api-v34-0-sum).  
+Workaround 1: use `:ApexTestWithCoverage` with `tooling-sync` or `tooling-async` flag.  
+Workaround 2: fall back to [tooling-force.com-0.3.3.3.jar](https://github.com/neowit/tooling-force.com/releases/tag/v0.3.3.3). 
+Note: you will lose some of newer functions.  
+
 ##### Update March 2015  
 If you are getting `Internal Server Error` when trying to deploy/save list of files which contain both Aura bundle(s) and Apex Class/Page then you are most likely affected by what appears to be a bug in Spring'15. 
 Current workaround is to deploy Apex Classes/Pages first (:ApexDeployOne or :ApexDeployOpen or :ApexDeployStaged) and then call :ApexDeploy or :ApexSave as usual.
