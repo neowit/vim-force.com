@@ -32,7 +32,7 @@ function apexCoverage#quickFixOpen(...) abort
 			let linesTotalNum = coverage["linesTotalNum"]
 			let linesNotCoveredNum = coverage["linesNotCoveredNum"]
 			let linesCoveredNum = (linesTotalNum - linesNotCoveredNum)
-			let percent = linesCoveredNum * 100 / linesTotalNum
+			let percent = linesTotalNum > 0 ? linesCoveredNum * 100 / linesTotalNum : 0
 			let fullPathName = apexOs#joinPath(projectPath, coverage["path"])
 
 			let line.filename = fullPathName
