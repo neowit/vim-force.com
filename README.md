@@ -74,7 +74,7 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
 
 * Create triggers/classes/pages
 
-* Refresh current file from SFDC, Refresh whole project from SFDC
+* Refresh project from SFDC
 
 * Search
   - find word in classes/triggers  
@@ -84,17 +84,15 @@ Support for metadata types that reside inside folders (e.g. Document, Dashboard 
 * Syntax highlighting
   - supports syntax highlighting of Apex Classes, Triggers, Pages, JS Resources
 
-* List candidates for [auto-completion](http://youtu.be/u-6JQNuWRdE) in Apex classes
-	- try following in .cls file  
-	  String str = 'abc';  
-	  str. `Ctrl-X,Ctrl-O`  
+* List candidates for [auto-completion](http://youtu.be/u-6JQNuWRdE) in Apex classes. Invoked using vim omni-completion: `Ctrl-X,Ctrl-O`
 
-* List candidates (field names, object types, relationships, etc) for [auto-completion](http://youtu.be/rzqgXV3Gx0s) in SOQL expressions (requires [tooling-force.com v0.3.3.0](https://github.com/neowit/tooling-force.com/releases) or above). Invoked using vim omni-completion: `Ctrl-X,Ctrl-O`
+
+* List candidates (field names, object types, relationships, etc) for [auto-completion](http://youtu.be/rzqgXV3Gx0s) in SOQL expressions. Invoked using vim omni-completion: `Ctrl-X,Ctrl-O`
   
 * Most commands (where it makes sense) can be run against different orgs without leaving current project.  
 e.g.   
 `:ApexQuery` will run selected SOQL query against the Org configured for current project  
-`:ApexQuery MyOtherOrg` will run the same query against 'MyOtherOrg'  
+`:ApexQuery <api> MyOtherOrg` will run the same query against 'MyOtherOrg'.  
 Org name supports auto completion.
 
 * Handling content of zipped .resource files
@@ -142,7 +140,6 @@ There is a number of great Vim plugins which you may want to consider
 - unite.vim or ctrl-p - quick file/buffer open  
 - NERDTree - project/file-system browsing  
 - Pathogen - manage individually installed plugins in ~/.vim/bundle  
-- Session - save/restore open files, like IDE Project  
 - UltiSnip - implements some of TextMate's snippets features in Vim  
 - TagBar - a source code browser plugin for Vim  
 
