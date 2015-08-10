@@ -296,7 +296,28 @@ function apexTooling#printChangedFiles(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {}, [])
 endfunction	
-"
+
+"Args:
+"Param1: path to file which belongs to current apex project
+"Param2: [optional] name of remote <project>.properties file
+function apexTooling#refreshFile(filePath, ...)
+    let l:paths = {}
+	if a:0 > 0 && len(a:1) > 0
+        " specific project, not necessarily the current one
+		let projectName = apexUtil#unescapeFileName(a:1)
+        let l:paths = apexTooling#retrieveSpecific(a:filePath, 'file', projectName)
+    else    
+        " current project
+        let l:paths = apexTooling#retrieveSpecific(a:filePath, 'file')
+	endif
+    if len(l:paths) > 1 && filereadable(l:paths['remoteFile'])
+        call apexOs#copyFile(l:paths['remoteFile'], a:filePath)
+    else
+        call apexUtil#warning("Failed to retrieve remote file or it does not exist on remote.")
+    endif
+
+endfunction
+
 "Args:
 "Param1: path to file which belongs to current apex project
 "Param2: mode: 'project' or 'file'
@@ -304,6 +325,56 @@ endfunction
 "       - 'file' - will compare only current file with its remote counterpart
 "Param3: [optional] name of remote <project>.properties file
 function apexTooling#diffWithRemote(filePath, mode, ...)
+    
+    let leftFile = a:filePath
+    
+    let l:paths = {}
+	if a:0 > 0 && len(a:1) > 0
+        " specific project, not necessarily the current one
+		let projectName = apexUtil#unescapeFileName(a:1)
+        let l:paths = apexTooling#retrieveSpecific(a:filePath, a:mode, projectName)
+    else    
+        " current project
+        let l:paths = apexTooling#retrieveSpecific(a:filePath, a:mode)
+	endif
+    if len(l:paths) > 0
+        let modeMsg = 'file' == a:mode ? "files" : "folders"
+        if apexUtil#input("Run diff tool to compare local and remote ". modeMsg ." [y/N]? ", "YynN", "N") ==? 'y'
+            echo "\n"
+            
+            if 'file' == a:mode
+                let rightFile = l:paths['remoteFile']
+                " compare single files
+                call apexUtil#compareFiles(leftFile, rightFile)
+            else
+                " compare top of local and retrieved projects
+                let srcPath = apex#getApexProjectSrcPath(leftFile)
+                " remove temp package.xml because it contains only last
+                " retrieved metadata type
+                call delete(apexOs#joinPath(srcPath, 'package.xml'))
+
+                call apexUtil#compareFiles(srcPath, l:paths['remoteSrcDir'])
+            endif
+        endif    
+    else
+        if 'file' == a:mode
+            call apexUtil#warning("Failed to retrieve remote file or it does not exist on remote.")
+        endif
+    endif
+
+endfunction	
+
+" this method is used for :ApexDiffWithRemote[File|Project] and for :ApexRefreshFile
+"Args:
+"Param1: path to file which belongs to current apex project
+"Param2: mode: 'project' or 'file'
+"       - 'project' - will retrieve all project files into a temp folder and
+"                     return its location
+"       - 'file' - will retrieve a single file (or aura bundle) and return
+"                 single file location
+"Param3: [optional] name of remote <project>.properties file
+"Return: dictionary: {'remoteSrcDir': '/path/to/temp/src...', 'remoteFile': '/path/to/temp/src/.../file'}
+function apexTooling#retrieveSpecific(filePath, mode, ...)
     let leftFile = a:filePath
     let l:mode = a:mode
     
@@ -314,9 +385,7 @@ function apexTooling#diffWithRemote(filePath, mode, ...)
 		let projectName = apexUtil#unescapeFileName(a:1)
 	endif
 
-
     let l:extraParams = {"typesFileFormat" : "packageXml"}
-
 
     if 'file' == l:mode
 
@@ -340,14 +409,11 @@ function apexTooling#diffWithRemote(filePath, mode, ...)
         let l:extraParams = {"typesFileFormat" : "file-paths", "specificTypes" : tempFile}
     endif
     
+    " 'diffWithRemote' here is not a mistake, it is more suitable than 'bilkRetrieve' for current purpose
     let resMap = apexTooling#execute("diffWithRemote", projectName, projectPair.path, l:extraParams, [])
 	if "true" == resMap["success"]
         let responseFilePath = resMap["responseFilePath"]
         let l:values = s:grepValues(responseFilePath, "REMOTE_SRC_FOLDER_PATH=")
-        echo "\n"
-        let modeMsg = 'file' == l:mode ? "files" : "folders"
-        if len(l:values) > 0 && apexUtil#input("Run diff tool to compare local and remote ". modeMsg ." [y/N]? ", "YynN", "N") ==? 'y'
-            echo "\n"
             let remoteSrcFolderPath = l:values[0]
             let srcPath = apex#getApexProjectSrcPath(leftFile)
             if 'file' == l:mode
@@ -355,15 +421,13 @@ function apexTooling#diffWithRemote(filePath, mode, ...)
                 let rightProjectFolder = apexOs#splitPath(remoteSrcFolderPath).head
                 let filePathRelativeProjectFolder = apex#getFilePathRelativeProjectFolder(leftFile)
                 let rightFile = apexOs#joinPath(rightProjectFolder, filePathRelativeProjectFolder)
-                call apexUtil#compareFiles(leftFile, rightFile)
-
+                return {'remoteSrcDir': remoteSrcFolderPath, 'remoteFile': rightFile}
             else
-                " compare top of local and retrieved projects
-                call apexUtil#compareFiles(srcPath, remoteSrcFolderPath)
+                return {'remoteSrcDir': remoteSrcFolderPath, 'remoteFile': ''}
             endif
-        endif
     endif
-endfunction	
+    return {}
+endfunction
 
 function s:reportModifiedFiles(modifiedFiles)
 	let modifiedFiles = a:modifiedFiles

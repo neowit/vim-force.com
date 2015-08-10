@@ -63,6 +63,7 @@ function! s:toolingJarSpecific()
 	"command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployConfirm :call apexTooling#deploy('Confirm', <f-args>)
 
 	command! -nargs=0 ApexRefreshProject :call apexTooling#refreshProject(expand("%:p"))
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexRefreshFile :call apexTooling#refreshFile(expand("%:p"), <f-args>)
 
 	command! ApexPrintChanged :call apexTooling#printChangedFiles(expand("%:p"))
 	command! ApexPrintConflicts :call apexTooling#printConflicts(expand("%:p"))

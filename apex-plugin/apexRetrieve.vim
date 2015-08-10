@@ -114,7 +114,6 @@ function! apexRetrieve#open(filePath)
 	exec "highlight link ApexRetrieveInstructionsFooter Comment"
 	exec "highlight link ApexRetrieveSelectedItem Keyword"
 
-
 endfunction
 
 " mark entry as Selected/Deselected
