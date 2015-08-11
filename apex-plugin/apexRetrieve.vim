@@ -98,6 +98,7 @@ function! apexRetrieve#open(filePath)
 		"exec 'command! -buffer -bang -nargs=0 Expand :call <SNR>'.s:sid.'_ExpandSelected()'
 		exec 'command! -buffer -bang -nargs=0 Retrieve :call <SNR>'.s:sid.'_RetrieveSelected()'
 		exec 'command! -buffer -bang -nargs=0 Expand :call <SNR>'.s:sid.'_ExpandSelected()'
+		exec 'command! -buffer -bang -nargs=0 Reload :call <SNR>'.s:sid.'_ReloadFromRemote()'
 
 	endif
 
@@ -264,6 +265,18 @@ function! <SID>ExpandSelected()
 
 endfunction
 
+
+" remove current cache and reload from remote
+function! <SID>ReloadFromRemote()
+    let fPath = s:getMetadataResultFilePath(b:PROJECT_PATH)
+    if filereadable(fPath)
+        call delete(fPath)
+        :bdelete
+        call apexRetrieve#open(expand("%:p"))
+    endif
+
+
+endfunction
 
 let s:LOADED_CHILDREN_BY_ROOT_TYPE = {}
 "Returns: dictionary {xmlTypeName: [child-components]}
@@ -587,10 +600,14 @@ function! s:getMetaTypesMap(projectName, projectPath, forceLoad)
 	return s:getMetaTypesMapToolingJar(a:projectName, a:projectPath, a:forceLoad)
 endfunction
 
-"depending on the currenc command set metadata descrption can be in two
+"depending on the current command set metadata description can be in two
 "different formats
 function! s:getMetadataResultFile()
 	return "describeMetadata-result.js"
+endfunction
+
+function! s:getMetadataResultFilePath(projectPath)
+	return apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:getMetadataResultFile()])
 endfunction
 
 "load metadata description using toolingJar
@@ -603,7 +620,7 @@ endfunction
 "'CustomLabels': {'InFolder': 'false', 'DirName': 'labels', 'ChildObjects':['CustomLabel'], 'HasMetaFile': 'false', 'Suffix': 'labels'}, 
 "…}
 function! s:getMetaTypesMapToolingJar(projectName, projectPath, forceLoad)
-	let allMetaTypesFilePath = apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:getMetadataResultFile()])
+	let allMetaTypesFilePath = s:getMetadataResultFilePath(a:projectPath)
 
 	if !filereadable(allMetaTypesFilePath) || a:forceLoad
 		let res = apexTooling#loadMetadataList(a:projectName, a:projectPath, allMetaTypesFilePath)
@@ -765,9 +782,10 @@ function! s:init(projectPath)
 				\ "|| t=toggle Select/Deselect",
 				\ "|| :Expand = retrieve children of selected types for further selection",
 				\ "|| :Retrieve = retrieve selected types into the project folder",
+				\ "|| :Reload = discard existing local cache of metadata types and reload them from remote Org",
 				\ "|| ",
 				\ "|| NOTE: cached list of CORE metadata types is stored in: ",
-				\ "||		 '".apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:getMetadataResultFile()])."' file.",
+				\ "||		 '".s:getMetadataResultFilePath(a:projectPath)."' file.",
 				\ "||		To clear cached types delete this file and run :ApexRetrieve to reload fresh version.",
 				\ "============================================================================="
 				\ ]
