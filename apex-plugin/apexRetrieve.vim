@@ -614,13 +614,14 @@ function! s:getMetaTypesMapToolingJar(projectName, projectPath, forceLoad)
 	let typesMap = {}
 	for line in readfile(allMetaTypesFilePath, '', 10000) " assuming metadata types file will never contain more than 10K lines
 		" replace all json false/true with 'false'/'true'
-		let lineFixed = substitute(line, ":true", ": 'true'", "g")
-		let lineFixed = substitute(lineFixed, ":false", ": 'false'", "g")
+		let lineFixed = substitute(line, ":\\s*true", ": 'true'", "g")
+		let lineFixed = substitute(lineFixed, ":\\s*false", ": 'false'", "g")
 
 		try
 			let lineMap = eval(lineFixed)
 		catch
 			" dump debug info
+            echo "failed ot convert JSON to vim dictionary"
 			echo "before"
 			echo line
 			echo "after"
