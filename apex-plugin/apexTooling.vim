@@ -301,17 +301,33 @@ endfunction
 "Param1: path to file which belongs to current apex project
 "Param2: [optional] name of remote <project>.properties file
 function apexTooling#refreshFile(filePath, ...)
+    let filePath = a:filePath
+    " check if current file is part of unpacked static resource
+    let resourcePath = apexResource#getResourcePath(a:filePath)
+    let isUnpackedResource = 0
+
+    if len(resourcePath) > 0
+        "current filePath is something like this
+        ".../project1/resources_unpacked/my.resource/css/main.css
+        "swap unpacked file with its corresponding <name>.resource
+        let filePath = resourcePath
+        let isUnpackedResource = 1
+    endif    
     let l:paths = {}
 	if a:0 > 0 && len(a:1) > 0
         " specific project, not necessarily the current one
 		let projectName = apexUtil#unescapeFileName(a:1)
-        let l:paths = apexTooling#retrieveSpecific(a:filePath, 'file', projectName)
+        let l:paths = apexTooling#retrieveSpecific(filePath, 'file', projectName)
     else    
         " current project
-        let l:paths = apexTooling#retrieveSpecific(a:filePath, 'file')
+        let l:paths = apexTooling#retrieveSpecific(filePath, 'file')
 	endif
     if len(l:paths) > 1 && filereadable(l:paths['remoteFile'])
-        call apexOs#copyFile(l:paths['remoteFile'], a:filePath)
+        call apexOs#copyFile(l:paths['remoteFile'], filePath)
+        if isUnpackedResource
+            call apexUtil#warning("You have refreshed zipped static resource, please re-open it explicitly to unpack fresh files.")
+            call apexUtil#info("You may want to delete 'resources_unpacked/".apexOs#splitPath(resourcePath).tail."' before unpacking fresh resource content.")
+        endif    
     else
         call apexUtil#warning("Failed to retrieve remote file or it does not exist on remote.")
     endif
