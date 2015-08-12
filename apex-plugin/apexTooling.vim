@@ -351,7 +351,7 @@ function apexTooling#diffWithRemote(filePath, mode, ...)
                 let srcPath = apex#getApexProjectSrcPath(leftFile)
                 " remove temp package.xml because it contains only last
                 " retrieved metadata type
-                call delete(apexOs#joinPath(srcPath, 'package.xml'))
+                call delete(apexOs#joinPath(l:paths['remoteSrcDir'], 'package.xml'))
 
                 call apexUtil#compareFiles(srcPath, l:paths['remoteSrcDir'])
             endif
