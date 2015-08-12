@@ -957,6 +957,15 @@ endfunction
 " {"specificFiles": "/path/to/temp/file/with/relative/path/names"}
 function! s:deployOnePrepareParams(projectPath)
 	let fullpath = expand('%:p')
+
+    " check if current file is part of unpacked static resource
+    let resourcePath = apexResource#getResourcePath(fullpath)
+    if len(resourcePath) > 0
+        "current fullpath is something like this
+        ".../project1/resources_unpacked/my.resource/css/main.css
+        "swap unpacked file with its corresponding <name>.resource
+        let fullpath = resourcePath
+    endif    
 	let relativePath = strpart(fullpath, len(a:projectPath) + 1) "+1 to remove turn '/src/' into 'src/'
 	return s:prepareSpecificFilesParams([relativePath])
 endfunction

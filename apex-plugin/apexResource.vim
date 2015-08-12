@@ -112,6 +112,31 @@ function! apexResource#write(filePath)
 	"echomsg "wrote ".a:filePath
 endfunction
 
+"Params:
+"Arg1: unpackedFilePath - a file under 'resources_unpacked/<name>.resource' folder
+"Returns: full path to static resource corresponding given unpacked file
+"example:
+"	filePath: .../project1/resources_unpacked/my.resource/css/main.css
+"	result: '.../project1/src/staticresources/my.resource'
+function! apexResource#getResourcePath(filePath)
+    let unpackedResourceDir = s:getBundlePath(a:filePath, 1)
+    if len(unpackedResourceDir) < 1
+        return '' " not inside 'resources_unpacked'
+    endif    
+    
+	let apexResourcesDir = apexOs#joinPath(apexResource#getApexProjectSrcPath(a:filePath), 'staticresources')
+	let resourceName = apexOs#splitPath(unpackedResourceDir).tail
+
+	let resourcePath = apexOs#joinPath(apexResourcesDir, resourceName)
+	let existingResource = filereadable(resourcePath)
+    if existingResource
+        return resourcePath
+    endif
+    return ''
+
+endfunction    
+
+
 function! s:changeDir(newdir) abort
 	try
 		exe "cd ".fnameescape(a:newdir)
@@ -126,12 +151,13 @@ function! s:changeDir(newdir) abort
 endfunction
 
 "Params:
-"Arg: unpackedFilePath - a file under 'resources_unpacked/<name>.resource' folder
+"Arg1: unpackedFilePath - a file under 'resources_unpacked/<name>.resource' folder
+"Arg2: silent: 0|1 [optional]
 "Returns: full path to unpacked resource dir
 "example:
 "	filePath: .../project1/resources_unpacked/my.resource/css/main.css
 "	result: '.../project1/resources_unpacked/my.resource'
-function! s:getBundlePath(unpackedFilePath) abort
+function! s:getBundlePath(unpackedFilePath, ...) abort
 	let path = a:unpackedFilePath
 	let srcDirParent = ""
 	let prevTail = ""
@@ -147,12 +173,12 @@ function! s:getBundlePath(unpackedFilePath) abort
 		let prevTail = pathPair.tail
 	endwhile
 
-	if len(bundlePath) < 1
+    let isSilent = a:0 > 0 && 1 == a:1
+	if len(bundlePath) < 1 && !isSilent
 		call apexUtil#error("Failed to identify resource name for file " . path)
 	endif
 	return bundlePath
 endfunction
-
 
 "Params:
 "Arg: fileUnderSrc - any file under src/ folder
