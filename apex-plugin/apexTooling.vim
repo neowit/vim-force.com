@@ -102,6 +102,9 @@ function apexTooling#deploy(action, mode, bang, ...)
 	if l:subMode == 'checkOnly'
 		let l:extraParams["checkOnly"] = "true"
 	endif
+    if "AllDestructive" == l:mode
+		let l:extraParams["typesFileFormat"] = "packageXml"
+    endif    
 	"ignoreConflicts ?
 	if a:bang || !s:isNeedConflictCheck()
 		let l:extraParams["ignoreConflicts"] = "true"
