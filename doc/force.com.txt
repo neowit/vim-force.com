@@ -754,8 +754,8 @@ files. Use SFDC UI to create new static resource and then call
 ==============================================================================
 SETTINGS                                                   *force.com-settings*
 
-Before using force.com plgin following variables must be defined (ex: in .vimrc)
-The plugin provides the following options that can customise the behaviour the
+Before using force.com plugin following variables must be defined (ex: in .vimrc)
+The plugin provides the following options that can customise the
 force.com plugin behaviour. These options should be set in your vimrc.
 
 All of the examples below are for Unix environments. When defining paths for MS
