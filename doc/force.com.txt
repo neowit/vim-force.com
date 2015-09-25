@@ -583,7 +583,7 @@ offer to update package.xml accordingly.
 *WARNING* :|ApexRetrieve| command is Experimental. You may want to backup your
 project before running :|ApexRetrieve|.
 
-There are 2 potential scenarios which may involve :|ApexReteieve|
+There are 2 potential scenarios which may involve :|ApexRetrieve|
 1. Load all members of given metadata type
    e.g. to load all Custom Objects you will do something like this >
 	:ApexRetrieve
