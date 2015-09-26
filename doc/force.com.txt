@@ -87,7 +87,6 @@ e.g. add these lines into .vimrc (or _vimrc on windows) >
 	set nocompatible 
 	filetype plugin on
 	syntax on
-<
 
 7. If not using pathogen - below lines added on step 6, add 'vim-force.com'
    folder to vim runtime path and make sure it loads apexcode filetype detection
@@ -211,8 +210,280 @@ B. vim force.com plugin standalone                     *apex-plugin-standalone*
 In this mode Eclipse is not needed.
 Run :|ApexInitProject| and follow the wizard
 
-                                                              *ApexInitProject*
-Requires an existing SFDC org. To create one see: https://developer.salesforce.com
+
+------------------------------------------------------------------------------
+Plugin exposes following commands:                              *apex-commands*
+
+|ApexCompare|                       compare files in two local projects
+|ApexCompareLocalProjects|          compare two local projects
+|ApexCompareWithPreRefreshVersion|  compare with pre refresh project state
+|ApexDeploy|                        deploy modified files to SFDC (Metadata API)
+|ApexDeployAll|                     deploy all files in current project (Metadata API)
+|ApexDeployAllDestructive|          deploy all files in current project (Metadata API)
+                                    if there are deleted local files then remove
+                                    them from remote as well 
+|ApexDeployDestructive|             deploy modified files to SFDC (Metadata API)
+                                    if there are deleted local files then remove
+                                    them from remote as well.
+|ApexDeployOpen|                    deploy all open files to SFDC (Metadata API)
+|ApexDeployOne|                     deploy file opened in current buffer (Metadata API)
+|ApexDeployStaged|                  deploy all files listed in Stage cache 
+                                    (Metadata API)
+|ApexDiffWithRemoteFile|            compare local file with its remote version
+|ApexDiffWithRemoteProject|         compare local project with its remote version
+|ApexExecuteAnonymous|              run 'Execute Anonymous'
+|ApexExecuteAnonymousRepeat|        repeat last 'Execute Anonymous'
+|ApexGitInit|                       initialise new Git repository for current 
+                                    project
+|ApexInitProject|                   initialise new SFDC project
+|ApexLog|                           view last log
+|ApexNewFile|                       create new file
+|ApexPrintChanged|                  display all modified files
+|ApexPrintConflicts|                list potential conflicts between local and remote
+|ApexQuery|                         execute selected SOQL query
+|ApexQueryRepeat|                   repeat last SOQL query
+|ApexRefreshFile|                   refresh current file from SFDC
+|ApexRefreshProject|                refresh project from SFDC
+|ApexRemoveStaged|                  remove Staged files from target SFDC ORG
+|ApexRetrieve|                      retrieve specified metadata types from server
+|ApexSave|                          save modified files to SFDC (Tooling API)
+|ApexSaveOne|                       save file opened in current buffer
+                                    (Tooling API)
+|ApexSaveOpen|                      save all open files to SFDC (Tooling API)
+|ApexScratch|                       open scratch pad
+|ApexStage|                         show/switch-to "Stage" buffer
+|ApexStageAdd|                      add to Stage file in the current buffer
+|ApexStageAddOpen|                  add to Stage files from all open buffers
+|ApexStageClear|                    clear Stage buffer
+|ApexStageRemove|                   remove file in the current buffer from Stage cache 
+|ApexTest|                          run Unit Test(s) 
+|ApexTestCoverageHideAll|           hide per-line coverage highligh in all files
+|ApexTestCoverageShow|              show per-line coverage highligh for file in 
+                                    the current or specified buffer
+|ApexTestCoverageToggle|            toggle per-line coverage highligh in
+                                    current file
+|ApexTestWithCoverage|              run Unit Tests and generate per-line coverage
+|ApexTListToggle|                   toggle taglist (works if 'taglist' plugin 
+                                    is installed)
+|ApexToolingVersion|                show version of tooling-force.com.jar
+
+------------------------------------------------------------------------------
+
+                                                                   *ApexCompare*
+
+Imagine you have 2 sandboxes of the same Org and want to compare current file
+with its counterpart in another sandbox
+
+Example:
+Assume following salesforce project folder structure
+    .../some-path/sandbox 1/src
+    .../some-path/prod org/src
+'some-path' may be root of eclipse workspace or any other folder
+
+':ApexCompare' will open directory selection dialogue
+Assuming current project is 'sandbox 1' select 'prod org' folder and system
+will open specified (|'g:apex_diff_cmd'|) diff tool with both files 
+
+                                                      *ApexCompareLocalProjects*
+
+Similar to :|ApexCompare| but instead of individual files this command calls
+external diff tool on "src" folders of two projects.
+Imagine you have 2 sandboxes of the same Org and want to compare current 
+project with its counterpart in another sandbox file list wise.
+
+Example:
+Assume following salesforce project folder structure:
+    .../some-path/sandbox 1/src
+    .../some-path/prod org/src
+'some-path' may be root of eclipse workspace or any other folder
+
+':|ApexCompareLocalProjects|' will open directory selection dialogue.
+Assuming current project is 'sandbox 1' select 'prod org' folder and system
+will open specified (|'g:apex_diff_cmd'|) diff tool with "src" folders of both
+projects.
+
+                                              *ApexCompareWithPreRefreshVersion*
+
+Every time when refresh from SFDC is executed system backs up modified files
+from local project in the location specified by |'g:apex_backup_folder'|
+Once refresh is complete it is possible to quickly open diff tool to compare
+current file with its pre-refresh version.
+Same as with |ApexCompare| you only have to pick top level folder of the
+relevant backup i.e. parent of ./src/ folder, no need to drill down into
+project subfolders.
+
+                                                                    *ApexDeploy*
+
+Use :|ApexDeploy| to deploy all modified files of current project to SFDC.
+See also :|ApexPrintChanged|.
+
+All commands in :|ApexDeploy|* family support 2 optional arguments 
+- deployment mode: normal deploy or 'checkOnly'
+- 'project name' to deploy to. This name should match file name part of
+  .properties file which contains access details.
+See |force.com-settings| for details about .properties files.
+For example if I am working in "My Sandbox1" project and have 2 .properties 
+files:
+"My Sandbox 1.properties" and "My Sandbox 2.properties" then >
+ :ApexDeploy
+<will deploy by default using "My Sandbox 1.properties" file, while >
+ :ApexDeploy My\ Sandbox\ 2
+<will deploy files from current project using "My Sandbox 2.properties" file.
+
+Project name argument of all commands in :|ApexDeploy|* family supports 
+completion.
+For instance, using project names from the example above >
+ :ApexDeploy checkOnly My<Tab>
+< will offer "My Sandbox 1" and "My Sandbox 2"
+
+Note 1: Uses Metadata API.
+
+Note 2: See also :|ApexSave|
+
+Note 3: All commands in :|ApexDeploy|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
+
+                                                                 *ApexDeployAll*
+
+Deploy all files in current project. This feature works reasonably well with
+code files, custom labels, page layouts and many other metadata types but
+suffers from the same limitations as salesforce.com library for Ant. 
+For example - it will not create new Profiles. If profile already exists, then it
+will complain that it can not rename it, even if you are not trying to rename.
+If there are Objects and Workflows in current project then SFDC may complain
+that Objects have to be created before workflows, even if all objects already
+exist in SFDC.
+
+Note 1: Uses Metadata API.
+
+Note 2: All commands in :|ApexDeploy|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
+
+                                                      *ApexDeployAllDestructive*
+
+*WARNING:*
+This is a dangerous and destructive operation - use it at your peril!
+
+In addition to behaving like :|ApexDeployAll|, it also removes files that live
+remotely but that do not live locally. The files to which this applies to are
+determined by your package.xml file.
+
+It is wise to check :|ApexDiffWithRemoteProject| to see which files have changed,
+and which files will be removed.
+
+This command is useful when you are using version control systems like git and
+treat them as your source of truth.
+
+Note 1: Uses Metadata API.
+
+Note 2: All commands in :|ApexDeploy|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
+
+                                                         *ApexDeployDestructive*
+
+*WARNING:* 
+This is a dangerous and destructive operation - use it at your peril!
+
+You can think of :ApexDeployDestructive as a combination of :|ApexDeploy| and
+:|ApexRemoveStaged| executed in one go. 
+Unlike :|ApexRemoveStaged| you do not have to add anything manually to the
+Stage and the Stage is not used/touched.
+
+In addition to deploying modified files there will be a check done to see if
+local session contains information about local files that no longer exist on
+the local machine. If such files are detected, they will be deleted from SFDC
+as well.
+
+It is always a good idea to run :|ApexPrintChanged| before
+:|ApexDeployDestructive| to make sure that you know what files will be deleted in
+"Destructive" part.
+
+Example:
+- create file MyClass.cls using :|ApexNewFile|
+- run :ApexDeploy
+  this will upload MyClass to SFDC and record MyClass.cls in the local session 
+  store
+- delete local file MyClass.cls & MyClass.cls-meta.xml from your drive
+- run :ApexDeployDestructive
+  this will deploy any modifications to existing files and also remove
+  MyClass.cls from SFDC
+
+Note 1: Uses Metadata API.
+
+Note 2: All commands in :|ApexDeploy|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
+
+                                                                *ApexDeployOpen*
+
+Deploy to SFDC all files open in current Vim instance.
+
+Note 1: Uses Metadata API.
+Note 2: All commands in :|ApexDeploy|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
+
+                                                                 *ApexDeployOne*
+
+Deploy to SFDC single file from current buffer.
+
+Note 1: Uses Metadata API.
+Note 2: All commands in :|ApexDeploy|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
+
+                                                              *ApexDeployStaged*
+
+Deploy all files previously added by :|ApexStageAdd| command.
+
+Note 1: Uses Metadata API.
+Note 2: All commands in :|ApexDeploy|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
+
+                                                        *ApexDiffWithRemoteFile*
+
+Compare current file with its remote counterpart.
+Params:
+- [optional] - name of remote project (e.g. another sandbox)
+  Name must match .properties file
+  If provided then difference will be shown between current (local) project
+  file and file in the specified remote Org.
+
+                                                     *ApexDiffWithRemoteProject*
+
+List file differences between local and remote project.
+Params:
+- [optional] - name of remote project (e.g. another sandbox)
+  Name must match .properties file
+  If provided then differences will be listed between current (local) project
+  files and files in the specified remote Org.
+
+                                                          *ApexExecuteAnonymous*
+
+Execute a block of code.
+Block can be either whole current buffer or visual selection
+
+                                                    *ApexExecuteAnonymousRepeat*
+
+A shortcut to repeat last :|ApexExecuteAnonymous| command.
+Useful when you want to re-run visual selection which is not currently selected,
+or you are not in the buffer where last :|ApexExecuteAnonymous| was run.
+
+                                                                   *ApexGitInit*
+
+If git is available then :|ApexGitInit| can be used to initialise new git
+repository in current force.com project and add (with confirmation) existing
+source files.
+
+Supported resources types:
+ -labels
+ -pages
+ -classes
+ -triggers
+ -components
+ -static resources
+
+                                                               *ApexInitProject*
+
+Requires an existing SFDC org. To create one see: 
+https://developer.salesforce.com
 
 Asks project location/login related questions (see below) and creates a new
 project folder and properties file.
@@ -234,237 +505,167 @@ specified by |g:apex_properties_folder|.
 Once project is setup you can proceed with creation of Class/Page/Trigger using
 :|ApexNewFile|
 
-------------------------------------------------------------------------------
-Plugin exposes following commands:                              *apex-commands*
+                                                                       *ApexLog*
 
-|ApexCompare|                       compare files in two local projects
-|ApexCompareLocalProjects|          compare two local projects
-|ApexCompareWithPreRefreshVersion|  compare with pre refresh project state
+A shortcut to open (if available) log file generated by last Apex* command.
 
-|ApexDiffWithRemoteProject|                compare local project with its remote version
-|ApexDiffWithRemoteFile|            compare local file with its remote version
+                                                                   *ApexNewFile*
 
-|ApexStage|                         show/switch-to "Stage" buffer
-|ApexStageAdd|                      add to Stage file in the current buffer
-|ApexStageAddOpen|                  add to Stage files from all open buffers
-|ApexStageRemove|                   remove from Stage file in the current buffer
-|ApexStageClear|                    clear Stage buffer
+Invoke file types menu and create Apex file (class, trigger, etc). 
+Not all files are currently supported.
 
-|ApexDeploy|                        deploy modified files to SFDC (Metadata API)
-|ApexDeployDestructive|             deploy modified files to SFDC (Metadata API)
-                                    if there are deleted local files then remove
-                                    them from remote as well.
-|ApexSave|                          save modified files to SFDC (Tooling API)
-|ApexDeployOpen|                    deploy all open files
-|ApexDeployAll|                     deploy all files in current project
-|ApexDeployAllDestructive|          deploy all files in current project
-                                    if there are deleted local files then remove
-                                    them from remote as well
-|ApexDeployStaged|                  deploy all files listed in Stage cache
-|ApexTest|                          run Unit Tests 
-|ApexTestWithCoverage|              run Unit Tests and generate per-line coverage
-|ApexTestCoverageShow|              show per-line coverage highligh for file in 
-                                    the current or specified buffer
-|ApexTestCoverageToggle|            toggle per-line coverage highligh in
-                                    current file
-|ApexTestCoverageHideAll|           hide per-line coverage highligh in all files
+Note: File will be created with API version defined by |g:apex_API_version|
+variable.
 
-|ApexGitInit|                       initialise new Git repository for current 
-                                    project
-|ApexPrintChanged|                  display all modified files
-|ApexPrintConflicts|                list potential conflicts between local and remote
+                                                              *ApexPrintChanged*
 
-|ApexRefreshFile|                   refresh current file from SFDC
-|ApexRefreshProject|                refresh project from SFDC
+Display changed files, i.e. candidates for deployment to SFDC.
 
-|ApexTListToggle|                   toggle taglist (works if 'taglist' plugin 
-                                    is installed)
+                                                            *ApexPrintConflicts*
 
-|ApexInitProject|                   initialise new SFDC project
-|ApexNewFile|                       create new file
+Checks if locally modified files have been updated remotely since last time we
+deployed local project.  
+Takes into account only modified files (see :|ApexPrintChanged|), i.e. files
+which would be deployed if :DeployModified command is executed.
+See also |'g:apex_conflict_check'|.
 
-|ApexRetrieve|                      retrieve specified metadata types from server
+                                                                     *ApexQuery*
 
-|ApexRemoveStaged|                  remove Staged files from target SFDC ORG
+Execute block of code as SOQL query.
+Block can be either whole current buffer or visual selection.
+Supports 2 (optional) parameters:
+- API: Partner or Tooling
+- project-name
+Example >
+    :ApexQuery Tooling MyOrg
+<
+                                                               *ApexQueryRepeat*
 
-|ApexLog|                           View last log
-|ApexScratch|                       Open scratch pad
+A shortcut to repeat last :|ApexQuery| command.
+Useful when you want to re-run visual selection which is not currently selected,
+or you are not in the buffer where last :|ApexQuery| was run.
+Supports 2 (optional) parameters, see :|ApexQuery|
 
-|ApexExecuteAnonymous|              run 'Execute Anonymous'
-|ApexExecuteAnonymousRepeat|        repeat last 'Execute Anonymous'
+                                                               *ApexRefreshFile*
 
-|ApexQuery|                         execute selected SOQL query
-|ApexQueryRepeat|                   repeat last SOQL query
+Refresh current (single) file and replace it with its version from SFDC.
 
-|ApexToolingVersion|                show version of tooling-force.com.jar
-------------------------------------------------------------------------------
-                                                                  *ApexCompare*
-Imagine you have 2 sandboxes of the same Org and want to compare current file
-with its counterpart in another sandbox
+Note: :|ApexRefreshFile| uses "diffWithRemote" in the background and only 
+updates selected local file but does not touch local timestamp cache, hence 
+during saving / deploying file to SFDC file still will be considered as 
+outdated.
 
-Example:
-Assume following salesforce project folder structure
-    .../some-path/sandbox 1/src
-    .../some-path/prod org/src
-'some-path' may be root of eclipse workspace or any other folder
+                                                            *ApexRefreshProject*
 
-':ApexCompare' will open directory selection dialogue
-Assuming current project is 'sandbox 1' select 'prod org' folder and system will 
-open specified (|'g:apex_diff_cmd'|) diff tool with both files 
+Refresh current project and download new/modified files from SFDC replacing
+all local files.
 
-                                                      *ApexCompareLocalProjects*
-Similar to :|ApexCompare| but instead of individual files this command calls
-external diff tool on "src" folders of two projects.
-Imagine you have 2 sandboxes of the same Org and want to compare current project
-with its counterpart in another sandbox file list wise.
+                                                              *ApexRemoveStaged*
 
-Example:
-Assume following salesforce project folder structure:
-    .../some-path/sandbox 1/src
-    .../some-path/prod org/src
-'some-path' may be root of eclipse workspace or any other folder
+Delete staged files from current or specified Org. See |ApexStageAdd|.
+Example 1: >
+	:ApexRemoveStaged
+< will remove all files listed in :ApexStage from the current Org
+Example 2: >
+	:ApexRemoveStaged My Other Org
+< will remove staged files from "My Other Org"
 
-':ApexCompareLocalProjects' will open directory selection dialogue.
-Assuming current project is 'sandbox 1' select 'prod org' folder and system
-will open specified (|'g:apex_diff_cmd'|) diff tool with "src" folders of both
-projects.
+See also :|ApexDeployDestructive|
 
-                                             *ApexCompareWithPreRefreshVersion*
-Every time before refresh from SFDC is executed system backs up modified files
-from current project in the location specified by |'g:apex_backup_folder'|
-Once refresh is complete it is possible to quickly open diff tool to compare
-current file with its pre-refresh version.
-Same as with |ApexCompare| you only have to pick top level folder of the
-relevant backup i.e. parent of ./src/ folder, no need to drill down into
-project subfolders.
+                                                                  *ApexRetrieve*
 
-                                                                  *ApexStage*
-Stage is a temporary buffer which can be used as a stack to list files/metadata
-types which will be used in subsequent Deploy/Remove operations.
+Invoke metadata types list "menu" and load data of specified types.  
+Usually :|ApexRefreshProject| will retrieve all types defined in package.xml.
+:|ApexRetrieve| can be used to load types which are not part of current
+package.xml Use this command when package.xml does not yet contain necessary
+metadata type(s). If retrieved type is not part of the package.xml system will
+offer to update package.xml accordingly. 
+*WARNING* :|ApexRetrieve| command is Experimental. You may want to backup your
+project before running :|ApexRetrieve|.
 
-Stage content can be manipulated either by commands like :|ApexStageAdd|,
-:|ApexStageRemove|, :|ApexStageClear|, :|ApexStageAddOpen| or directly like any
-other text buffer.  
-Stage is persistent and retains its content between vim
-editing sessions unless explicitly cleared.  If you use :Write command while in
-Stage buffer, or just switch from Stage to another file/buffer, Stage content
-will be automatically written to a disk file.
-See also :|ApexRemoveStaged| and :|ApexDeployStaged|.
-
-                                                                  *ApexStageAdd*
-Add current file to |ApexStage|.
-
-                                                              *ApexStageAddOpen*
-Cycle through open buffers and add their files to |ApexStage|, provided that
-these are supported apex file types.
-
-                                                                    *ApexDeploy*
-Use :|ApexDeploy| to deploy all modified files of current project to SFDC.
-:|ApexDeploy| uses Metadata API (see also :|ApexSave|)
-See also :|ApexPrintChanged|.
-
-All commands in :|ApexDeploy|* family support 2 optional arguments 
-- deployment mode: normal deploy or 'checkOnly'
-- 'project name' to deploy to.  This name should match file name part of
-  .properties file which contains access details.
-See |force.com-settings| for details about .properties files.
-For example if I am working in "My Sandbox1" project and have 2 .properties files:
-"My Sandbox 1.properties" and "My Sandbox 2.properties" then >
- :ApexDeploy
-<will deploy by default using "My Sandbox 1.properties" file, while >
- :ApexDeploy My\ Sandbox\ 2
-<will deploy files from current project using "My Sandbox 2.properties" file.
-
-Project name argument of all commands in :|ApexDeploy|* family supports completion.
-For instance, using project names from the example above >
- :ApexDeploy checkOnly My<Tab>
-< will offer "My Sandbox 1" and "My Sandbox 2"
-
-All commands in :|ApexDeploy|* family support <bang>, see |'g:apex_conflict_check'|
-for more details.
-
-                                                         *ApexDeployDestructive*
-**WARNING** 
-This is a dangerous and destructive operation - use it at your peril!
-
-You can think of :ApexDeployDestructive as a combination of :|ApexDeploy| and
-:|ApexRemoveStaged| executed in one go. 
-Unlike :|ApexRemoveStaged| you do not have to add anything manually to the
-Stage and the Stage is not used/touched.
-
-In addition to deploying modified files there will be a check done to see if
-local session contains information about local files that no longer exist on
-the local machine.  If such files detected then they will be deleted from SFDC
-as well.
-
-It is always a good idea to run :|ApexPrintChanged| before
-:ApexDeployDestructive to make sure that you know what files will be deleted in
-"Destructive" part
-
-Example:
-- create file MyClass.cls using :|ApexNewFile|
-- run :ApexDeploy
-  this will upload MyClass to SFDC and record MyClass.cls in the local session store
-- delete local file MyClass.cls & MyClass.cls-meta.xml from your drive
-- run :ApexDeployDestructive
-  this will deploy any modifications to existing files and also remove
-  MyClass.cls from SFDC
-
+There are 2 potential scenarios which may involve :|ApexRetrieve|
+1. Load all members of given metadata type
+   e.g. to load all Custom Objects you will do something like this >
+	:ApexRetrieve
+< then select CustomObjects line and then run >
+	:Retrieve
+<
+2. Load selected members of given metadata type
+   e.g. to load only Account metadata you will do something like this >
+	:ApexRetrieve
+< then select CustomObjects line and then run >
+	:Expand
+< then select Account and run >
+	:Retrieve
+<
                                                                       *ApexSave*
 
 Similar to :|ApexDeploy| but uses Tooling API instead of Metadata API.
 Takes modified files and tries to save them to SFDC.
 In some cases (especially in large Orgs) Tooling API may be a bit quicker than
 :|ApexDeploy| which uses Metadata API.
-Note: deploy with Tooling API does not work in Production Orgs.
 
-                                                                *ApexDeployOpen*
-Deploy to SFDC all files open in current Vim instance.
+Note 1: Uses Tooling API.
+Note 2: Deploy with Tooling API does not work in Production Orgs.
+Note 3: All commands in :|ApexSave|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
 
-                                                                 *ApexDeployAll*
-Deploy all files in current project.  This feature works reasonably well with
-code files, custom labels, page layouts and many other metadata types but
-suffers from the same limitations as salesforce.com library for Ant. 
-For example - it will not create new Profiles. If profile already exist then it
-will complain that it can not rename it, even if you are not trying to rename.
-If there are Objects and Workflows in current project then SFDC may complain
-that Objects have to be created before workflows, even if all objects already
-exist in SFDC.
+                                                                   *ApexSaveOne*
 
-                                                      *ApexDeployAllDestructive*
-**WARNING**
-This is a dangerous and destructive operation - use it at your peril!
+Save single file from current buffer.
 
-In addition to behaving like :|ApexDeployAll|, it also removes files that live
-remotely but that do not live locally. The files which this applies to is
-determined by your package.xml file.
+Note 1: Uses Tooling API.
+Note 2: Deploy with Tooling API does not work in Production Orgs.
+Note 3: All commands in :|ApexSave|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
+                                                                  *ApexSaveOpen*
 
-It is wise to check :|ApexDiffWithRemoteProject| to see what files have changed, and
-what files will be removed.
+Saves files from currently opened tabs or buffers.
 
-This command is useful when you are using version control systems like git and
-treat them as your source of truth.
+Note 1: Uses Tooling API.
+Note 2: Deploy with Tooling API does not work in Production Orgs.
+Note 3: All commands in :|ApexSave|* family support <bang>, see 
+|'g:apex_conflict_check'| for more details.
 
-                                                     *ApexDiffWithRemoteProject*
-List file differences between local and remote project.
-Params:
-- [optional] - name of remote project (e.g. another sandbox)
-  Name must match .properties file
-  If provided then differences will be listed between current (local) project
-  files and files in the specified remote Org.
+                                                                   *ApexScratch*
 
-                                                        *ApexDiffWithRemoteFile*
-Compare current file with its remote counterpart.
-Params:
-- [optional] - name of remote project (e.g. another sandbox)
-  Name must match .properties file
-  If provided then difference will be shown between current (local) project
-  file and file in the specified remote Org.
+A shortcut to open a scratch file. 
+Useful when combined with :|ApexExecuteAnonymous| or :|ApexQuery| commands.
 
-                                                              *ApexDeployStaged*
-Deploy all files previously added by :|ApexStageAdd| command.
+                                                                     *ApexStage*
+
+Stage is a temporary buffer which can be used as a stack to list files/metadata
+types which will be used in subsequent Deploy/Remove operations.
+
+Stage content can be manipulated either by commands like :|ApexStageAdd|,
+:|ApexStageRemove|, :|ApexStageClear|, :|ApexStageAddOpen| or directly like any
+other text buffer.  
+Stage is persistent and retains its content between vim editing sessions unless
+explicitly cleared. If you use :Write command while in Stage buffer, or just 
+switch from Stage to another file/buffer, Stage content will be automatically 
+written to a disk file.
+
+See also :|ApexRemoveStaged| and :|ApexDeployStaged|.
+
+                                                                  *ApexStageAdd*
+
+Add current file to |ApexStage|.
+
+                                                              *ApexStageAddOpen*
+
+Cycle through open buffers and add their files to |ApexStage|, provided that
+these are supported apex file types.
+
+                                                                *ApexStageClear*
+
+Clear existing stage cache.
+
+                                                               *ApexStageRemove*
+
+Remove file opened in current buffer from stage cache.
 
                                                                       *ApexTest*
+
 Similar to :|ApexDeploy| but runs unit tests using either Metadata or Tooling
 API.
 If no class name specified then will run tests in all modified classes that
@@ -478,7 +679,8 @@ Param: 1 - mode: 'meta-testAndDeploy', 'meta-checkOnly',
                 'tooling-sync', 'tooling-async'
             default: 'testAndDeploy'
            Note: 
-            - 'meta-testAndDeploy' runs all test methods in a specified class(es).
+            - 'meta-testAndDeploy' runs all test methods in a specified 
+              class(es).
             
             - 'meta-checkOnly' 
               - can run all or specific test method(s) in a class(es)
@@ -533,7 +735,34 @@ Differences to :|ApexDeploy|
 - if you run :|ApexTest| and get unit tests failure(s) or insufficient overall
   code coverage then SFDC rejects changes and you files are NOT saved in SFDC.
 
-                                                      *ApexTestWithCoverage*
+                                                       *ApexTestCoverageHideAll*
+
+Hide test coverage highlight signs in all files.
+
+                                                          *ApexTestCoverageShow*
+
+When last test was run with :|ApexTestWithCoverage| a line-by-line report of
+code coverage in the current file can be shown with :|ApexTestCoverageShow|. 
+Lines not covered by last unit test run will be highlighted with vim 'sign'
+function.
+Note: this command accepts command line parameter - name of open buffer.
+If provided then coverage will be shown for file open in the specified buffer
+instead of current file.
+
+ex 1: with file name (file must be loaded in current or other buffer) >
+ :ApexTestCoverageShow MyClass.cls
+<
+ex 2: without file name (this will attempt to show coverage signs in the current
+file) >
+ :ApexTestCoverageShow
+<
+                                                        *ApexTestCoverageToggle*
+
+Shows or hides code coverage highlight for current file.
+See :|ApexTestCoverageShow| for more details
+
+                                                          *ApexTestWithCoverage*
+
 Similar to :|ApexTest| but also generates line-by-line report of code coverage
 in quickfix buffer.
 
@@ -573,134 +802,20 @@ ex: >
 Note_2: piping is a bit tempremental, so if it does not work then use the
 generic (two commands, each on its own line) version shown above.
 
-                                                         *ApexTestCoverageShow*
-When last test was run with :|ApexTestWithCoverage| a line-by-line report of
-code coverage in the current file can be shown with :|ApexTestCoverageShow|. 
-Lines not covered by last unit test run will be highlighted with vim 'sign'
-function.
-Note: this command accepts command line parameter - name of open buffer.
-If provided then coverage will be shown for file open in the specified buffer
-instead of current file.
+                                                               *ApexTListToggle*
 
-ex 1: with file name (file must be loaded in current or other buffer) >
- :ApexTestCoverageShow MyClass.cls
-<
-ex 2: without file name (this will attempt to show coverage signs in the current file) >
- :ApexTestCoverageShow
-<
-
-                                                       *ApexTestCoverageToggle*
-Shows or hides code coverage highlight for current file.
-See :|ApexTestCoverageShow| for more details
-
-                                                      *ApexTestCoverageHideAll*
-Hide test coverage highlight signs in all files.
-
-                                                                  *ApexGitInit*
-If git is available then :|ApexGitInit| can be used to initialise new git
-repository in current force.com project and add (with confirmation) existing
-source files.
-See apexUtil#gitInit() for the list of supported force.com project resources.
-                                                            
-                                                            *ApexPrintChanged*
-Display changed files, i.e. candidates for deployment to SFDC.
-
-                                                           *ApexPrintConflicts*
-Checks if locally modified files have been updated remotely since last time we
-deployed local project.  
-Takes into account only modified files (see :|ApexPrintChanged|), i.e. files
-which would be deployed if :DeployModified command is executed.
-See also |'g:apex_conflict_check'|.
-
-
-
-                                                              *ApexRefreshFile*
-Refresh current (single) file and replace it with its version from SFDC.
-
-                                                           *ApexRefreshProject*
-Refresh current project and download new/modified files from SFDC replacing
-all local files.
-
-                                                            *ApexTListToggle*
-Helper for 'Tagist' plugin (http://vim-taglist.sourceforge.ne)
+Helper for 'TagList' plugin (http://vim-taglist.sourceforge.net)
 Taglist plugin does not support mixed filetypes like: apexcode.java 
 so we have to trick it like if &filetype was = 'apexcode'
 i.e. every time when Taglist is called set filetype=apexcode temporarely
 and then revert back to what it was 
 See apexcode.vim s:Apex_TList_Toggle() method for more details.
 
-                                                                  *ApexNewFile*
-Invoke file types menu and create Apex file (class, trigger, etc). 
-Not all files currently supported.
-File will be created with API version defined by |g:apex_API_version| variable.
+                                                            *ApexToolingVersion*
 
-                                                                 *ApexRetrieve*
-Invoke metadata types list "menu" and load data of specified types.  
-Usually :|ApexRefreshProject| will retrieve all types defined in package.xml.
-:|ApexRetrieve| can be used to load types which are not part of current
-package.xml Use this command when package.xml does not yet contain necessary
-metadata type(s).  If retrieved type is not part of the package.xml system will
-offer to update package.xml accordingly. 
-*WARNING* :|ApexRetrieve| command is Experimental. You may want to backup your
-project before running :|ApexRetrieve|.
+Return version of tooling-force.com.jar .
 
-There are 2 potential scenarios which may involve :|ApexReteieve|
-1. Load all members of given metadata type
-   e.g. to load all Custom Objects you will do something like this >
-	:ApexRetrieve
-< then select CustomObjects line and then run >
-	:Retrieve
-<
-2. Load selected members of given metadata type
-   e.g. to load only Account metadata you will do something like this >
-	:ApexRetrieve
-< then select CustomObjects line and then run >
-	:Expand
-< then select Account and run >
-	:Retrieve
-<
 
-                                                             *ApexRemoveStaged*
-Delete staged files from current or specified Org. See |ApexStageAdd|.
-Example 1: >
-	:ApexRemoveStaged
-< will remove all files listed in :ApexStage from the current Org
-Example 2: >
-	:ApexRemoveStaged My Other Org
-< will remove staged files from "My Other Org"
-
-See also :|ApexDeployDestructive|
-
-                                                                      *ApexLog*
-A shortcut to open (if available) log file generated by last Apex* command.
-
-                                                                  *ApexScratch*
-A shortcut to open a scratch file. 
-Useful when combined with :|ApexExecuteAnonymous| or :|ApexQuery| commands.
-
-                                                         *ApexExecuteAnonymous*
-Execute a block of code.
-Block can be either whole current buffer or visual selection
-
-                                                   *ApexExecuteAnonymousRepeat*
-A shortcut to repeat last :|ApexExecuteAnonymous| command.
-Useful when you want to re-run visual selection which is not currently selected,
-or you are not in the buffer where last :|ApexExecuteAnonymous| was run.
-
-                                                                    *ApexQuery*
-Execute block of code as SOQL query.
-Block can be either whole current buffer or visual selection.
-Supports 2 (optional) parameters:
-- API: Partner or Tooling
-- project-name
-Example >
-    :ApexQuery Tooling MyOrg
-<
-                                                              *ApexQueryRepeat*
-A shortcut to repeat last :|ApexQuery| command.
-Useful when you want to re-run visual selection which is not currently selected,
-or you are not in the buffer where last :|ApexQuery| was run.
-Supports 2 (optional) parameters, see :|ApexQuery|
 
 ==============================================================================
                                                                 *auto-complete*

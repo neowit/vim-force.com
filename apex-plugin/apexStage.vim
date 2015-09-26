@@ -230,7 +230,7 @@ function! apexStage#remove(filePath)
 
 endfunction	
 
-" delete Stage buffer if loaded and clear lobal variable
+" delete Stage buffer if loaded and clear global variable
 function! apexStage#kill()
 	if exists("g:APEX_STAGE_BUF_NUM")
 		if bufloaded(g:APEX_STAGE_BUF_NUM)
@@ -240,7 +240,7 @@ function! apexStage#kill()
 	endif
 endfunction	
 
-" Clear Stage buffer from user dded content
+" Clear Stage buffer from user added content
 function! s:clear()
 	" clear buffer first
 	if exists("g:APEX_STAGE_BUF_NUM") && bufloaded(g:APEX_STAGE_BUF_NUM)
