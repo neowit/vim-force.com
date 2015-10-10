@@ -17,6 +17,15 @@ au! BufRead,BufNewFile vim-force.com-scratch.txt set filetype=apexcode
 " resources with name like *JS.resource are treated as plain javascript files, (i.e. non zip files)
 au! BufRead,BufNewFile *JS.resource set filetype=apexcode.javascript | set syntax=javascript
 
+" basic detection for non code files (detecting these allows loading the
+" plugin when one of such files is opened)
+augroup apexXml 
+	au!
+    au! BufRead,BufNewFile */src/objects/*.object set filetype=apexcode.xml | set syntax=xml
+    au! BufRead,BufNewFile */src/profiles/*.profile set filetype=apexcode.xml | set syntax=xml
+    au! BufRead,BufNewFile */src/layouts/*.layout set filetype=apexcode.xml | set syntax=xml
+augroup END
+
 " unpacked resources are stored in projet_root/resources_unpacked/... folder
 " see also end of apexResource.vim, where handling of .resource and its unpacked content is defined
 au! BufRead,BufNewFile */resources_unpacked/*.js set filetype=apexcode.javascript | set syntax=javascript
