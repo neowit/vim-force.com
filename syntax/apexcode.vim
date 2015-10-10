@@ -79,7 +79,19 @@ syn match	apexcodeSelectOperator	contained "\<\(in\|not in\)\>"
 syn keyword	apexcodeSelectOperator	contained or and true false
 syn keyword	apexcodeSelectOperator	contained toLabel includes excludes convertTimezone convertCurrency
 syn keyword	apexcodeSelectOperator	contained avg count count_distinct min max sum
-syn region 	apexcodeSelectStatic	start="\[" end="]" fold transparent contains=apexcodeSelectKeywords,apexcodeSelectOperator,apexcodeString
+syn match	apexcodeSelectConstant	contained "\<\(YESTERDAY\|TODAY\|TOMORROW\|LAST_WEEK\|THIS_WEEK\|NEXT_WEEK\|LAST_MONTH\|THIS_MONTH\|NEXT_MONTH\)\>"
+syn match	apexcodeSelectConstant	contained "\<\(LAST_90_DAYS\|NEXT_90_DAYS\|THIS_QUARTER\|LAST_QUARTER\|NEXT_QUARTER\|THIS_YEAR\|LAST_YEAR\|NEXT_YEAR\)\>"
+syn match	apexcodeSelectConstant	contained "\<\(THIS_FISCAL_QUARTER\|LAST_FISCAL_QUARTER\|NEXT_FISCAL_QUARTER\)\>"
+syn match	apexcodeSelectConstant	contained "\<\(THIS_FISCAL_YEAR\|LAST_FISCAL_YEAR\|NEXT_FISCAL_YEAR\)\>"
+syn match	apexcodeSelectConstant	contained "\<\(LAST_N_DAYS\|NEXT_N_DAYS\|NEXT_N_WEEKS\|LAST_N_WEEKS\)\>:\d\+"
+syn match	apexcodeSelectConstant	contained "\<\(NEXT_N_MONTHS\|LAST_N_MONTHS\|NEXT_N_QUARTERS\|LAST_N_QUARTERS\)\>:\d\+"
+syn match	apexcodeSelectConstant	contained "\<\(NEXT_N_YEARS\|LAST_N_YEARS\|NEXT_N_FISCAL_QUARTERS\|LAST_N_FISCAL_QUARTERS\)\>:\d\+"
+syn match	apexcodeSelectConstant	contained "\<\(NEXT_N_FISCAL_YEARS\|LAST_N_FISCAL_YEARS\)\>:\d\+"
+" match YYYY-MM-DD
+syn match	apexcodeSelectDateLiteral	contained "\<\(\d\{4}-[0|1][0-2]-\([0-2]\d\|3[01]\)\)\>"
+" match YYYY-MM-DDThh:mm:ss+hh:mm | YYYY-MM-DDThh:mm:ssZ
+syn match	apexcodeSelectDateLiteral	contained "\<\(\d\{4}-[0|1][0-2]-\([0-2]\d\|3[01]\)\)T\([01][0-9]\|2[0-4]\):[0-5][0-9]:[0-5][0-9]\(Z\|[+-]\([01][0-9]\|2[0-4]\)\>:[0-5][0-9]\)\>"
+syn region 	apexcodeSelectStatic	start="\[" end="]" fold transparent contains=apexcodeSelectKeywords,apexcodeSelectOperator,apexcodeString,apexcodeSelectConstant,apexcodeSelectDateLiteral
 
 syn match   apexcodeSpecial	       "\\\d\d\d\|\\."
 syn region  apexcodeString	       start=+'+  skip=+\\\\\|\\'+  end=+'\|$+	contains=apexcodeSpecial
@@ -147,6 +159,8 @@ hi def link apexcodeKeyword			Keyword
 
 hi def link apexcodeSelectKeywords	Statement
 hi def link apexcodeSelectOperator	Operator
+hi def link apexcodeSelectConstant	Constant
+hi def link apexcodeSelectDateLiteral Constant
 
 hi def link apexcodeString			String
 hi def link apexcodeNumber			Number
