@@ -24,6 +24,7 @@ augroup apexXml
     au! BufRead,BufNewFile */src/objects/*.object set filetype=apexcode.xml | set syntax=xml
     au! BufRead,BufNewFile */src/profiles/*.profile set filetype=apexcode.xml | set syntax=xml
     au! BufRead,BufNewFile */src/layouts/*.layout set filetype=apexcode.xml | set syntax=xml
+    au! BufRead,BufNewFile */src/workflows/*.workflow set filetype=apexcode.xml | set syntax=xml
 augroup END
 
 " unpacked resources are stored in projet_root/resources_unpacked/... folder
