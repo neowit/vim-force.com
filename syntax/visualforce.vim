@@ -16,7 +16,7 @@ endif
 runtime! syntax/html.vim
 
 " higihlight visualforce tags as html tags
-syn match htmlTagName contained "\(c\|apex\|chatter\|flow\|ideas\|knowledge\|messaging\|site\):[a-z]\+[A-Za-z0-9]*"
+syn match htmlTagName contained "\(c\|apex\|chatter\|flow\|ideas\|knowledge\|messaging\|site\):[a-z]\+[A-Za-z_0-9]*"
 " fix syntax breakage when using '&{'in the code looking something like this
 " <apex:outputLink value="/path?param=1&{!mergeVar}">link</apex:outputLink>
 syn match htmlSpecialChar contained "&{"
