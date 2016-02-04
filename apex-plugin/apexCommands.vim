@@ -99,6 +99,9 @@ function! s:toolingJarSpecific()
 	command! -bang -nargs=? -complete=customlist,apex#completeSaveParams ApexSave :call apexTooling#deploy('save', 'Modified', <bang>0, <f-args>)
 	command! -bang -nargs=? -complete=customlist,apex#completeSaveParams ApexSaveOpen :call apexTooling#deploy('save', 'Open', <bang>0, <f-args>)
 	command! -bang -nargs=? -complete=customlist,apex#completeSaveParams ApexSaveOne :call apexTooling#deploy('save', 'One', <bang>0, <f-args>)
+
+    " Apex Parser 
+	command! ApexCheckSyntax :call apexComplete#checkSyntax(expand("%:p"))
 	
 endfunction
 

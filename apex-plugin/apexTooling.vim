@@ -185,6 +185,24 @@ function apexTooling#listCompletions(filePath, attributeMap)
 	return responseFilePath
 endfunction
 
+function apexTooling#checkSyntax(filePath, attributeMap)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectPath = projectPair.path
+	let projectName = projectPair.name
+	let attributeMap = a:attributeMap
+
+	let l:extraParams = {}
+	let l:extraParams["isSilent"] = 1
+	" let l:extraParams["line"] = attributeMap["line"]
+	" let l:extraParams["column"] = attributeMap["column"]
+	let l:extraParams["currentFilePath"] = apexOs#shellescape(a:filePath)
+	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(a:filePath)
+	let l:extraParams["useLocationList"] = 1 " if there are errors then fill current window 'Location List', instead of Quick Fix
+
+	let resMap = apexTooling#execute("checkSyntax", projectName, projectPath, l:extraParams, [])
+	let responseFilePath = resMap["responseFilePath"]
+	return responseFilePath
+endfunction
 
 "run unit tests
 "Args:
@@ -753,10 +771,22 @@ endfunction
 " returns: 
 " 0 - if RESULT=SUCCESS
 " any value > 0 - if RESULT <> SUCCESS
-function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilent, disableMorePrompt)
-	"clear quickfix
-	call setqflist([])
-	call CloseEmptyQuickfixes()
+function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilent, disableMorePrompt, extraParams)
+    
+    let l:useLocationList = 0
+    if has_key(a:extraParams, "useLocationList")
+        let l:useLocationList = 1 == a:extraParams["useLocationList"]
+    endif
+
+    if l:useLocationList
+        "clear location list
+        call setloclist(0, []) " set location list of current window, hence 0
+        lclose
+    else
+        "clear quickfix
+        call setqflist([])
+        call CloseEmptyQuickfixes()
+    endif    
 
 	"temporarily disable more if enabled
 	"also see :help hit-enter
@@ -793,7 +823,7 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 	" check if we have messages
 	call s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes)
 	
-	call s:fillQuickfix(a:logFilePath, a:projectPath)
+	call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
 	if disableMore && reEnableMore
 		set more
 	endif
@@ -882,7 +912,7 @@ endfunction
 " Param: logFilePath - full path to the response file
 " Param: projectPath - full path to the project folder which contains
 "		package.xml and 'src'
-function! s:fillQuickfix(logFilePath, projectPath)
+function! s:fillQuickfix(logFilePath, projectPath, useLocationList)
 	" error is reported like so
 	" ERROR: {"line" : 3, "column" : 10, "filePath" : "src/classes/A_Fake_Class.cls", "text" : "Invalid identifier: test22."}
 	let l:lines = apexUtil#grepFile(a:logFilePath, '^ERROR: ')
@@ -910,9 +940,18 @@ function! s:fillQuickfix(logFilePath, projectPath)
 		let index = index + 1
 	endwhile
 
-	call setqflist(l:errorList)
+    if 1 == a:useLocationList
+        call setloclist(0, l:errorList) " set location list of current window, hence 0
+    else
+        call setqflist(l:errorList)
+    endif    
+
 	if len(l:errorList) > 0
-		copen
+		if a:useLocationList
+            lopen 
+        else    
+            copen
+        endif    
 	endif
 endfunction	
 
@@ -1058,7 +1097,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 		let l:command = l:command  . " --logLevel=" . g:apex_test_logType
 	endif
 
-	let l:EXCLUDE_KEYS = ["isSilent"]
+	let l:EXCLUDE_KEYS = ["isSilent", "useLocationList"]
 	if len(a:extraParams) > 0
 		for key in keys(a:extraParams)
 			if index(l:EXCLUDE_KEYS, key) < 0
@@ -1132,7 +1171,7 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 
     let l:disableMorePrompt = s:hasOnCommandComplete()
 
-	let errCount = s:parseErrorLog(responseFilePath, a:projectPath, a:displayMessageTypes, isSilent, l:disableMorePrompt)
+	let errCount = s:parseErrorLog(responseFilePath, a:projectPath, a:displayMessageTypes, isSilent, l:disableMorePrompt, a:extraParams)
     "echo "l:startTime=" . string(l:startTime)
     call s:onCommandComplete(reltime(l:startTime))
 	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}

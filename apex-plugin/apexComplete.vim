@@ -32,6 +32,26 @@ function! apexComplete#Complete(findstart, base) abort
 
 endfunction
 
+" Run local syntax check for given apex file
+" Note - this is more a grammar debug/check function, not intended for use by
+" end users
+function! apexComplete#checkSyntax(filePath) abort
+    let l:filePath = a:filePath
+	let attributeMap = {}
+	"save content of current buffer in a temporary file
+	"let tempFilePath = tempname() . apexOs#splitPath(a:filePath).tail
+	"silent exe ":w! " . tempFilePath
+	
+	let attributeMap["currentFilePath"] = a:filePath
+	" let attributeMap["currentFileContentPath"] = tempFilePath
+	let attributeMap["currentFileContentPath"] = a:filePath
+
+	let responseFilePath = apexTooling#checkSyntax(a:filePath, attributeMap)
+
+	" temp file is no longer needed
+	"call delete(tempFilePath)
+endfunction    
+
 function! s:listOptions(filePath, line, column)
 	let attributeMap = {}
 	let attributeMap["line"] = a:line
