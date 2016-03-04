@@ -159,7 +159,7 @@ endfunction
 "			line: - current line
 "			column: - column where cursor is positioned
 "			currentFilePath: full path of current file
-"			currentFileContentPath: full path tu saved content of current file
+"			currentFileContentPath: full path to saved content of current file
 "					(when completion is called current version of the file may not be saved yet)
 "
 "
