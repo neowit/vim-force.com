@@ -113,7 +113,7 @@ function s:executeAnonymous(filePath, projectName, codeFile)
 		let l:extraParams["callingAnotherOrg"] = "true"
 	endif
 	let resMap = apexTooling#execute("executeAnonymous", a:projectName, projectPath, l:extraParams, [])
-	if 'None' != g:apex_test_logType
+	if exists('g:apex_test_debuggingHeader')
 		if "true" == resMap.success
 			:ApexLog
 		endif

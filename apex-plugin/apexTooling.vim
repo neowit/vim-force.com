@@ -1093,9 +1093,14 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 		let l:command = l:command  . " " . g:apex_tooling_force_dot_com_extra_params
 	endif
 	
-	if exists('g:apex_test_logType')
-		let l:command = l:command  . " --logLevel=" . g:apex_test_logType
-	endif
+"	if exists('g:apex_test_logType')
+"		let l:command = l:command  . " --logLevel=" . g:apex_test_logType
+"	endif
+    if exists('g:apex_test_debuggingHeader')
+        let tempLogConfigFilePath = apexLogActions#saveTempTraceFlagConfig(g:apex_test_debuggingHeader)
+        " let l:extraParams["debuggingHeaderConfig"] = apexOs#shellescape(tempLogConfigFilePath)
+        let l:command = l:command  . " --debuggingHeaderConfig=" . apexOs#shellescape(tempLogConfigFilePath)
+    endif
 
 	let l:EXCLUDE_KEYS = ["isSilent", "useLocationList"]
 	if len(a:extraParams) > 0

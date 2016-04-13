@@ -672,7 +672,7 @@ If no class name specified then will run tests in all modified classes that
 contain 'testMethod'.
 
 By default no debug log is generated. Default Log level can be configured via
-|'g:apex_test_logType'| variable.
+|'g:apex_test_debuggingHeader'| variable.
 
 :|ApexTest| supports command line parameters (and their completion)
 Param: 1 - mode: 'meta-testAndDeploy', 'meta-checkOnly', 
@@ -898,7 +898,7 @@ Optional
                                     poll of Salesforce to retrieve the results
 |'g:apex_maxPollRequests'|          The number of times to poll Salesforce for
                                     the results of the task
-|'g:apex_test_logType'|             The debug logging level for tests. 
+|'g:apex_test_debuggingHeader'|             The debug logging level for tests. 
 |'g:apex_conflict_check'|           Control (on/off) conflict check with SFDC before deployment
 
 |'g:apex_java_cmd'|                 custom path to java executable
@@ -1033,11 +1033,15 @@ Usually default value is sufficient, but if you have a large Org and
 |'g:apex_pollWaitMillis'| parameter is short then higher
 'g:apex_maxPollRequests' value may be needed.
 
-                                                         *'g:apex_test_logType'*
+                                                         *'g:apex_test_debuggingHeader'*
 Optional. 
-Defaults to 'None'. Default debug logging level for tests. 
-Valid options are 'None', 'Debugonly', 'Db', 'Profiling', 'Callout', and
-'Detail'.  See ant-salesforce.jar documentation for 'logType' parameter.
+Logging levels to use for tests. Defaults to no logs.
+See Metadata API documentation for 'DebuggingHeader'.
+ex:  >
+    let g:apex_test_debuggingHeader = {"All": "Error", "Visualforce": "Error",
+    \ "Workflow": "Error", "Db": "Error", "System": "Error", "Callout": "Error",
+    \ "Apex_profiling": "Error", "Apex_code": "Debug", "Validation": "Error"}
+<
 
                                                 *'g:apex_conflict_check'*
 Optional.
