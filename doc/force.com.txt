@@ -676,7 +676,7 @@ By default no debug log is generated. Default Log level can be configured via
 
 :|ApexTest| supports command line parameters (and their completion)
 Param: 1 - mode: 'meta-testAndDeploy', 'meta-checkOnly', 
-                'tooling-sync', 'tooling-async'
+                'tooling-sync', 'tooling-async', 'testSuites'
             default: 'testAndDeploy'
            Note: 
             - 'meta-testAndDeploy' runs all test methods in a specified 
@@ -703,6 +703,16 @@ Param: 1 - mode: 'meta-testAndDeploy', 'meta-checkOnly',
             - 'tooling-async' runs one or more methods within one or more Apex
               classes, using the asynchronous test execution mechanism.
               - can run all or specific test method(s) in a class(es)
+            
+            - 'testSuites' allows to execute one (or more) Test Suites
+              - multiple test suites should be specified comma separated
+                e.g. TestSuite1,TestSuite2
+              - if you use tab completion then you may have to press it twice
+                for Test Suite names parameter - first time calls SFDC to
+                query available test suite Names
+              - there is no support for creating/managing Test Suite content
+                from vim-force.com plugin, use SFDC Developer console instead.  
+
 
 Param: 2 - class name - use this parameter to run only unit tests in a specific
            class. Multiple test class names can be specified separated by ','.

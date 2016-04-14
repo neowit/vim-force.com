@@ -252,8 +252,12 @@ function apexTooling#deployAndTest(filePath, attributeMap, orgName, reportCovera
 	if has_key(attributeMap, "testsToRun")
         let l:extraParams["testsToRun"] = shellescape(attributeMap["testsToRun"])
 	else
-		"run all tests in the deployment package
-		let l:extraParams["testsToRun"] = shellescape('*')
+        if has_key(attributeMap, "testSuites")
+            let l:extraParams["testSuitesToRun"] = shellescape(attributeMap["testSuites"])
+        else    
+            "run all tests in the deployment package
+            let l:extraParams["testsToRun"] = shellescape('*')
+        endif
 	endif
 	"reportCoverage
 	if 'reportCoverage' == a:reportCoverage
@@ -316,6 +320,16 @@ endfunction
 function apexTooling#printChangedFiles(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	call apexTooling#execute("listModified", projectPair.name, projectPair.path, {}, [])
+endfunction	
+
+" retrieve list of Test Suite names into specified file
+"Args:
+"Param1: path to file which belongs to apex project
+function apexTooling#loadTestSuiteNamesList(projectName, projectPath, outputFilePath)
+    let l:extraParams = {}
+    let l:extraParams["testSuiteAction"] = "dumpNames"
+    let l:extraParams["dumpToFile"] = apexOs#shellescape(a:outputFilePath)
+	call apexTooling#execute("testSuiteManage", a:projectName, a:projectPath, l:extraParams, [])
 endfunction	
 
 "Args:

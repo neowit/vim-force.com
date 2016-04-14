@@ -13,6 +13,9 @@ let g:loaded_apexTest = 1
 
 let s:ALL = '*ALL*'
 
+let b:projectPair = apex#getSFDCProjectPathAndName(expand("%:p"))
+let b:PROJECT_NAME = b:projectPair.name
+let b:PROJECT_PATH = b:projectPair.path
 " run test using apexTooling
 "Param: reportCoverage: 'reportCoverage' (means load lines report), anything
 "				        else means do not load lines coverage report
@@ -43,6 +46,11 @@ function! apexTest#runTest(reportCoverage, bang, ...)
     if modeName == 'tooling-sync'
         let attributes['tooling'] = 'sync'
     elseif modeName == 'tooling-async'
+        let attributes['tooling'] = 'async'
+    elseif modeName == 'testSuites'
+        let attributes['tooling'] = 'testSuites'
+        call remove(attributes, 'testsToRun')
+        let attributes['testSuites'] = testsToRun
         let attributes['tooling'] = 'async'
     endif
 
@@ -95,7 +103,8 @@ function! apexTest#completeParams(arg, line, pos)
 		return call(funcs[n], [a:arg, a:line, a:pos])
 endfunction	
 
-" if previous character is nothing or ',' then list class names
+" if previous character is nothing or ',' then list class names or Test Suite
+" names
 " if previous character is '.' then take previous word, use it as a class name
 " and list method names in that class
 " 
@@ -105,20 +114,18 @@ endfunction
 " line: CmdLine - the entire command line
 " pos: CursorPos - the cursor position in it (byte index)
 function! s:listClassOrMethodNames(arg, line, pos)
-    if empty(a:arg)
+    if !empty(a:arg) && a:arg =~ '\w\.\w*$'
+        return s:listMethodNames(a:arg, a:line, a:pos)
+    elseif a:line =~ " testSuites "
+        return s:listTestSuiteNames(a:arg, a:line, a:pos)
+    else
         return s:listClassNames(a:arg, a:line, a:pos)
-    else    
-        if a:arg =~ '\w\.\w*$'
-            return s:listMethodNames(a:arg, a:line, a:pos)
-        else     
-            return s:listClassNames(a:arg, a:line, a:pos)
-        endif    
     endif    
 
 endfunction
 
 " list classes that contain 'testMethod' token for argument auto-completion
-" arg mey look like so
+" arg may look like so
 " 
 " <Cla>
 " <Class.method,>
@@ -202,9 +209,20 @@ function! s:listMethodNames(arg, line, pos)
 endfunction	
 
 function! s:listModeNames(arg, line, pos)
-	let candidates = ['meta-testAndDeploy', 'meta-checkOnly', 'tooling-sync', 'tooling-async']
+	let candidates = ['meta-testAndDeploy', 'meta-checkOnly', 'tooling-sync', 'tooling-async', 'testSuites']
 	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, candidates)
 endfunction	
+"
+" list test suite names for argument auto-completion
+" arg may look like so
+" 
+" <Cla>
+" <Class.method,>
+" <Class.method,Cla>
+function! s:listTestSuiteNames(arg, line, pos)
+    let candidates = s:getTestSuiteNames(b:PROJECT_NAME, b:PROJECT_PATH, 0)
+	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, candidates)
+endfunction    
 
 " Using given file name and starting from lineNum try to identify method name
 " assuming that this is the last word before '('
@@ -316,3 +334,35 @@ function! apexTest#parseUnitTestFailure(text)
 
 endfunction	
 
+"depending on the current command set metadata description can be in two
+"different formats
+function! s:getTestSuiteCacheFile()
+	return "testSuites-cache.js"
+endfunction
+
+function! s:getTestSuiteCacheFilePath(projectPath)
+	return apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:getTestSuiteCacheFile()])
+endfunction
+
+function! s:getTestSuiteNames(projectName, projectPath, forceLoad)
+
+	let l:testSuitesFilePath = s:getTestSuiteCacheFilePath(a:projectPath)
+    " reload test suites list if current cache file is more than 10 seconds
+    " old
+    let l:timeThreshold = localtime() - 10 " 10 seconds ago
+
+	if !filereadable(l:testSuitesFilePath) || a:forceLoad || getftime(l:testSuitesFilePath) < l:timeThreshold
+		silent let res = apexTooling#loadTestSuiteNamesList(a:projectName, a:projectPath, testSuitesFilePath)
+		if 'true' != res["success"]
+			return []
+		endif
+	endif
+	let l:names = []
+	let l:lines = readfile(testSuitesFilePath, '', 1) " assuming test suite names file will never contain more than 1 line
+
+    if len(l:lines) > 0
+	    let l:names = eval(l:lines[0])
+    endif    
+    return l:names
+        
+endfunction    
