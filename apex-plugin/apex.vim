@@ -184,7 +184,7 @@ function! apex#getSFDCProjectPathAndName(filePath)
 	endif
 
 	if srcDirParent == ""
-		echoerr "src folder not found"
+		throw "src folder not found"
 		return {'path': "", 'name': ""}
 	endif
 	let projectFolder = srcDirParent 

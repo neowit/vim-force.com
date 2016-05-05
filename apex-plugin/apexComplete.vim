@@ -37,6 +37,10 @@ endfunction
 " end users
 function! apexComplete#checkSyntax(filePath) abort
     let l:filePath = a:filePath
+    
+    " check if this file is inside 'src' folder
+    try | call apex#getSFDCProjectPathAndName(l:filePath) | catch /.*/ | return | endtry    
+
 	let attributeMap = {}
 	"save content of current buffer in a temporary file
 	"let tempFilePath = tempname() . apexOs#splitPath(a:filePath).tail
