@@ -48,6 +48,105 @@ function! s:genericCallback(resultMap)
     endif
     "redraw " refresh buffer, just in case if it is :ApexMessage buffer
 endfunction    
+
+"Args:
+"Param: action:
+"			'deploy' - use metadata api
+"			'save' - use tooling api
+"Param: mode:
+"			'Modified' - all changed files
+"			'ModifiedDestructive' - all changed files
+"			'Open' - deploy only files from currently open Tabs or Buffers (if
+"					less than 2 tabs open)
+"			'Confirm' - TODO - all changed files with confirmation for every file
+"			'All' - all files under ./src folder
+"			'AllDestructive' - all files under ./src folder
+"			'Staged' - all files listed in stage-list.txt file
+"			'One' - single file from current buffer
+"Param: bang - if 1 then skip conflicts check with remote
+"Param1: subMode: (optional), allowed values:
+"			'deploy' (default) - normal deployment
+"			'checkOnly' - dry-run deployment or tests
+"Param2: orgName:(optional) if provided then given project name will be used as
+"						target Org name.
+"						must match one of .properties file with	login details
+function apexToolingAsync#deploy(action, mode, bang, ...)
+	let filePath = expand("%:p")
+	let l:mode = len(a:mode) < 1 ? 'Modified' : a:mode
+
+	if "ModifiedDestructive" == l:mode && apexUtil#input("If there are any files removed locally then they will be deleted from SFDC as well. No backup will be made. Are you sure? [y/N]? ", "YynN", "N") !=? 'y'
+		redraw! " clear prompt from command line area
+		return
+	endif
+
+	if "AllDestructive" == l:mode && apexUtil#input("DANGER!\nAny files that you do not have locally will be removed from Remote.".
+                \ "\nRun :ApexDiffWithRemoteProject to check what will be removed.\nProceed with destruction? [y/N]? ", "YynN", "N") !=? 'y'
+		redraw! " clear prompt from command line area
+		return
+	endif
+
+	let l:subMode = a:0 > 0? a:1 : 'deploy'
+
+	if index(['deploy', 'save'], a:action) < 0
+		call apexUtil#error("Unsupported action: " . a:action)
+		return
+	endif
+
+	if index(s:MAKE_MODES, l:mode) < 0
+		call apexUtil#error("Unsupported deployment mode: " . a:1)
+		return
+	endif
+	
+
+	let projectPair = apex#getSFDCProjectPathAndName(filePath)
+	let projectPath = projectPair.path
+	let projectName = projectPair.name
+	if a:0 >1 && len(a:2) > 0
+		" if project name is provided via tab completion then spaces in it
+		" will be escaped, so have to unescape otherwise funcions like
+		" filereadable() do not understand such path name
+		let projectName = apexUtil#unescapeFileName(a:2)
+	endif
+
+	let l:action = a:action . l:mode
+	let l:extraParams = {}
+	"checkOnly ?
+	if l:subMode == 'checkOnly'
+		let l:extraParams["checkOnly"] = "true"
+	endif
+    if "AllDestructive" == l:mode
+		let l:extraParams["typesFileFormat"] = "packageXml"
+    endif    
+	"ignoreConflicts ?
+	if a:bang || !s:isNeedConflictCheck()
+		let l:extraParams["ignoreConflicts"] = "true"
+	endif
+
+	let funcs = {'Open': 's:deployOpenPrepareParams', 'Staged': 's:deployStagedPrepareParams', 'One': 's:deployOnePrepareParams'}
+	if has_key(funcs, l:mode)
+		let deployOpenParams = call(funcs[l:mode], [apexOs#removeTrailingPathSeparator(projectPath)])
+
+		if len(deployOpenParams) < 1
+			"user cancelled
+			return
+		endif
+		call extend(l:extraParams, deployOpenParams)
+		let l:action = a:action . "SpecificFiles"
+
+	endif
+	" another org?
+	if projectPair.name != projectName
+		let l:extraParams["callingAnotherOrg"] = "true"
+		"when deploying to another org there is no point in checking conflicts
+		"because local metadata is not related to that org
+		let l:extraParams["ignoreConflicts"] = "true"
+	endif
+
+	let resMap = apexToolingAsync#execute(l:action, projectName, projectPath, l:extraParams, [])
+
+endfunction
+
+
 "
 "list potential conflicts between local and remote
 "takes into account only modified files, i.e. files which would be deployed if
@@ -79,8 +178,8 @@ endfunction
 "Param1: filePath - path to apex file in current project
 function apexToolingAsync#getVersion(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-    let obj = {}
-    let obj.callbackFuncRef = function('s:genericCallback')
+    "let obj = {}
+    "let obj.callbackFuncRef = function('s:genericCallback')
     let extraParams = {}
 	call apexToolingAsync#execute("version", projectPair.name, projectPair.path, extraParams, [])
 endfunction
@@ -331,7 +430,7 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 	endif
 
 	call apexMessages#logError("Operation failed")
-	" check if we have messages
+	" check if we have failure messages
 	call apexMessages#display(a:logFilePath, a:projectPath, a:displayMessageTypes)
 	
 	silent call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)

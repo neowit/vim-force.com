@@ -28,15 +28,11 @@ function! apexMessages#open()
     endif    
     
     call s:ensureBufferExists()
-	" syntax highlight
-	if has("syntax")
-		syntax on
-        set filetype=apex_messages
-        set syntax=apex_messages
-	endif
 
     "redraw
+    " show content
     edit
+    " go to the last line
     normal G
 endfunction    
 
@@ -174,9 +170,12 @@ function! s:ensureBufferExists()
         return
     endif    
 	if exists("g:_apex_messages_buf_num") && bufloaded(g:_apex_messages_buf_num)
+        echomsg "#1"
 		execute 'b '.g:_apex_messages_buf_num
         "echomsg "switch to existing buffer: " . g:_apex_messages_buf_num
-    else
+    endif
+    if !s:isSetupCorrectly()
+        echomsg "#2"
         "echomsg "creating message buffer"
         let l:currentBufNum = bufnr('%')
         " create new buffer
@@ -196,6 +195,15 @@ function! s:ensureBufferExists()
 
 		" Define key mapping for current buffer
 		exec 'nnoremap <buffer> <silent> q :call <SNR>'.s:sid.'_Close()<CR>'
+        
+        " syntax highlight
+        if has("syntax")
+
+            echomsg "#3"
+            syntax on
+            set filetype=apex_messages
+            set syntax=apex_messages
+        endif
 
         " switch back to original buffer
         if l:currentBufNum > 0
@@ -210,6 +218,10 @@ endfunction
 
 function! s:isVisible()
 	return bufwinnr(s:BUFFER_NAME) > 0
+endfunction    
+
+function! s:isSetupCorrectly()
+	return &syntax == 'apex_messages'
 endfunction    
 
 function! s:show()
