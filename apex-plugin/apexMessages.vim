@@ -31,7 +31,7 @@ function! apexMessages#open()
 
     "redraw
     " show content
-    edit
+    view
     " go to the last line
     normal G
 endfunction    
@@ -121,7 +121,7 @@ function! s:logHeader(msgType, msg)
     "setlocal nomodifiable
     if s:isVisible()
         "redraw
-        edit
+        view
         normal G
     endif    
 endfunction    
@@ -135,7 +135,7 @@ function! s:logDetail(msgType, msg)
     if s:isVisible()
         " scroll to the bottom of the file
         "redraw
-        edit
+        view
         normal G
     endif    
 endfunction    
@@ -179,7 +179,7 @@ function! s:ensureBufferExists()
         "echomsg "creating message buffer"
         let l:currentBufNum = bufnr('%')
         " create new buffer
-        exec 'edit ' fnameescape(s:tempFile)
+        exec 'view ' fnameescape(s:tempFile)
         " set attributes
 		"setlocal buftype=nofile
 		setlocal buftype=nowrite
@@ -189,7 +189,7 @@ function! s:ensureBufferExists()
 		setlocal nobuflisted
         setlocal autoread
         
-        echomsg 'file: ' . s:tempFile
+        "echomsg 'file: ' . s:tempFile
         let s:BUFFER_NAME = bufname('%')
 		let g:_apex_messages_buf_num = bufnr("%")
 
