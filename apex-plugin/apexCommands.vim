@@ -92,6 +92,9 @@ function! s:toolingJarSpecific()
 	" display last log
 	command! ApexLog :call apexTooling#openLastLog()
 
+    " display message buffer
+	command! ApexMessages :call apexMessages#open()
+
 	" open scratch buffer/file
 	command! ApexScratch :call apexTooling#openScratchFile(expand("%:p"))
 

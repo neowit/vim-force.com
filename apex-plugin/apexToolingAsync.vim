@@ -39,13 +39,14 @@ endfunction
 
 
 function! s:genericCallback(resultMap)
-    echomsg "extraParams.callbackFuncRef: " . string(a:resultMap)
+    "echomsg "extraParams.callbackFuncRef: " . string(a:resultMap)
     if "true" == a:resultMap["success"]
         let l:responseFilePath = a:resultMap["responseFilePath"]
         let l:projectPath = a:resultMap["projectPath"]
         " check if we have messages
-        call s:displayMessages(l:responseFilePath, l:projectPath, [], "N")
+        "let l:msgCount = apexMessages#display(l:responseFilePath, l:projectPath, [], "N")
     endif
+    "redraw " refresh buffer, just in case if it is :ApexMessage buffer
 endfunction    
 "
 "list potential conflicts between local and remote
@@ -73,8 +74,21 @@ function! apexToolingAsync#printConflicts(filePath)
 	call apexToolingAsync#execute("listConflicts", projectPair.name, projectPair.path, extraParams, [])
 endfunction	
 
+" get version of currently installed tooling-force.com
+"Args:
+"Param1: filePath - path to apex file in current project
+function apexToolingAsync#getVersion(filePath)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+    let obj = {}
+    let obj.callbackFuncRef = function('s:genericCallback')
+    let extraParams = {}
+	call apexToolingAsync#execute("version", projectPair.name, projectPair.path, extraParams, [])
+endfunction
+
+" this callback is used when no explicit callback method specified by caller
+" of apexToolingAsync#execute()
 function! s:dummyCallback(msg)
-    echo "dummyCallback: " . string(a:msg)
+    "echo "dummyCallback: " . string(a:msg)
 endfunction    
 
 "Returns: dictionary/pair: 
@@ -182,23 +196,26 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     endif    
     
     function obj.callbackInternal(channel, ...)
-        echomsg "a:0=" . a:0
+        "echomsg "a:0=" . a:0
         if a:0 > 0
             " channel and msg
             " display message = a:2
-            echo a:1
+            "echo a:1
+            let l:msg = a:1 
+            call apexMessages#log(l:msg)
+            echo l:msg
             return
         elseif 0 == a:0
             " channel only. assume that channel has been closed
         endif    
 
         " echo 'one=' . self.one. '; two=' . self.two . '; ' . a:msg 
-        let logFileRes = s:grepValues(self.responseFilePath, "LOG_FILE=")
+        silent let logFileRes = s:grepValues(self.responseFilePath, "LOG_FILE=")
 
         if !empty(logFileRes)
             let s:apex_last_log = logFileRes[0]
             if s:show_log_hint
-                call apexUtil#info("Log file is available, use :ApexLog to open it")
+                call apexMessages#logInfo("Log file is available, use :ApexLog to open it")
                 let s:show_log_hint = 0
             endif
         else
@@ -212,7 +229,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
             if !empty(logFileRes)
                 let s:apex_last_log_by_class_name = eval(logFileRes[0])
                 if s:show_log_hint
-                    call apexUtil#info("Log file is available, use :ApexLog to open it")
+                    call apexMessages#logInfo("Log file is available, use :ApexLog to open it")
                     let s:show_log_hint = 0
                 endif
             elseif exists("s:apex_last_log_by_class_name")
@@ -224,7 +241,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 
         let errCount = s:parseErrorLog(self.responseFilePath, self.projectPath, self.displayMessageTypes, self.isSilent, l:disableMorePrompt, self.extraParams)
         "echo "l:startTime=" . string(l:startTime)
-        call s:onCommandComplete(reltime(self.startTime))
+        """temporary disabled"" call s:onCommandComplete(reltime(self.startTime))
 
         let l:result = {"success": 0 == errCount? "true": "false", "responseFilePath": self.responseFilePath, "projectPath": self.projectPath}
         call self.callbackFuncRef(l:result)
@@ -305,106 +322,21 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 
 	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
 		" check if we have messages
-		if s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1 && !a:isSilent
-			call apexUtil#info("No errors found")
+		if apexMessages#display(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1 && !a:isSilent
+			call apexMessages#logInfo("No errors found")
+        else 
+            call apexMessages#open()
 		endif
-        if disableMore && reEnableMore
-            set more
-        endif
 		return 0
 	endif
 
-	call apexUtil#error("Operation failed")
+	call apexMessages#logError("Operation failed")
 	" check if we have messages
-	call s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes)
+	call apexMessages#display(a:logFilePath, a:projectPath, a:displayMessageTypes)
 	
-	call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
-	if disableMore && reEnableMore
-		set more
-	endif
+	silent call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
 	return 1
 
-endfunction
-
-"Param: displayMessageTypes list of message types to display, other types will
-"be ignored, e.g. ['ERROR'] - will display only errors
-"Param: ... flags string
-"       'N' = suppress new/empty line after last message
-"Returns: number of messages displayed
-function! s:displayMessages(logFilePath, projectPath, displayMessageTypes, ...)
-	let prefix = 'MESSAGE: '
-	let l:lines = apexUtil#grepFile(a:logFilePath, '^' . prefix)
-	let l:index = 0
-	for line in l:lines
-		let line = substitute(line, prefix, "", "")
-		let message = eval(line)
-		let msgType = has_key(message, "type")? message["type"] : "INFO"
-		if len(a:displayMessageTypes) > 0
-			if index(a:displayMessageTypes, msgType) < 0
-				" this msgType is disabled
-				continue
-			endif
-		endif
-		let text = message["text"]
-		if "ERROR" == msgType
-			call apexUtil#error(text)
-		elseif "WARN" == msgType
-			call apexUtil#warning(text)
-		elseif "INFO" == msgType
-			call apexUtil#info(text)
-		elseif "DEBUG" == msgType
-			echo text
-		else
-			echo text
-		endif
-		call s:displayMessageDetails(a:logFilePath, a:projectPath, message)
-		let l:index += 1
-	endfor
-    let l:flags = ''
-    if a:0 > 0
-        let l:flags = a:1
-    endif    
-    
-    " if flags contain 'N' then do not show empty line after last message
-	if l:index > 0 && l:flags !~# "N"
-		" blank line before next message
-		echo ""
-	endif	
-	return l:index
-endfunction
-
-" using Id of specific message check if log file has details and display if
-" details found
-function! s:displayMessageDetails(logFilePath, projectPath, message)
-	let prefix = 'MESSAGE DETAIL: '
-	silent let l:lines = apexUtil#grepFile(a:logFilePath, '^' . prefix)
-	let l:index = 0
-	while l:index < len(l:lines)
-		let line = substitute(l:lines[l:index], prefix, "", "")
-		let detail = eval(line)
-		if detail["messageId"] == a:message["id"]
-			let text = "  " . detail["text"]
-			if has_key(detail, "echoText")
-				" for messages we do not need to display full text if short
-				" version is available
-				let text = "  " . detail["echoText"]
-			endif
-			let msgType = has_key(detail, "type")? detail.type : a:message["type"]
-			if "ERROR" == msgType
-				call apexUtil#error(text)
-			elseif "WARN" == msgType
-				call apexUtil#warning(text)
-			elseif "INFO" == msgType
-				call apexUtil#info(text)
-			elseif "DEBUG" == msgType
-				echo text
-			else
-				echo text
-			endif
-		endif
-		let l:index = l:index + 1
-	endwhile
-	return l:index
 endfunction
 
 " Process Compile and Unit Test errors and populate quickfix
@@ -490,8 +422,6 @@ function! s:runCommand(java_command, commandLine, isSilent, callbackFuncRef)
 	endif
 
 	if isServerEnabled && s:ensureServerRunning(a:java_command)
-		"let l:command = s:prepareServerCommand(a:commandLine)
-		"call apexOs#exe(l:command, l:flags)	
 		call s:sendCommandToServer(a:commandLine, l:flags, a:callbackFuncRef)
 	else
 		let l:command = a:java_command . a:commandLine
@@ -581,6 +511,13 @@ function! s:execAsync(command, callbackFuncRef)
 	let l:port = s:getServerPort()
     let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
 
+    let l:reEnableMore = &more
+    "set nomore
+    call apexMessages#log("")
+    call apexMessages#log(a:command)
+	if l:reEnableMore
+		set more
+	endif
     call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
 
 endfunction    
