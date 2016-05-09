@@ -199,9 +199,9 @@ function apexTooling#checkSyntax(filePath, attributeMap)
 	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(a:filePath)
 	let l:extraParams["useLocationList"] = 1 " if there are errors then fill current window 'Location List', instead of Quick Fix
 
-	let resMap = apexTooling#execute("checkSyntax", projectName, projectPath, l:extraParams, [])
-	let responseFilePath = resMap["responseFilePath"]
-	return responseFilePath
+	let resMap = apexToolingAsync#execute("checkSyntax", projectName, projectPath, l:extraParams, [])
+	"let responseFilePath = resMap["responseFilePath"]
+	"return responseFilePath
 endfunction
 
 "run unit tests

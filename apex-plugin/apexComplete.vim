@@ -50,7 +50,7 @@ function! apexComplete#checkSyntax(filePath) abort
 	" let attributeMap["currentFileContentPath"] = tempFilePath
 	let attributeMap["currentFileContentPath"] = a:filePath
 
-	let responseFilePath = apexTooling#checkSyntax(a:filePath, attributeMap)
+	let responseFilePath = apexToolingAsync#checkSyntax(a:filePath, attributeMap)
 
 	" temp file is no longer needed
 	"call delete(tempFilePath)

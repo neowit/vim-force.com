@@ -44,7 +44,7 @@ function! s:genericCallback(resultMap)
         let l:responseFilePath = a:resultMap["responseFilePath"]
         let l:projectPath = a:resultMap["projectPath"]
         " check if we have messages
-        "let l:msgCount = apexMessages#display(l:responseFilePath, l:projectPath, [], "N")
+        "let l:msgCount = apexMessages#process(l:responseFilePath, l:projectPath, [], "N")
     endif
     "redraw " refresh buffer, just in case if it is :ApexMessage buffer
 endfunction    
@@ -184,6 +184,34 @@ function apexToolingAsync#getVersion(filePath)
 	call apexToolingAsync#execute("version", projectPair.name, projectPair.path, extraParams, [])
 endfunction
 
+
+let s:last_coverage_report_file = ''
+function! apexToolingAsync#getLastCoverageReportFile()
+	return s:last_coverage_report_file
+endfunction
+"DEBUG ONLY
+function! apexToolingAsync#setLastCoverageReportFile(filePath)
+	let s:last_coverage_report_file = a:filePath
+endfunction
+
+function apexToolingAsync#checkSyntax(filePath, attributeMap)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectPath = projectPair.path
+	let projectName = projectPair.name
+	let attributeMap = a:attributeMap
+
+	let l:extraParams = {}
+	let l:extraParams["isSilent"] = 1
+	" let l:extraParams["line"] = attributeMap["line"]
+	" let l:extraParams["column"] = attributeMap["column"]
+	let l:extraParams["currentFilePath"] = apexOs#shellescape(a:filePath)
+	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(a:filePath)
+	let l:extraParams["useLocationList"] = 1 " if there are errors then fill current window 'Location List', instead of Quick Fix
+
+	call apexToolingAsync#execute("checkSyntax", projectName, projectPath, l:extraParams, [])
+endfunction
+
+" ==================================================================================================
 " this callback is used when no explicit callback method specified by caller
 " of apexToolingAsync#execute()
 function! s:dummyCallback(msg)
@@ -421,17 +449,17 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 
 	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
 		" check if we have messages
-		if apexMessages#display(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1 && !a:isSilent
+		if apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1 && !a:isSilent
 			call apexMessages#logInfo("No errors found")
-        else 
+        elseif !a:isSilent 
             call apexMessages#open()
 		endif
 		return 0
 	endif
 
-	call apexMessages#logError("Operation failed")
-	" check if we have failure messages
-	call apexMessages#display(a:logFilePath, a:projectPath, a:displayMessageTypes)
+    call apexMessages#logError("Operation failed")
+    " check if we have failure messages
+    call apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes)
 	
 	silent call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
 	return 1
@@ -449,7 +477,7 @@ endfunction
 function! s:fillQuickfix(logFilePath, projectPath, useLocationList)
 	" error is reported like so
 	" ERROR: {"line" : 3, "column" : 10, "filePath" : "src/classes/A_Fake_Class.cls", "text" : "Invalid identifier: test22."}
-	let l:lines = apexUtil#grepFile(a:logFilePath, '^ERROR: ')
+	silent let l:lines = apexUtil#grepFile(a:logFilePath, '^ERROR: ')
 	let l:errorList = []
 
 	let index = 0
@@ -521,7 +549,8 @@ function! s:runCommand(java_command, commandLine, isSilent, callbackFuncRef)
 	endif
 
 	if isServerEnabled && s:ensureServerRunning(a:java_command)
-		call s:sendCommandToServer(a:commandLine, l:flags, a:callbackFuncRef)
+		"call s:sendCommandToServer(a:commandLine, l:flags, a:callbackFuncRef)
+        call s:execAsync(a:commandLine, a:callbackFuncRef)
 	else
 		let l:command = a:java_command . a:commandLine
 		call apexOs#exe(l:command, l:flags)
@@ -534,7 +563,7 @@ function! s:ensureServerRunning(java_command)
 		"server not enabled
 		return 0
 	else
-		let pong = s:sendCommandToServer("ping", "sb", function('s:dummyCallback'))
+		let pong = s:sendCommandToServerBlocking("ping", "sb", function('s:dummyCallback'))
 		
 		if pong !~? "pong"
 			" start server
@@ -543,7 +572,7 @@ function! s:ensureServerRunning(java_command)
 			"wait a little to make sure it had a chance to start
 			echo "wait for server to start..."
 			let l:count = 15 " wait for server to start no more than 15 seconds
-			while (s:sendCommandToServer("ping", "sb", function('s:dummyCallback')) !~? "pong" ) && l:count > 0
+			while (s:sendCommandToServerBlocking("ping", "sb", function('s:dummyCallback')) !~? "pong" ) && l:count > 0
 				sleep 1
 				let l:count = l:count - 1
 			endwhile
@@ -572,20 +601,14 @@ function! s:getServerTimeoutSec()
 	return apexUtil#getOrElse("g:apex_server_timeoutSec", 60)
 endfunction
 
-
-function! s:sendCommandToServer(commandLine, flags, callbackFuncRef) abort
+function! s:sendCommandToServerBlocking(commandLine, flags, callbackFuncRef) abort
 	let isSilent = a:flags =~# "s"
-	let isBlocking = a:flags =~# "b"
 
     if isSilent
         return system(s:prepareServerCommand(a:commandLine))
     else
-        if isBlocking
-            let l:command = s:prepareServerCommand(a:commandLine)
-            call apexOs#exe(l:command, a:flags)	
-        else    
-            call s:execAsync(a:commandLine, a:callbackFuncRef)	
-        endif    
+        let l:command = s:prepareServerCommand(a:commandLine)
+        call apexOs#exe(l:command, a:flags)	
     endif
 endfunction
 

@@ -41,8 +41,8 @@ endfunction
 "Param: ... flags string
 "       'N' = suppress new/empty line after last message
 "Returns: number of messages displayed
-function! apexMessages#display(logFilePath, projectPath, displayMessageTypes, ...)
-    call s:ensureBufferExists()
+function! apexMessages#process(logFilePath, projectPath, displayMessageTypes, ...)
+    "call s:ensureBufferExists()
     
 	let prefix = 'MESSAGE: '
 	let l:lines = apexUtil#grepFile(a:logFilePath, '^' . prefix)
@@ -71,7 +71,7 @@ function! apexMessages#display(logFilePath, projectPath, displayMessageTypes, ..
 			echo text
 		endif
         call s:logHeader(msgType, text)
-		let l:index = l:index + 1 + s:displayMessageDetails(a:logFilePath, a:projectPath, message)
+		let l:index = l:index + 1 + s:processMessageDetails(a:logFilePath, a:projectPath, message)
 		"let l:index += 1
 	endfor
     
@@ -80,7 +80,7 @@ endfunction
 
 " using Id of specific message check if log file has details and display if
 " details found
-function! s:displayMessageDetails(logFilePath, projectPath, message)
+function! s:processMessageDetails(logFilePath, projectPath, message)
 	let prefix = 'MESSAGE DETAIL: '
 	silent let l:lines = apexUtil#grepFile(a:logFilePath, '^' . prefix)
 	let l:index = 0
@@ -114,28 +114,24 @@ function! s:displayMessageDetails(logFilePath, projectPath, message)
 endfunction
 
 function! s:logHeader(msgType, msg)
-    "setlocal modifiable
     let l:msgType = len(a:msgType) > 0? a:msgType . ':' : ''
     "call append( line('$'), l:msgType . ' ' . a:msg )
     call s:dump(l:msgType . ' ' . a:msg)
-    "setlocal nomodifiable
     if s:isVisible()
         "redraw
-        view
+        exec 'view ' . s:tempFile
         normal G
     endif    
 endfunction    
 function! s:logDetail(msgType, msg)
-    "setlocal modifiable
     "call append( line('$'), a:msgType . ':    ' . a:msg)
     let l:msgType = len(a:msgType) > 0? a:msgType . ':' : ''
     call s:dump(l:msgType . '    ' . a:msg)
 
-    "setlocal nomodifiable
     if s:isVisible()
         " scroll to the bottom of the file
         "redraw
-        view
+        exec 'view ' . s:tempFile
         normal G
     endif    
 endfunction    
@@ -145,19 +141,16 @@ function! s:dump(line)
 endfunction
 
 function! apexMessages#logInfo(msg)
-    "call s:ensureBufferExists()
     call s:logHeader("INFO", a:msg)
     call apexUtil#info(a:msg)
 endfunction    
 
 function! apexMessages#logError(msg)
-    "call s:ensureBufferExists()
     call s:logHeader("ERROR", a:msg)
     call apexUtil#info(a:msg)
 endfunction    
 
 function! apexMessages#log(msg)
-    "call s:ensureBufferExists()
     call s:logHeader("", a:msg)
     "echo a:msg
 endfunction    
