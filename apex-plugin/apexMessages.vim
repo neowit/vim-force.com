@@ -51,10 +51,8 @@ endfunction
 
 "Param: displayMessageTypes list of message types to display, other types will
 "be ignored, e.g. ['ERROR'] - will display only errors
-"Param: ... flags string
-"       'N' = suppress new/empty line after last message
 "Returns: number of messages displayed
-function! apexMessages#process(logFilePath, projectPath, displayMessageTypes, ...)
+function! apexMessages#process(logFilePath, projectPath, displayMessageTypes)
     
 	let prefix = 'MESSAGE: '
 	let l:lines = apexUtil#grepFile(a:logFilePath, '^' . prefix)
