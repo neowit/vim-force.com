@@ -13,8 +13,14 @@ let g:loaded_apexMessages = 1
 
 let s:BUFFER_NAME = 'vim-force.com-Messages'
 
-let s:tempFile = tempname() 
+let s:tempFile = tempname() . ".apex_messages"
 let g:tempFile = s:tempFile
+augroup apex_messages
+	au!
+	au! BufRead,BufNewFile  *.apex_messages call s:setupBuffer()
+	"exec 'au! BufRead,BufNewFile "'.s:tempFile.'" call s:setupBuffer()'
+augroup END
+
 
 function! apexMessages#open()
     if exists('g:APEX_MESSAGES_BUFFER_DISABLED') && g:APEX_MESSAGES_BUFFER_DISABLED
@@ -27,11 +33,18 @@ function! apexMessages#open()
         return
     endif    
     
-    call s:ensureBufferExists()
+    "call s:setupBuffer()
 
     "redraw
     " show content
-    view
+	if exists("g:_apex_messages_buf_num") && bufloaded(g:_apex_messages_buf_num)
+        "echomsg "#1"
+		execute 'b '.g:_apex_messages_buf_num
+        "echomsg "switch to existing buffer: " . g:_apex_messages_buf_num
+    else 
+        "echomsg "#2"
+        exec 'view ' . fnameescape(s:tempFile)
+    endif
     " go to the last line
     normal G
 endfunction    
@@ -42,7 +55,6 @@ endfunction
 "       'N' = suppress new/empty line after last message
 "Returns: number of messages displayed
 function! apexMessages#process(logFilePath, projectPath, displayMessageTypes, ...)
-    "call s:ensureBufferExists()
     
 	let prefix = 'MESSAGE: '
 	let l:lines = apexUtil#grepFile(a:logFilePath, '^' . prefix)
@@ -155,24 +167,21 @@ function! apexMessages#log(msg)
     "echo a:msg
 endfunction    
 
+let s:hintDisplayed = 0
 "Variables:
 "   g:APEX_MESSAGES_BUFFER_DISABLED - set to 1 if message buffer must NOT be
 "   created/used
-function! s:ensureBufferExists()
+function! s:setupBuffer()
     if exists('g:APEX_MESSAGES_BUFFER_DISABLED') && g:APEX_MESSAGES_BUFFER_DISABLED
         return
     endif    
-	if exists("g:_apex_messages_buf_num") && bufloaded(g:_apex_messages_buf_num)
-        echomsg "#1"
-		execute 'b '.g:_apex_messages_buf_num
-        "echomsg "switch to existing buffer: " . g:_apex_messages_buf_num
-    endif
+    "echom "inside setupBuffer"
     if !s:isSetupCorrectly()
-        echomsg "#2"
+        "echomsg "#2"
         "echomsg "creating message buffer"
         let l:currentBufNum = bufnr('%')
         " create new buffer
-        exec 'view ' fnameescape(s:tempFile)
+        "exec 'view ' fnameescape(s:tempFile)
         " set attributes
 		"setlocal buftype=nofile
 		setlocal buftype=nowrite
@@ -188,11 +197,17 @@ function! s:ensureBufferExists()
 
 		" Define key mapping for current buffer
 		exec 'nnoremap <buffer> <silent> q :call <SNR>'.s:sid.'_Close()<CR>'
+        if !s:hintDisplayed
+            let l:separator = "************************************"
+            call writefile([l:separator," press 'q' to close this buffer",l:separator], s:tempFile, "a")
+            let s:hintDisplayed = 1
+            " reload with hint visible
+            exec 'view ' fnameescape(s:tempFile)
+        endif
         
         " syntax highlight
         if has("syntax")
-
-            echomsg "#3"
+            "echomsg "#3"
             syntax on
             set filetype=apex_messages
             set syntax=apex_messages
