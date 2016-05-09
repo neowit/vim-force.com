@@ -467,7 +467,12 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
         call apexMessages#open()
     endif    
 	
+    let l:currentBufWinNum = bufwinnr("%")
 	call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
+    if a:isSilent && l:currentBufWinNum >=0 && l:currentBufWinNum != bufwinnr("%")
+        " return focus to original buffer
+        exe l:currentBufWinNum . "wincmd w"
+    endif
     
 	return 1
 
