@@ -553,7 +553,7 @@ function! s:runCommand(commandLine, isSilent, callbackFuncRef)
     let l:java_command = s:getJavaCommand()
 
 	if isServerEnabled 
-        call s:execAsync(l:java_command, a:commandLine, a:callbackFuncRef)
+        call s:execAsync(a:commandLine, a:callbackFuncRef)
 	else
 		let l:command = l:java_command . a:commandLine
 		call apexOs#exe(l:command, l:flags)
@@ -575,7 +575,7 @@ function! s:getJavaCommand()
 		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
 		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
 	endif
-	let l:java_command = l:java_command  . " -jar " . apexOs#shellescape(g:apex_tooling_force_dot_com_path)
+	let l:java_command = l:java_command  . " -jar " . fnameescape(g:apex_tooling_force_dot_com_path)
 
     return l:java_command
 
@@ -593,10 +593,8 @@ function! s:getServerTimeoutSec()
 	return apexUtil#getOrElse("g:apex_server_timeoutSec", 60)
 endfunction
 
-function! s:execAsync(java_command, command, callbackFuncRef)
+function! s:execAsync(command, callbackFuncRef)
     call ch_logfile('/Users/andrey/temp/vim/_job-test/channel.log', 'w')
-	let l:host = s:getServerHost()
-	let l:port = s:getServerPort()
 
     let l:reEnableMore = &more
     "set nomore
@@ -606,21 +604,45 @@ function! s:execAsync(java_command, command, callbackFuncRef)
         set more
     endif
 
-    let l:attempts = 10
-    while l:attempts > 0
-
+    let attempts = 15
+    while attempts > 0 
         try
+            let l:host = s:getServerHost()
+            let l:port = s:getServerPort()
             let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
             call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
-            let l:attempts = 0
+            let attempts = 0
+        catch /^Vim\%((\a\+)\)\=:E906/
+            "echom 'server not started: ' v:exception
+            echo "Starting server..."
+            call s:startServer()
+            let attempts -= 1
+            sleep 1000m
         catch /.*/
-            echom "server not started, attempts: " . l:attempts
-            let l:attempts -= 1
-            " try to start server
-			let l:command = a:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
-            echomsg l:command
-			silent call apexOs#exe(l:command, 'bMp') "start in background, disable --more--, try to use python if MS Windows
-            sleep " sleep for 1 second
+            call apexUtil#error("Failed to execute command. " . v:exception)
         endtry    
     endwhile
+endfunction    
+
+function! s:startServer()
+    call ch_logfile('/Users/andrey/temp/vim/_job-test/channel-startServer.log', 'w')
+
+
+    let obj = {}
+    
+    function obj.callback(channel, msg)
+        "echomsg "callback: msg=" . a:msg
+        if a:msg =~ "Error"
+            call apexUtil#error("Failed to start server: " . a:msg)
+        elseif a:msg =~ "Awaiting connection"    
+            call ch_close(a:channel)
+        endif    
+
+    endfunction    
+    
+    let l:java_command = s:getJavaCommand()
+    let l:command = l:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
+    "echom "l:command=" . l:command
+    let job = job_start(l:command, {"callback": obj.callback})
+    
 endfunction    
