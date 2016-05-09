@@ -323,13 +323,15 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     endif    
     
     function obj.callbackInternal(channel, ...)
-        echomsg "a:0=" . a:0
+        "echomsg "a:0=" . a:0
         if a:0 > 0
             " channel and msg
             " display message = a:2
             "echo a:1
             let l:msg = a:1 
-            call apexMessages#log(l:msg)
+            if !self.isSilent
+                call apexMessages#log(l:msg)
+            endif
             if len(l:msg) > 0
                 echo l:msg
             endif
