@@ -231,21 +231,6 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 		call apexUtil#warning("skipping conflict check with remote")
 	endif
 
-	let l:java_command = "java "
-	if exists("g:apex_java_cmd")
-		" set user defined path to java
-		let l:java_command = g:apex_java_cmd
-	endif
-	if exists('g:apex_tooling_force_dot_com_java_params')
-		" if defined then add extra JVM params
-		let l:java_command = l:java_command  . " " . g:apex_tooling_force_dot_com_java_params
-	else
-		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
-		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
-		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
-	endif
-	let l:java_command = l:java_command  . " -jar " . apexOs#shellescape(g:apex_tooling_force_dot_com_path)
-
 	let l:command = " --action=" . a:action
 	if exists("g:apex_temp_folder")
 		let l:command = l:command  . " --tempFolderPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
@@ -379,9 +364,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     endfunction    
     " ================= END internal callback =========================
 
-
-
-	call s:runCommand(l:java_command, l:command, isSilent, function(obj.callbackInternal))
+	call s:runCommand(l:command, isSilent, function(obj.callbackInternal))
 
 endfunction
 
@@ -555,52 +538,47 @@ function! s:grepValues(filePath, prefix)
 endfunction
 
 "================= server mode commands ==========================
-function! s:runCommand(java_command, commandLine, isSilent, callbackFuncRef)
+function! s:runCommand(commandLine, isSilent, callbackFuncRef)
 	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
+	if !isServerEnabled
+		"server not enabled
+        call apexUtil#error('Async mode does not support non server mode. add  ":let g:apex_server = 1" to .vimrc')
+		return 0
+    endif    
 	let l:flags = 'M' "disable --more--
 	if a:isSilent
 		let l:flags .= 's' " silent
 	endif
 
-	if isServerEnabled && s:ensureServerRunning(a:java_command)
-		"call s:sendCommandToServer(a:commandLine, l:flags, a:callbackFuncRef)
-        call s:execAsync(a:commandLine, a:callbackFuncRef)
+    let l:java_command = s:getJavaCommand()
+
+	if isServerEnabled 
+        call s:execAsync(l:java_command, a:commandLine, a:callbackFuncRef)
 	else
-		let l:command = a:java_command . a:commandLine
+		let l:command = l:java_command . a:commandLine
 		call apexOs#exe(l:command, l:flags)
 	endif
 endfunction
 
-function! s:ensureServerRunning(java_command)
-	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
-	if !isServerEnabled
-		"server not enabled
-		return 0
-	else
-		let pong = s:sendCommandToServerBlocking("ping", "sb", function('s:dummyCallback'))
-		
-		if pong !~? "pong"
-			" start server
-			let l:command = a:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
-			call apexOs#exe(l:command, 'bMp') "start in background, disable --more--, try to use python if MS Windows
-			"wait a little to make sure it had a chance to start
-			echo "wait for server to start..."
-			let l:count = 15 " wait for server to start no more than 15 seconds
-			while (s:sendCommandToServerBlocking("ping", "sb", function('s:dummyCallback')) !~? "pong" ) && l:count > 0
-				sleep 1
-				let l:count = l:count - 1
-			endwhile
-			" echo 'had to wait for ' . (5-l:count) . ' second(s)'
-		endif
+function! s:getJavaCommand()
+
+	let l:java_command = "java "
+	if exists("g:apex_java_cmd")
+		" set user defined path to java
+		let l:java_command = g:apex_java_cmd
 	endif
-	return 1
-endfunction
+	if exists('g:apex_tooling_force_dot_com_java_params')
+		" if defined then add extra JVM params
+		let l:java_command = l:java_command  . " " . g:apex_tooling_force_dot_com_java_params
+	else
+		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
+		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
+		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
+	endif
+	let l:java_command = l:java_command  . " -jar " . apexOs#shellescape(g:apex_tooling_force_dot_com_path)
 
+    return l:java_command
 
-function! s:prepareServerCommand(commandLine)
-	let l:host = s:getServerHost()
-	let l:port = s:getServerPort()
-	return 'echo "' . a:commandLine . '" | nc ' . l:host . ' ' . l:port
 endfunction
 
 function! s:getServerHost()
@@ -615,45 +593,34 @@ function! s:getServerTimeoutSec()
 	return apexUtil#getOrElse("g:apex_server_timeoutSec", 60)
 endfunction
 
-function! s:sendCommandToServerBlocking(commandLine, flags, callbackFuncRef) abort
-	let isSilent = a:flags =~# "s"
-
-    if isSilent
-        return system(s:prepareServerCommand(a:commandLine))
-    else
-        let l:command = s:prepareServerCommand(a:commandLine)
-        call apexOs#exe(l:command, a:flags)	
-    endif
-endfunction
-
-function! s:execAsync(command, callbackFuncRef)
-    " let obj = {"one": "value 1", "two": "value 2"}
-    " function obj.callbackProgress(channel, msg)
-    "     echo a:msg . " channel=" . a:channel
-    "     echo " channel=" . a:channel
-    " endfunction    
-
-    " function obj.callbackChannelClosed(channel)
-    "     echo " channel=" . a:channel
-    " endfunction    
-
-    "echomsg "execAsync: " . a:command
-
-    " let job = job_start(a:command, {"callback": function(obj.callbackInternal)})
-    " let s:job = job
-    " echomsg "job=" . job
+function! s:execAsync(java_command, command, callbackFuncRef)
     call ch_logfile('/Users/andrey/temp/vim/_job-test/channel.log', 'w')
 	let l:host = s:getServerHost()
 	let l:port = s:getServerPort()
-    let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
 
     let l:reEnableMore = &more
     "set nomore
     call apexMessages#log("")
     call apexMessages#log(a:command)
-	if l:reEnableMore
-		set more
-	endif
-    call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
+    if l:reEnableMore
+        set more
+    endif
 
+    let l:attempts = 10
+    while l:attempts > 0
+
+        try
+            let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
+            call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
+            let l:attempts = 0
+        catch /.*/
+            echom "server not started, attempts: " . l:attempts
+            let l:attempts -= 1
+            " try to start server
+			let l:command = a:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
+            echomsg l:command
+			silent call apexOs#exe(l:command, 'bMp') "start in background, disable --more--, try to use python if MS Windows
+            sleep " sleep for 1 second
+        endtry    
+    endwhile
 endfunction    
