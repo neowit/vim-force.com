@@ -323,14 +323,16 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     endif    
     
     function obj.callbackInternal(channel, ...)
-        "echomsg "a:0=" . a:0
+        echomsg "a:0=" . a:0
         if a:0 > 0
             " channel and msg
             " display message = a:2
             "echo a:1
             let l:msg = a:1 
             call apexMessages#log(l:msg)
-            echo l:msg
+            if len(l:msg) > 0
+                echo l:msg
+            endif
             return
         elseif 0 == a:0
             " channel only. assume that channel has been closed
@@ -456,12 +458,15 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 		endif
 		return 0
 	endif
-
+   
     call apexMessages#logError("Operation failed")
     " check if we have failure messages
-    call apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes)
+    if apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes) > 0 && !a:isSilent
+        call apexMessages#open()
+    endif    
 	
-	silent call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
+	call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
+    
 	return 1
 
 endfunction
@@ -477,7 +482,7 @@ endfunction
 function! s:fillQuickfix(logFilePath, projectPath, useLocationList)
 	" error is reported like so
 	" ERROR: {"line" : 3, "column" : 10, "filePath" : "src/classes/A_Fake_Class.cls", "text" : "Invalid identifier: test22."}
-	silent let l:lines = apexUtil#grepFile(a:logFilePath, '^ERROR: ')
+	let l:lines = apexUtil#grepFile(a:logFilePath, '^ERROR: ')
 	let l:errorList = []
 
 	let index = 0
@@ -515,6 +520,8 @@ function! s:fillQuickfix(logFilePath, projectPath, useLocationList)
             copen
         endif    
 	endif
+    
+    return len(l:errorList) 
 endfunction	
 
 " similar apexUtil#grepFile() function s:grepValues()
