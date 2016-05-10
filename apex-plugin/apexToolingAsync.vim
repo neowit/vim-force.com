@@ -294,7 +294,8 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 
     let l:startTime = reltime()
     " ================= internal callback =========================
-    let obj = {"responseFilePath": responseFilePath, "callbackFuncRef": function('s:dummyCallback')}
+    "let obj = {"responseFilePath": responseFilePath, "callbackFuncRef": function('s:dummyCallback')}
+    let obj = {"responseFilePath": responseFilePath}
     let obj.projectPath = a:projectPath
     let obj.displayMessageTypes = a:displayMessageTypes
     let obj.extraParams = a:extraParams
@@ -360,7 +361,9 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         """temporary disabled"" call s:onCommandComplete(reltime(self.startTime))
 
         let l:result = {"success": 0 == errCount? "true": "false", "responseFilePath": self.responseFilePath, "projectPath": self.projectPath}
-        call self.callbackFuncRef(l:result)
+        if ( has_key(self, "callbackFuncRef") )
+            call self.callbackFuncRef(l:result)
+        endif    
     endfunction    
     " ================= END internal callback =========================
 
