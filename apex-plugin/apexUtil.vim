@@ -421,3 +421,7 @@ function! apexUtil#getOrElse(var, defaultValue)
 	endif
 	return a:defaultValue
 endfunction
+
+function! apexUtil#log(msg)
+    call writefile([a:msg], "/Users/andrey/temp/vim/_job-test/log.txt", "a")
+endfunction    

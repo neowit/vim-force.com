@@ -11,7 +11,7 @@ if exists("g:loaded_apexMessages") || &compatible
 endif
 let g:loaded_apexMessages = 1
 
-let s:BUFFER_NAME = 'vim-force.com-Messages'
+let s:BUFFER_NUMBER = -1
 
 let s:tempFile = tempname() . ".apex_messages"
 let g:tempFile = s:tempFile
@@ -37,12 +37,10 @@ function! apexMessages#open()
 
     "redraw
     " show content
-	if exists("g:_apex_messages_buf_num") && bufloaded(g:_apex_messages_buf_num)
-        "echomsg "#1"
-		execute 'b '.g:_apex_messages_buf_num
-        "echomsg "switch to existing buffer: " . g:_apex_messages_buf_num
+	if s:BUFFER_NUMBER > 0 && bufloaded(s:BUFFER_NUMBER)
+		execute 'b '.s:BUFFER_NUMBER
     else 
-        "echomsg "#2"
+        call apexUtil#log("view: inside apexMessages#open")
         exec 'view ' . fnameescape(s:tempFile)
     endif
     " go to the last line
@@ -129,6 +127,7 @@ function! s:logHeader(msgType, msg)
     call s:dump(l:msgType . ' ' . a:msg)
     if s:isVisible()
         "redraw
+        call apexUtil#log("view: inside logHeader")
         exec 'view ' . s:tempFile
         normal G
     endif    
@@ -141,6 +140,7 @@ function! s:logDetail(msgType, msg)
     if s:isVisible()
         " scroll to the bottom of the file
         "redraw
+        call apexUtil#log("view: inside logDetail")
         exec 'view ' . s:tempFile
         normal G
     endif    
@@ -173,11 +173,10 @@ function! s:setupBuffer()
     if exists('g:APEX_MESSAGES_BUFFER_DISABLED') && g:APEX_MESSAGES_BUFFER_DISABLED
         return
     endif    
-    "echom "inside setupBuffer"
+    
+    call apexUtil#log("inside setupBuffer")
     if !s:isSetupCorrectly()
-        "echomsg "#2"
-        "echomsg "creating message buffer"
-        let l:currentBufNum = bufnr('%')
+        let s:BUFFER_NUMBER = bufnr('%')
         " create new buffer
         "exec 'view ' fnameescape(s:tempFile)
         " set attributes
@@ -189,10 +188,6 @@ function! s:setupBuffer()
 		setlocal nobuflisted
         setlocal autoread
         
-        "echomsg 'file: ' . s:tempFile
-        let s:BUFFER_NAME = bufname('%')
-		let g:_apex_messages_buf_num = bufnr("%")
-
 		" Define key mapping for current buffer
 		exec 'nnoremap <buffer> <silent> q :call <SNR>'.s:sid.'_Close()<CR>'
         if !s:hintDisplayed
@@ -200,44 +195,40 @@ function! s:setupBuffer()
             call writefile([l:separator," press 'q' to close this buffer",l:separator], s:tempFile, "a")
             let s:hintDisplayed = 1
             " reload with hint visible
+            call apexUtil#log("view: inside setupBuffer")
+
             exec 'view ' fnameescape(s:tempFile)
         endif
         
         " syntax highlight
         if has("syntax")
-            "echomsg "#3"
             syntax on
-            set filetype=apex_messages
-            set syntax=apex_messages
+            setlocal filetype=apex_messages
+            setlocal syntax=apex_messages
         endif
 
-        " switch back to original buffer
-        if l:currentBufNum > 0
-            "exec 'b ' . l:currentBufNum
-        endif
     endif    
-    "if bufname('%') != s:BUFFER_NAME
-    "    exec 'file ' . fnameescape(s:BUFFER_NAME)
-    "endif
     
 endfunction    
 
 function! s:isVisible()
-	return bufwinnr(s:BUFFER_NAME) > 0
+    call apexUtil#log("isVisible: s:BUFFER_NUMBER=" . s:BUFFER_NUMBER . "; bufwinnr(s:BUFFER_NUMBER)=" . bufwinnr(s:BUFFER_NUMBER))
+
+	return bufwinnr(s:BUFFER_NUMBER) > 0
 endfunction    
 
 function! s:isSetupCorrectly()
-	return &syntax == 'apex_messages'
+	return s:BUFFER_NUMBER > 0 && 'apex_messages' && getbufvar(s:BUFFER_NUMBER, "&syntax")
 endfunction    
 
-function! s:show()
-    if s:isVisible()
-       exec bnr . "wincmd w"
-    else
-       echo a:buffername . ' is not existent'
-       silent execute 'split ' . a:buffername
-    endif
- endfunction
+"function! s:show()
+"    if s:isVisible()
+"       exec bnr . "wincmd w"
+"    else
+"       echo a:buffername . ' is not existent'
+"       silent execute 'split ' . a:buffername
+"    endif
+"endfunction
 
 function! s:SID()
   " Return the SID number for this file
@@ -247,8 +238,8 @@ let s:sid = s:SID()
 
 " close buffer
 function! <SID>Close()
-	if exists("g:_apex_messages_buf_num") && bufloaded(g:_apex_messages_buf_num)
-        execute 'bdelete '.g:_apex_messages_buf_num
+	if s:BUFFER_NUMBER > 0 && bufloaded(s:BUFFER_NUMBER)
+        execute 'bdelete '.s:BUFFER_NUMBER
         "hide
     endif
     "exec 'buffer #'

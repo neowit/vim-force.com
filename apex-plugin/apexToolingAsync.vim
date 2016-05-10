@@ -439,10 +439,17 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 
 	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
 		" check if we have messages
-		if apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1 && !a:isSilent
+        let messageCount = apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes)
+		if messageCount < 1 && !a:isSilent
 			call apexMessages#logInfo("No errors found")
+            sleep 500m " give message a chance to be noticed by user
         elseif !a:isSilent 
-            call apexMessages#open()
+            " only open message buffer if there was more than 1 message
+            if messageCount > 1
+                call apexMessages#open()
+            else
+                sleep 500m " give message a chance to be noticed by user
+            endif
 		endif
 		return 0
 	endif
