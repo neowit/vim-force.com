@@ -850,7 +850,7 @@ Recommended .vimrc config for apex completion:
 	" map omni completion to Control + Space
 	""""""""""""""""""""""""""""""""""""""""""
 	inoremap <C-Space> <C-x><C-o>
-	inoremap <C-@> <C-Space>
+    inoremap <C-@> <C-x><C-o>
 <
 2. completion menu popup >
     set completeopt=menu,preview,longest
