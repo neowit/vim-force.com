@@ -606,20 +606,21 @@ function! s:execAsync(command, callbackFuncRef)
 
     let attempts = 15
     while attempts > 0 
+        let attempts -= 1
         try
             let l:host = s:getServerHost()
             let l:port = s:getServerPort()
             let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
             call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
-            let attempts = 0
+            break
         catch /^Vim\%((\a\+)\)\=:E906/
             "echom 'server not started: ' v:exception
             echo "Starting server..."
             call s:startServer()
-            let attempts -= 1
             sleep 1000m
         catch /.*/
             call apexUtil#error("Failed to execute command. " . v:exception)
+            break
         endtry    
     endwhile
 endfunction    
