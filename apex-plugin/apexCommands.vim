@@ -75,7 +75,7 @@ function! s:toolingJarSpecific()
 	command! -nargs=0 ApexRefreshProject :call apexTooling#refreshProject(expand("%:p"))
 	command! -nargs=? -complete=customlist,apex#listProjectNames ApexRefreshFile :call apexTooling#refreshFile(expand("%:p"), <f-args>)
 
-	command! ApexPrintChanged :call apexTooling#printChangedFiles(expand("%:p"))
+	command! ApexPrintChanged :call apexToolingAsync#printChangedFiles(expand("%:p"))
 	command! ApexPrintConflicts :call apexToolingAsync#printConflicts(expand("%:p"))
 	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteProject :call apexTooling#diffWithRemote(expand("%:p"), "project", <f-args>)
 	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteFile :call apexTooling#diffWithRemote(expand("%:p"), "file", <f-args>)

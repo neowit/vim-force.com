@@ -351,6 +351,13 @@ function apexToolingAsync#deployAndTest(filePath, attributeMap, orgName, reportC
 
 endfunction
 
+"Args:
+"Param1: path to file which belongs to apex project
+function apexToolingAsync#printChangedFiles(filePath)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	call apexToolingAsync#execute("listModified", projectPair.name, projectPair.path, {}, [])
+endfunction	
+
 " ==================================================================================================
 " this callback is used when no explicit callback method specified by caller
 " of apexToolingAsync#execute()
