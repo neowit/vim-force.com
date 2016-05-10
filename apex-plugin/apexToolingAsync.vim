@@ -10,7 +10,7 @@
 if exists("g:loaded_apexToolingAsync") || &compatible
   finish
 endif
-"let g:loaded_apexToolingAsync = 1
+let g:loaded_apexToolingAsync = 1
 
 let s:SESSION_FOLDER = ".vim-force.com"
 
@@ -211,6 +211,146 @@ function apexToolingAsync#checkSyntax(filePath, attributeMap)
 	call apexToolingAsync#execute("checkSyntax", projectName, projectPath, l:extraParams, [])
 endfunction
 
+"run unit tests
+"Args:
+"Param: filePath 
+"			path to file which belongs to apex project
+"
+"Param: attributeMap - map {} of test attributes
+"			e.g.: {"checkOnly": 0, "testsToRun": "TestClass,OtherTestClass"}
+"			e.g.: {"checkOnly": 1, "testsToRun": "TestClass.method1,TestClass.method2"}
+"
+"			testsToRun: (optional) - if provided then only run tests in the specified class(es)
+"									otherwise all test classes listed in
+"									deployment package
+"			checkOnly:(optional) - can be either 0(false) or 1(true)
+"			tooling:(optional) - can be either 'sync' or 'async'.
+"			                        if specified then Tooling API will be
+"			                        used, instead of Metadata API
+"
+"
+"Param: orgName - given project name will be used as
+"						target Org name.
+"						must match one of .properties file with	login details
+"Param: reportCoverage: 'reportCoverage' (means load lines report), anything
+"				        else means do not load lines coverage report
+"Param: bang - if 1 then skip conflicts check with remote
+function apexToolingAsync#deployAndTest(filePath, attributeMap, orgName, reportCoverage, bang)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectPath = projectPair.path
+	let projectName = len(a:orgName) > 0 ? a:orgName : projectPair.name
+	let attributeMap = a:attributeMap
+	" if any coverage shown - remove highlight, to avoid confusion
+	call apexCoverage#hide(a:filePath)
+
+	let l:extraParams = {}
+	" another org?
+	if projectPair.name != projectName
+		let l:extraParams["callingAnotherOrg"] = "true"
+		"when deploying to another org there is no point in checking conflicts
+		"because local metadata is not related to that org
+		let l:extraParams["ignoreConflicts"] = "true"
+	endif
+	" checkOnly?
+	if has_key(attributeMap, "checkOnly")
+		let l:extraParams["checkOnly"] = attributeMap["checkOnly"]? "true" : "false"
+	endif
+	" testsToRun
+	if has_key(attributeMap, "testsToRun")
+        let l:extraParams["testsToRun"] = shellescape(attributeMap["testsToRun"])
+	else
+        if has_key(attributeMap, "testSuites")
+            let l:extraParams["testSuitesToRun"] = shellescape(attributeMap["testSuites"])
+        else    
+            "run all tests in the deployment package
+            let l:extraParams["testsToRun"] = shellescape('*')
+        endif
+	endif
+	"reportCoverage
+	if 'reportCoverage' == a:reportCoverage
+		let l:extraParams["reportCoverage"] = 'true'
+	endif
+	"ignoreConflicts ?
+	if a:bang
+		let l:extraParams["ignoreConflicts"] = "true"
+	endif
+
+    let l:command = "deployModified"
+    let l:isTooling = has_key(attributeMap, "tooling")
+
+	if l:isTooling 
+        let l:command = "runTestsTooling"
+        if 'async' == attributeMap["tooling"]
+		    let l:extraParams["async"] = "true"
+        else
+		    let l:extraParams["async"] = "false"
+        endif    
+    endif
+    if "deployModified" == l:command
+        " current version only asks Metadata API log level
+        call apexLogActions#askLogLevel(a:filePath, 'meta')
+        
+    elseif has_key(attributeMap, "tooling")
+
+        call apexLogActions#askLogLevel(a:filePath, 'tooling')
+        if exists('g:apex_test_traceFlag')
+            let tempTraceConfigFilePath = apexLogActions#saveTempTraceFlagConfig(g:apex_test_traceFlag)
+		    
+            let l:extraParams["traceFlagConfig"] = apexOs#shellescape(tempTraceConfigFilePath)
+            "let l:extraParams["scope"] = "user"
+        endif
+    endif    
+    " ================= internal callback ===========================
+    function! l:extraParams.callbackFuncRef(resMap)
+        if has_key(a:resMap, "responseFilePath")
+            let responsePath = a:resMap["responseFilePath"]
+            let coverageFiles = s:grepValues(responsePath, "COVERAGE_FILE=")
+            let filePath = a:resMap["filePath"]
+
+            if len(coverageFiles) > 0
+                let s:last_coverage_report_file = coverageFiles[0]
+                " if last command is piped to another command then no need to display
+                " quickfix window
+                let l:histnr = histnr("cmd")
+                let l:lastCmd = histget("cmd", l:histnr)
+                if l:lastCmd !~ "|.*ApexTestCoverage"
+                    " display coverage list if available and there are no errors in quickfix
+                    if len(getqflist()) < 1
+                        call apexCoverage#quickFixOpen(filePath)
+                    endif
+                endif
+            endif
+        endif
+    endfunction    
+
+    let l:extraParams["_filePath"] = a:filePath
+    "let l:extraParams["callbackFuncRef"] = function(l:extraParams.internalCallback)
+    "let l:extraParams["callbackFuncParams"] = {"filePath": a:filePath}
+    " ================= END internal callback ===========================
+
+	call apexToolingAsync#execute(l:command, projectName, projectPath, l:extraParams, [])
+
+	"let resMap = apexTooling#execute(l:command, projectName, projectPath, l:extraParams, [])
+    "if has_key(resMap, "responseFilePath")
+    "    let responsePath = resMap["responseFilePath"]
+    "    let coverageFiles = s:grepValues(responsePath, "COVERAGE_FILE=")
+    "    if len(coverageFiles) > 0
+    "        let s:last_coverage_report_file = coverageFiles[0]
+    "        " if last command is piped to another command then no need to display
+    "        " quickfix window
+    "        let l:histnr = histnr("cmd")
+    "        let l:lastCmd = histget("cmd", l:histnr)
+    "        if l:lastCmd !~ "|.*ApexTestCoverage"
+    "            " display coverage list if available and there are no errors in quickfix
+    "            if len(getqflist()) < 1
+    "                call apexCoverage#quickFixOpen(a:filePath)
+    "            endif
+    "        endif
+    "    endif
+    "endif
+
+endfunction
+
 " ==================================================================================================
 " this callback is used when no explicit callback method specified by caller
 " of apexToolingAsync#execute()
@@ -218,10 +358,11 @@ function! s:dummyCallback(msg)
     "echo "dummyCallback: " . string(a:msg)
 endfunction    
 
-"Returns: dictionary/pair: 
+"Returns: dictionary: 
 "	{
 "	"success": "true" if RESULT=SUCCESS
 "	"responseFilePath" : "path to current response/log file"
+"	"projectPath": "project path"
 "	}
 "
 function! apexToolingAsync#execute(action, projectName, projectPath, extraParams, displayMessageTypes) abort
@@ -252,9 +393,10 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     endif
 
 	let l:EXCLUDE_KEYS = ["isSilent", "useLocationList", "callbackFuncRef"]
+    " also exclude keys wich start with underscore '_'
 	if len(a:extraParams) > 0
 		for key in keys(a:extraParams)
-			if index(l:EXCLUDE_KEYS, key) < 0
+			if index(l:EXCLUDE_KEYS, key) < 0 && key !~ '^_'
 				let l:command = l:command  . " --" . key . "=" . a:extraParams[key]
 			endif
 		endfor
@@ -301,6 +443,9 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     let obj.extraParams = a:extraParams
     let obj.isSilent = isSilent
     let obj.startTime = l:startTime
+    if has_key(a:extraParams, "_filePath")
+        let obj.filePath = a:extraParams["_filePath"]
+    endif
 
     " in case if caller did not provide custom callbackFuncRef let's use
     " generic callback function
@@ -361,6 +506,9 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         """temporary disabled"" call s:onCommandComplete(reltime(self.startTime))
 
         let l:result = {"success": 0 == errCount? "true": "false", "responseFilePath": self.responseFilePath, "projectPath": self.projectPath}
+        if has_key(self, "filePath")
+            let l:result["filePath"] = self.filePath
+        endif    
         if ( has_key(self, "callbackFuncRef") )
             call self.callbackFuncRef(l:result)
         endif    

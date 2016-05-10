@@ -77,7 +77,7 @@ function! apexTest#runTest(reportCoverage, bang, ...)
 
     endif
 
-    call apexTooling#deployAndTest(filePath, attributes, projectName, a:reportCoverage, a:bang)
+    call apexToolingAsync#deployAndTest(filePath, attributes, projectName, a:reportCoverage, a:bang)
 
 endfunction
 
