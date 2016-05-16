@@ -146,6 +146,141 @@ function apexToolingAsync#deploy(action, mode, bang, ...)
 
 endfunction
 
+function s:reportModifiedFiles(modifiedFiles)
+	let modifiedFiles = a:modifiedFiles
+	" show first 5
+	let index = 0
+	for fName in modifiedFiles
+		let index += 1
+		if index > 5
+			call apexUtil#warning("+ " . (len(modifiedFiles) - index) . " more")
+			break
+		endif
+		if fName =~ "package.xml$"
+			continue " skip package.xml
+		endif
+
+		call apexUtil#warning("    " . fName)
+	endfor
+endfunction
+
+function! s:refreshProjectMainCallback(resMap)
+	if "true" == a:resMap["success"]
+		" TODO add a setting so user could chose whether they want
+		" backup of all files received in Refresh or only modified ones
+		"
+		" backup modified files
+		"if len(modifiedFiles) > 0
+		"	call s:backupFiles(projectPair.name, projectPair.path, modifiedFiles)
+		"endif
+
+		" copy files from temp folder into project folder
+		let logFilePath = a:resMap["responseFilePath"]
+		let l:lines = apexToolingCommon#grepValues(logFilePath, "RESULT_FOLDER=")
+		if len(l:lines) > 0
+			let resultFolder = apexOs#removeTrailingPathSeparator(l:lines[0])
+			let resultFolderPathLen = len(resultFolder)
+
+			let l:files = apexOs#glob(resultFolder . "/**/*")
+
+			" backup files we are about to overwrite
+			" if they new and old differ in size
+			let relativePathsOfFilesToBeOverwritten = []
+			let packageXmlDifferent = 0
+			for path in l:files
+				if !isdirectory(path)
+					let relativePath = strpart(path, resultFolderPathLen)
+					let relativePath = substitute(relativePath, "^[/|\\\\]unpackaged[/|\\\\]", "src/", "")
+					"check if local file exists adn sizes are different
+					let localFilePath = apexOs#joinPath([a:resMap["projectPath"], relativePath])
+					if filereadable(localFilePath)
+						let currentSize = getfsize(localFilePath)
+						let newSize = getfsize(path)
+						if currentSize != newSize
+							call add(relativePathsOfFilesToBeOverwritten, relativePath)
+							if path =~ "package.xml$"
+								let packageXmlDifferent = 1
+							endif
+						endif
+					endif
+				endif
+
+			endfor
+			if len(relativePathsOfFilesToBeOverwritten) > 0
+				let backupDir = apexToolingCommon#backupFiles(a:resMap["projectName"], a:resMap["projectPath"], relativePathsOfFilesToBeOverwritten)
+                let l:msg = "Project files with size different to remote ones have been preserved in: " . backupDir
+                call apexMessages#log(l:msg)
+				echo l:msg
+			endif
+
+			" finally move files from temp dir into project dir
+			for sourcePath in l:files
+				if !isdirectory(sourcePath)
+
+					let relativePath = strpart(sourcePath, resultFolderPathLen)
+					let relativePath = substitute(relativePath, "^[/|\\\\]unpackaged[/|\\\\]", "src/", "")
+					let destinationPath = apexOs#joinPath([a:resMap["projectPath"], relativePath])
+					let overwrite = 1
+					if sourcePath =~ "package.xml$" && packageXmlDifferent
+						let overwrite = apexUtil#input("Overwrite package.xml [y/N]? ", "YynN", "N") ==? 'y'
+					endif
+					"echo "FROM= " .sourcePath
+					"echo "TO= " .destinationPath
+					if sourcePath !~ "package.xml$" || overwrite
+						let destinationDirPath = apexOs#splitPath(destinationPath).head
+						if !isdirectory(destinationDirPath)
+							call mkdir(destinationDirPath, "p")
+						endif
+						call apexOs#copyFile(sourcePath, destinationPath)
+					endif
+				endif
+			endfor
+			checktime "make sure that external changes are reported
+		endif
+	endif
+
+endfunction    
+
+"Args:
+"Param: filePath: path to file which belongs to apex project
+"Param1: skipModifiedFiles: (optional) 0 for false, anything else for true
+function! apexToolingAsync#refreshProject(filePath, ...)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let extraParams = a:0 > 0 && a:1 ? {"skipModifiedFilesCheck":"true"} : {}
+
+    " ============ internal callback 1 ================
+    function! extraParams.callbackFuncRef(resMap)
+        let logFilePath = a:resMap["responseFilePath"]
+        " check if SFDC client reported modified files
+        let modifiedFiles = apexToolingCommon#grepValues(logFilePath, "MODIFIED_FILE=")
+        if len(modifiedFiles) > 0
+            " modified files detected
+            call apexUtil#warning("Modified file(s) detected..")
+            call s:reportModifiedFiles(modifiedFiles)
+            echohl WarningMsg
+            let response = input('Are you sure you want to lose local changes [y/N]? ')
+            echohl None 
+            if 'y' !=? response
+                redrawstatus
+                return 
+            endif
+            " STEP 2: forced refresh when there are modified files
+            let extraParams = {"skipModifiedFilesCheck":"true"}
+            let extraParams.callbackFuncRef = function('s:refreshProjectMainCallback')
+            call apexToolingAsync#execute("refresh", a:resMap["projectName"], a:resMap["projectPath"], extraParams, ["ERROR", "INFO"])
+        else
+            " no modified files detected, can proceed with Main callback
+            call s:refreshProjectMainCallback(a:resMap)
+        endif
+
+    endfunction    
+    " ============ END internal callback 1 ================
+
+    " STEP 1:
+	call apexToolingAsync#execute("refresh", projectPair.name, projectPair.path, extraParams, ["ERROR", "INFO"])
+    
+
+endfunction	
 
 "
 "list potential conflicts between local and remote
@@ -304,7 +439,7 @@ function apexToolingAsync#deployAndTest(filePath, attributeMap, orgName, reportC
     function! l:extraParams.callbackFuncRef(resMap)
         if has_key(a:resMap, "responseFilePath")
             let responsePath = a:resMap["responseFilePath"]
-            let coverageFiles = s:grepValues(responsePath, "COVERAGE_FILE=")
+            let coverageFiles = apexToolingCommon#grepValues(responsePath, "COVERAGE_FILE=")
             let filePath = a:resMap["filePath"]
 
             if len(coverageFiles) > 0
@@ -333,7 +468,7 @@ function apexToolingAsync#deployAndTest(filePath, attributeMap, orgName, reportC
 	"let resMap = apexTooling#execute(l:command, projectName, projectPath, l:extraParams, [])
     "if has_key(resMap, "responseFilePath")
     "    let responsePath = resMap["responseFilePath"]
-    "    let coverageFiles = s:grepValues(responsePath, "COVERAGE_FILE=")
+    "    let coverageFiles = apexToolingCommon#grepValues(responsePath, "COVERAGE_FILE=")
     "    if len(coverageFiles) > 0
     "        let s:last_coverage_report_file = coverageFiles[0]
     "        " if last command is piped to another command then no need to display
@@ -370,6 +505,7 @@ endfunction
 "	"success": "true" if RESULT=SUCCESS
 "	"responseFilePath" : "path to current response/log file"
 "	"projectPath": "project path"
+"	"projectName": "project name"
 "	}
 "
 function! apexToolingAsync#execute(action, projectName, projectPath, extraParams, displayMessageTypes) abort
@@ -446,6 +582,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     "let obj = {"responseFilePath": responseFilePath, "callbackFuncRef": function('s:dummyCallback')}
     let obj = {"responseFilePath": responseFilePath}
     let obj.projectPath = a:projectPath
+    let obj.projectName = a:projectName
     let obj.displayMessageTypes = a:displayMessageTypes
     let obj.extraParams = a:extraParams
     let obj.isSilent = isSilent
@@ -479,7 +616,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         endif    
 
         " echo 'one=' . self.one. '; two=' . self.two . '; ' . a:msg 
-        silent let logFileRes = s:grepValues(self.responseFilePath, "LOG_FILE=")
+        silent let logFileRes = apexToolingCommon#grepValues(self.responseFilePath, "LOG_FILE=")
 
         if !empty(logFileRes)
             let s:apex_last_log = logFileRes[0]
@@ -493,7 +630,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
             endif    
 
             "try LOG_FILE_BY_CLASS_NAME map
-            let logFileRes = s:grepValues(self.responseFilePath, "LOG_FILE_BY_CLASS_NAME=")
+            let logFileRes = apexToolingCommon#grepValues(self.responseFilePath, "LOG_FILE_BY_CLASS_NAME=")
 
             if !empty(logFileRes)
                 let s:apex_last_log_by_class_name = eval(logFileRes[0])
@@ -512,7 +649,11 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         "echo "l:startTime=" . string(l:startTime)
         """temporary disabled"" call s:onCommandComplete(reltime(self.startTime))
 
-        let l:result = {"success": 0 == errCount? "true": "false", "responseFilePath": self.responseFilePath, "projectPath": self.projectPath}
+        let l:result = {"success": 0 == errCount? "true": "false",
+                    \ "responseFilePath": self.responseFilePath,
+                    \ "projectPath": self.projectPath,
+                    \ "projectName": self.projectName}
+        
         if has_key(self, "filePath")
             let l:result["filePath"] = self.filePath
         endif    
@@ -678,29 +819,6 @@ function! s:fillQuickfix(logFilePath, projectPath, useLocationList)
     
     return len(l:errorList) 
 endfunction	
-
-" similar apexUtil#grepFile() function s:grepValues()
-" greps all lines starting with given prefix
-" and returns list of values on the right side of the prefix
-" Example:
-" source file: 
-" MODIFIED_FILE=file1.txt
-" MODIFIED_FILE=file1.txt
-" result: 
-" ['file1.txt', 'file1.txt']
-"
-function! s:grepValues(filePath, prefix)
-	let l:lines = apexUtil#grepFile(a:filePath, '^' . a:prefix)
-	let l:index = 0
-	let l:resultLines = []
-	while l:index < len(l:lines)
-		let l:line = substitute(l:lines[l:index], a:prefix, "", "")
-		call add(l:resultLines, l:line)
-		let l:index = l:index + 1
-	endwhile
-
-	return l:resultLines
-endfunction
 
 "================= server mode commands ==========================
 function! s:runCommand(commandLine, isSilent, callbackFuncRef)
