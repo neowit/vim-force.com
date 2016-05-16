@@ -142,9 +142,155 @@ function apexToolingAsync#deploy(action, mode, bang, ...)
 		let l:extraParams["ignoreConflicts"] = "true"
 	endif
 
-	let resMap = apexToolingAsync#execute(l:action, projectName, projectPath, l:extraParams, [])
+	call apexToolingAsync#execute(l:action, projectName, projectPath, l:extraParams, [])
 
 endfunction
+
+"Args:
+"Param1: path to file which belongs to current apex project
+"Param2: [optional] name of remote <project>.properties file
+function apexToolingAsync#refreshFile(filePath, ...)
+    let filePath = a:filePath
+    " check if current file is part of unpacked static resource
+    let resourcePath = apexResource#getResourcePath(a:filePath)
+    let isUnpackedResource = 0
+
+    if len(resourcePath) > 0
+        "current filePath is something like this
+        ".../project1/resources_unpacked/my.resource/css/main.css
+        "swap unpacked file with its corresponding <name>.resource
+        let filePath = resourcePath
+        let isUnpackedResource = 1
+    endif    
+
+    " =============== internal callback ====================
+    let obj = {"_filePath": filePath, "_resourcePath": resourcePath}
+    let obj["_isUnpackedResource"] = isUnpackedResource
+    function! obj.callbackFuncRef(paths)
+        let filePath = a:paths._filePath
+        let resourcePath = a:paths._resourcePath
+        let isUnpackedResource = a:paths._isUnpackedResource
+        
+        if len(a:paths) > 1 && filereadable(a:paths['remoteFile'])
+            call apexOs#copyFile(a:paths['remoteFile'], filePath)
+            if isUnpackedResource
+                call apexUtil#warning("You have refreshed zipped static resource, please re-open it explicitly to unpack fresh files.")
+                call apexUtil#info("You may want to delete 'resources_unpacked/".apexOs#splitPath(resourcePath).tail."' before unpacking fresh resource content.")
+            endif    
+        else
+            call apexUtil#warning("Failed to retrieve remote file or it does not exist on remote.")
+        endif
+
+    endfunction    
+    " =============== END internal callback ====================
+
+	if a:0 > 0 && len(a:1) > 0
+        " specific project, not necessarily the current one
+		let projectName = apexUtil#unescapeFileName(a:1)
+        call apexToolingAsync#retrieveSpecific(filePath, 'file', obj, projectName )
+    else    
+        " current project
+        call apexToolingAsync#retrieveSpecific(filePath, 'file', obj)
+	endif
+
+endfunction
+
+" this method is used for :ApexDiffWithRemote[File|Project] and for :ApexRefreshFile
+"Args:
+"Param1: path to file which belongs to current apex project
+"Param2: mode: 'project' or 'file'
+"       - 'project' - will retrieve all project files into a temp folder and
+"                     return its location
+"       - 'file' - will retrieve a single file (or aura bundle) and return
+"                 single file location
+"Param3: callbackObj - object which contains 'callbackFuncRef' and other
+"       '_...' parameters
+"       when callbackFuncRef is called it receives 
+"       {'remoteSrcDir': '...', 'remoteFile': '...'}
+"       as well as original '_...' parameters
+"       e.g.: 
+"       callbackFuncRef({'remoteSrcDir': '...', 'remoteFile': '...', '_param': '...'}
+"Param4: [optional] name of remote <project>.properties file
+"Return: dictionary: {'remoteSrcDir': '/path/to/temp/src...', 'remoteFile': '/path/to/temp/src/.../file'}
+function apexToolingAsync#retrieveSpecific(filePath, mode, callbackObj, ...)
+    let leftFile = a:filePath
+    let l:mode = a:mode
+    
+	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
+	let projectName = projectPair.name
+    
+	if a:0 > 0 && len(a:1) > 0
+		let projectName = apexUtil#unescapeFileName(a:1)
+	endif
+
+    let l:extraParams = {"typesFileFormat" : "packageXml"}
+    let l:extraParams["_internalCallbackFuncRef"] = a:callbackObj.callbackFuncRef
+    let l:extraParams["_callbackObj"] = a:callbackObj
+
+    if 'file' == l:mode
+
+		let filePair = apexOs#splitPath(leftFile)
+		let fName = filePair.tail
+		let folder = apexOs#splitPath(filePair.head).tail
+		"file path in stage always uses / as path separator
+        let srcPath = apex#getApexProjectSrcPath(leftFile)
+        " get path relative src/ folder
+        let relPath = strpart(leftFile, len(srcPath) + 1) " +1 to remove / at the end of src/
+        " if current file is in aura bundle then we only need bundle name, not
+        " file name
+        if relPath =~ "^aura/"
+            let relPath = apexOs#removeTrailingPathSeparator(apexOs#splitPath(relPath).head)
+        endif
+        
+		"dump file list into a temp file
+		let tempFile = tempname() . "-fileList.txt"
+		call writefile([relPath], tempFile)
+
+        let l:extraParams["typesFileFormat"] = "file-paths"
+        let l:extraParams["specificTypes"] = tempFile
+        let l:extraParams["_leftFile"] = leftFile
+        let l:extraParams["_mode"] = l:mode
+    endif
+
+    " ================= apexToolingAsync#retrieveSpecific: internal callback ============================
+    function l:extraParams.callbackFuncRef(resMap)
+        let self.callbackFunc = a:resMap._internalCallbackFuncRef 
+        let callbackObj = a:resMap._callbackObj
+        let leftFile =    a:resMap._leftFile
+        let l:mode =    a:resMap._mode
+
+        let resObj = {}
+        " workaround for vim issue with losing scope when using nested
+        " callbacks
+        call s:copyUnderscoredParams(a:resMap, resObj)
+
+        if "true" == a:resMap["success"]
+            let responseFilePath = a:resMap["responseFilePath"]
+            let l:values = apexToolingCommon#grepValues(responseFilePath, "REMOTE_SRC_FOLDER_PATH=")
+                let remoteSrcFolderPath = l:values[0]
+                let resObj["remoteSrcDir"] = remoteSrcFolderPath
+                let srcPath = apex#getApexProjectSrcPath(leftFile)
+                if 'file' == l:mode
+                    " compare single files
+                    let rightProjectFolder = apexOs#splitPath(remoteSrcFolderPath).head
+                    let filePathRelativeProjectFolder = apex#getFilePathRelativeProjectFolder(leftFile)
+                    let rightFile = apexOs#joinPath(rightProjectFolder, filePathRelativeProjectFolder)
+                    let resObj["remoteFile"] = rightFile
+                else
+                    let resObj["remoteFile"] = ''
+                endif
+        endif
+        call s:copyUnderscoredParams(callbackObj, resObj)
+        "call a:resMap._internalCallbackFuncRef(resObj)
+        call self.callbackFunc(resObj)
+
+    endfunction    
+    " ================= END internal callback ============================
+    
+    " 'diffWithRemote' here is not a mistake, it is more suitable than 'bilkRetrieve' for current purpose
+    call apexToolingAsync#execute("diffWithRemote", projectName, projectPair.path, l:extraParams, [])
+endfunction
+
 
 function s:reportModifiedFiles(modifiedFiles)
 	let modifiedFiles = a:modifiedFiles
@@ -591,11 +737,12 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         let obj.filePath = a:extraParams["_filePath"]
     endif
 
-    " in case if caller did not provide custom callbackFuncRef let's use
-    " generic callback function
     if ( has_key(a:extraParams, "callbackFuncRef") )
         let obj["callbackFuncRef"] = a:extraParams["callbackFuncRef"]
     endif    
+    " workaround for vim losing scope of object to which
+    " callbackFuncRef belongs
+    call s:copyUnderscoredParams(a:extraParams, obj)
     
     function obj.callbackInternal(channel, ...)
         "echomsg "a:0=" . a:0
@@ -658,6 +805,10 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
             let l:result["filePath"] = self.filePath
         endif    
         if ( has_key(self, "callbackFuncRef") )
+            " workaround for vim losing scope of object to which
+            " callbackFuncRef belongs
+            call s:copyUnderscoredParams(self, l:result)
+            
             call self.callbackFuncRef(l:result)
         endif    
     endfunction    
@@ -666,6 +817,14 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 	call s:runCommand(l:command, isSilent, function(obj.callbackInternal))
 
 endfunction
+
+function! s:copyUnderscoredParams(source, dest)
+    for key in keys(a:source)
+        if key =~ '^_'
+            let a:dest[key] = a:source[key]
+        endif
+    endfor
+endfunction    
 
 
 " check if user has defined g:apex_OnCommandComplete

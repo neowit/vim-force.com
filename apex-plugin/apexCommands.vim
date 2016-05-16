@@ -73,7 +73,7 @@ function! s:toolingJarSpecific()
     " Deployment - Async
 
 	command! -nargs=0 ApexRefreshProject :call apexToolingAsync#refreshProject(expand("%:p"))
-	command! -nargs=? -complete=customlist,apex#listProjectNames ApexRefreshFile :call apexTooling#refreshFile(expand("%:p"), <f-args>)
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexRefreshFile :call apexToolingAsync#refreshFile(expand("%:p"), <f-args>)
 
 	command! ApexPrintChanged :call apexToolingAsync#printChangedFiles(expand("%:p"))
 	command! ApexPrintConflicts :call apexToolingAsync#printConflicts(expand("%:p"))
