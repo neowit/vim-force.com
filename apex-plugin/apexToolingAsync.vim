@@ -280,8 +280,8 @@ function apexToolingAsync#retrieveSpecific(filePath, mode, callbackObj, ...)
                     let resObj["remoteFile"] = ''
                 endif
         endif
+        " workaround for lost scope
         call s:copyUnderscoredParams(callbackObj, resObj)
-        "call a:resMap._internalCallbackFuncRef(resObj)
         call self.callbackFunc(resObj)
 
     endfunction    
@@ -818,6 +818,16 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 
 endfunction
 
+" vim appears to lose scope of outer object in a situation like this
+" let obj1 = {"test": 'test1'}
+" function obj1.func1() {
+"   " next line will cause error
+"   echo self.test " this will result in: 'dictionary self does not have key: test'
+" }
+" let obj2 = {"test": 'test2', 'callback': obj1.func1}
+" function obj1.func1() {
+"   call self.callback()
+" }
 function! s:copyUnderscoredParams(source, dest)
     for key in keys(a:source)
         if key =~ '^_'
