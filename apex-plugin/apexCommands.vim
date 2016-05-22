@@ -100,7 +100,7 @@ function! s:toolingJarSpecific()
 	command! -nargs=* -complete=customlist,apex#completeQueryParams ApexQueryRepeat call apexExecuteSnippet#repeat('soqlQuery', expand("%:p"), <f-args>)
 
 	" display last log
-	command! ApexLog :call apexTooling#openLastLog()
+	command! ApexLog :call apexToolingCommon#openLastLog()
 
     " display message buffer
 	command! ApexMessages :call apexMessages#open()
