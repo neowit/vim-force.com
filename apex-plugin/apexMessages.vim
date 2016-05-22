@@ -39,6 +39,8 @@ function! apexMessages#open()
     " show content
 	if s:BUFFER_NUMBER > 0 && bufloaded(s:BUFFER_NUMBER)
 		execute 'b '.s:BUFFER_NUMBER
+        " make sure we have up-to-date version loaded
+        exec 'view ' . fnameescape(s:tempFile)
     else 
         call apexUtil#log("view: inside apexMessages#open")
         exec 'view ' . fnameescape(s:tempFile)
