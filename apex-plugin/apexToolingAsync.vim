@@ -901,7 +901,24 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 	endif	
 
     let messageCount = 0
-	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
+
+	if len(apexUtil#grepFile(fileName, 'RESULT=FAILURE')) > 0
+        call apexMessages#logError("Operation failed")
+        " check if we have failure messages
+        let messageCount = apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes) > 0 
+
+        let l:currentBufWinNum = bufwinnr("%")
+        let quickfixMessageCount = apexToolingCommon#fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
+        if  quickfixMessageCount < 1 && messageCount > 1 && !a:isSilent
+            " open messages only if there are more than 1 and quickfix is empty
+            " and not silent mode
+            call apexMessages#open()
+        endif    
+        if a:isSilent && l:currentBufWinNum >=0 && l:currentBufWinNum != bufwinnr("%")
+            " return focus to original buffer
+            exe l:currentBufWinNum . "wincmd w"
+        endif
+    elseif len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
 		" check if we have messages
         let messageCount = apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes)
 		if messageCount < 1 && !a:isSilent
@@ -917,22 +934,6 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 		endif
 		return 0
 	endif
-   
-    call apexMessages#logError("Operation failed")
-    " check if we have failure messages
-    let messageCount = apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes) > 0 
-	
-    let l:currentBufWinNum = bufwinnr("%")
-    let quickfixMessageCount = apexToolingCommon#fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
-	if  quickfixMessageCount < 1 && messageCount > 1 && !a:isSilent
-        " open messages only if there are more than 1 and quickfix is empty
-        " and not silent mode
-        call apexMessages#open()
-    endif    
-    if a:isSilent && l:currentBufWinNum >=0 && l:currentBufWinNum != bufwinnr("%")
-        " return focus to original buffer
-        exe l:currentBufWinNum . "wincmd w"
-    endif
     
 	return 1
 
