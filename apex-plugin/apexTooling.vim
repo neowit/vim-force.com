@@ -822,26 +822,28 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 		endtry	 	
 	endif	
 
-	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
-		" check if we have messages
-		if s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1 && !a:isSilent
-			call apexUtil#info("No errors found")
-		endif
+	if len(apexUtil#grepFile(fileName, 'RESULT=FAILURE')) > 0
+        call apexUtil#error("Operation failed")
+        " check if we have messages
+        call s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes)
+
+        call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
         if disableMore && reEnableMore
             set more
         endif
-		return 0
+        return 1
+    elseif len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
+        " check if we have messages
+        if s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes) < 1 && !a:isSilent
+            call apexUtil#info("No errors found")
+        endif
+        if disableMore && reEnableMore
+            set more
+        endif
+        return 0
 	endif
+    return 1 " should never get to here unless there was a crash
 
-	call apexUtil#error("Operation failed")
-	" check if we have messages
-	call s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes)
-	
-	call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
-	if disableMore && reEnableMore
-		set more
-	endif
-	return 1
 
 endfunction
 
