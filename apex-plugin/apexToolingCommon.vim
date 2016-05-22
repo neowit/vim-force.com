@@ -235,13 +235,15 @@ function! apexToolingCommon#fillQuickfix(logFilePath, projectPath, useLocationLi
         call setqflist(l:errorList)
     endif    
 
-	if len(l:errorList) > 0
+    let l:errorCount = len(l:errorList)
+	if l:errorCount > 0
 		if a:useLocationList
             lopen 
         else    
             copen
         endif    
 	endif
+    return l:errorCount
 endfunction	
 
 " similar apexUtil#grepFile() function apexToolingCommon#grepValues()
@@ -343,3 +345,51 @@ function! apexToolingCommon#prepareSpecificFilesParams(relativePaths)
 	return l:params
 endfunction
 
+function! apexToolingCommon#setLastLog(filePath)
+    let s:apex_last_log = a:filePath
+endfunction    
+function! apexToolingCommon#setLastLogByFileName(filesMap)
+    let s:apex_last_log_by_class_name = a:filesMap
+endfunction    
+function! apexToolingCommon#clearLastLog()
+	if exists("s:apex_last_log")
+        unlet s:apex_last_log
+    endif    
+endfunction    
+function! apexToolingCommon#clearLastLogByFileName()
+	if exists("s:apex_last_log_by_class_name")
+        unlet s:apex_last_log_by_class_name
+    endif    
+endfunction    
+function! apexToolingCommon#hasLastLog()
+    return exists("s:apex_last_log")
+endfunction    
+
+function! apexToolingCommon#openLastLog()
+	if exists("s:apex_last_log")
+        "s:apex_last_log contains path to single log file
+        :execute "e " . fnameescape(s:apex_last_log)
+    elseif exists("s:apex_last_log_by_class_name")    
+        if type({}) == type(s:apex_last_log_by_class_name)
+            " s:apex_last_log_by_class_name contans map: {class-name -> file-path}
+            "fill location list with this information
+            let l:logList = []
+            for fName in sort(keys(s:apex_last_log_by_class_name))
+                let l:text = fName
+                let l:filePath = s:apex_last_log_by_class_name[fName]
+                let l:line = {"filename": l:filePath, "lnum": 1, "col": 1, "text": l:text}
+                call add(l:logList, l:line)
+            endfor
+            if 1 == len(l:logList)
+                " open the only log immediately, there is no point in filling
+                " in location list
+                :execute "e " . fnameescape(l:logList[0].filename)
+            else    
+                call setloclist(0, l:logList)
+                :lopen
+            endif    
+        endif
+	else
+		call apexUtil#info('No Log file available')
+	endif
+endfunction

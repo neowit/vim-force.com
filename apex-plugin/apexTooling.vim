@@ -402,36 +402,6 @@ function apexTooling#listMetadata(projectName, projectPath, specificTypesFilePat
 	return resMap
 endfunction	
 
-function! apexTooling#openLastLog()
-	if exists("s:apex_last_log")
-        "s:apex_last_log contains path to single log file
-        :execute "e " . fnameescape(s:apex_last_log)
-    elseif exists("s:apex_last_log_by_class_name")    
-        if type({}) == type(s:apex_last_log_by_class_name)
-            " s:apex_last_log_by_class_name contans map: {class-name -> file-path}
-            "fill location list with this information
-            let l:logList = []
-            for fName in sort(keys(s:apex_last_log_by_class_name))
-                let l:text = fName
-                let l:filePath = s:apex_last_log_by_class_name[fName]
-                let l:line = {"filename": l:filePath, "lnum": 1, "col": 1, "text": l:text}
-                call add(l:logList, l:line)
-            endfor
-            if 1 == len(l:logList)
-                " open the only log immediately, there is no point in filling
-                " in location list
-                :execute "e " . fnameescape(l:logList[0].filename)
-            else    
-                call setloclist(0, l:logList)
-                :lopen
-            endif    
-        endif
-	else
-		call apexUtil#info('No Log file available')
-	endif
-endfunction
-
-
 "open scratch file 
 "This file can be used for things line ExecuteAnonymous
 let s:scratch_project_pair = {}
@@ -889,27 +859,25 @@ function! apexTooling#execute(action, projectName, projectPath, extraParams, dis
 	let logFileRes = s:grepValues(responseFilePath, "LOG_FILE=")
 	
 	if !empty(logFileRes)
-		let s:apex_last_log = logFileRes[0]
+        call apexToolingCommon#setLastLog(logFileRes[0])
 		if s:show_log_hint
 			call apexUtil#info("Log file is available, use :ApexLog to open it")
 			let s:show_log_hint = 0
 		endif
 	else
-        if exists("s:apex_last_log")
-		    unlet s:apex_last_log
-        endif    
+        call apexToolingCommon#clearLastLog()
 
         "try LOG_FILE_BY_CLASS_NAME map
         let logFileRes = s:grepValues(responseFilePath, "LOG_FILE_BY_CLASS_NAME=")
 
         if !empty(logFileRes)
-            let s:apex_last_log_by_class_name = eval(logFileRes[0])
+            call apexToolingCommon#setLastLogByFileName( eval(logFileRes[0]) )
             if s:show_log_hint
                 call apexUtil#info("Log file is available, use :ApexLog to open it")
                 let s:show_log_hint = 0
             endif
-        elseif exists("s:apex_last_log_by_class_name")
-		    unlet s:apex_last_log_by_class_name
+        else
+            call apexToolingCommon#clearLastLogByFileName()
         endif    
 	endif
 

@@ -766,27 +766,25 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         silent let logFileRes = apexToolingCommon#grepValues(self.responseFilePath, "LOG_FILE=")
 
         if !empty(logFileRes)
-            let s:apex_last_log = logFileRes[0]
+            call apexToolingCommon#setLastLog(logFileRes[0])
             if s:show_log_hint
                 call apexMessages#logInfo("Log file is available, use :ApexLog to open it")
                 let s:show_log_hint = 0
             endif
         else
-            if exists("s:apex_last_log")
-                unlet s:apex_last_log
-            endif    
+            call apexToolingCommon#clearLastLog()
 
             "try LOG_FILE_BY_CLASS_NAME map
             let logFileRes = apexToolingCommon#grepValues(self.responseFilePath, "LOG_FILE_BY_CLASS_NAME=")
 
             if !empty(logFileRes)
-                let s:apex_last_log_by_class_name = eval(logFileRes[0])
+                call apexToolingCommon#setLastLogByFileName( eval(logFileRes[0]) )
                 if s:show_log_hint
                     call apexMessages#logInfo("Log file is available, use :ApexLog to open it")
                     let s:show_log_hint = 0
                 endif
-            elseif exists("s:apex_last_log_by_class_name")
-                unlet s:apex_last_log_by_class_name
+            else
+                call apexToolingCommon#clearLastLogByFileName()
             endif    
         endif
 
@@ -902,6 +900,7 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 		endtry	 	
 	endif	
 
+    let messageCount = 0
 	if len(apexUtil#grepFile(fileName, 'RESULT=SUCCESS')) > 0
 		" check if we have messages
         let messageCount = apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes)
@@ -921,12 +920,15 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
    
     call apexMessages#logError("Operation failed")
     " check if we have failure messages
-    if apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes) > 0 && !a:isSilent
-        call apexMessages#open()
-    endif    
+    let messageCount = apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes) > 0 
 	
     let l:currentBufWinNum = bufwinnr("%")
-	call s:fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
+    let quickfixMessageCount = apexToolingCommon#fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
+	if  quickfixMessageCount < 1 && messageCount > 1 && !a:isSilent
+        " open messages only if there are more than 1 and quickfix is empty
+        " and not silent mode
+        call apexMessages#open()
+    endif    
     if a:isSilent && l:currentBufWinNum >=0 && l:currentBufWinNum != bufwinnr("%")
         " return focus to original buffer
         exe l:currentBufWinNum . "wincmd w"
@@ -936,58 +938,6 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 
 endfunction
 
-" Process Compile and Unit Test errors and populate quickfix
-"
-" http://vim.1045645.n5.nabble.com/execute-command-in-vim-grep-results-td3236900.html
-" http://vim.wikia.com/wiki/Automatically_sort_Quickfix_list
-" 
-" Param: logFilePath - full path to the response file
-" Param: projectPath - full path to the project folder which contains
-"		package.xml and 'src'
-function! s:fillQuickfix(logFilePath, projectPath, useLocationList)
-	" error is reported like so
-	" ERROR: {"line" : 3, "column" : 10, "filePath" : "src/classes/A_Fake_Class.cls", "text" : "Invalid identifier: test22."}
-	let l:lines = apexUtil#grepFile(a:logFilePath, '^ERROR: ')
-	let l:errorList = []
-
-	let index = 0
-	while index < len(l:lines)
-		let line = substitute(l:lines[index], 'ERROR: ', "", "")
-		let err = eval(line)
-		let errLine = {}
-		if has_key(err, "line")
-			let errLine.lnum = err["line"]
-		endif
-		if has_key(err, "column")
-			let errLine.col = err["column"] 
-		endif
-		if has_key(err, "text")
-			let errLine.text = err["text"]
-		endif
-		if has_key(err, "filePath") && len(err["filePath"]) > 0
-			let errLine.filename = apexOs#joinPath(a:projectPath, err["filePath"])
-		endif
-
-		call add(l:errorList, errLine)
-		let index = index + 1
-	endwhile
-
-    if 1 == a:useLocationList
-        call setloclist(0, l:errorList) " set location list of current window, hence 0
-    else
-        call setqflist(l:errorList)
-    endif    
-
-	if len(l:errorList) > 0
-		if a:useLocationList
-            lopen 
-        else    
-            copen
-        endif    
-	endif
-    
-    return len(l:errorList) 
-endfunction	
 
 "================= server mode commands ==========================
 function! s:runCommand(commandLine, isSilent, callbackFuncRef)
