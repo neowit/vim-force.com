@@ -712,6 +712,58 @@ function apexToolingAsync#printChangedFiles(filePath)
 	call apexToolingAsync#execute("listModified", projectPair.name, projectPair.path, {}, [])
 endfunction	
 
+"Args:
+"Param1: path to file which belongs to current apex project
+"Param2: mode: 'project' or 'file'
+"       - 'project' - will compare local project with its remote counterpart
+"       - 'file' - will compare only current file with its remote counterpart
+"Param3: [optional] name of remote <project>.properties file
+function apexToolingAsync#diffWithRemote(filePath, mode, ...)
+    
+    " =============== internal callback ====================
+    let obj = {"_leftFile": a:filePath, "_mode": a:mode}
+    function! obj.callbackFuncRef(paths)
+        let l:mode = self._mode
+        let leftFile = self._leftFile
+        
+        if len(a:paths) > 0
+            let modeMsg = 'file' == l:mode ? "files" : "folders"
+            if apexUtil#input("Run diff tool to compare local and remote ". modeMsg ." [y/N]? ", "YynN", "N") ==? 'y'
+                echo "\n"
+
+                if 'file' == l:mode
+                    let rightFile = a:paths['remoteFile']
+                    " compare single files
+                    call apexUtil#compareFiles(leftFile, rightFile)
+                else
+                    " compare top of local and retrieved projects
+                    let srcPath = apex#getApexProjectSrcPath(leftFile)
+                    " remove temp package.xml because it contains only last
+                    " retrieved metadata type
+                    call delete(apexOs#joinPath(a:paths['remoteSrcDir'], 'package.xml'))
+
+                    call apexUtil#compareFiles(srcPath, a:paths['remoteSrcDir'])
+                endif
+            endif    
+        else
+            if 'file' == l:mode
+                call apexUtil#warning("Failed to retrieve remote file or it does not exist on remote.")
+            endif
+        endif
+    endfunction    
+    " =============== END internal callback ====================
+    " 
+	if a:0 > 0 && len(a:1) > 0
+        " specific project, not necessarily the current one
+		let projectName = apexUtil#unescapeFileName(a:1)
+        call apexToolingAsync#retrieveSpecific(a:filePath, a:mode, obj.callbackFuncRef, projectName)
+    else    
+        " current project
+        call apexToolingAsync#retrieveSpecific(a:filePath, a:mode, obj.callbackFuncRef)
+	endif
+
+endfunction	
+
 " ==================================================================================================
 " this callback is used when no explicit callback method specified by caller
 " of apexToolingAsync#execute()

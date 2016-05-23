@@ -77,8 +77,8 @@ function! s:toolingJarSpecific()
 
 	command! ApexPrintChanged :call apexToolingAsync#printChangedFiles(expand("%:p"))
 	command! ApexPrintConflicts :call apexToolingAsync#printConflicts(expand("%:p"))
-	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteProject :call apexTooling#diffWithRemote(expand("%:p"), "project", <f-args>)
-	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteFile :call apexTooling#diffWithRemote(expand("%:p"), "file", <f-args>)
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteProject :call apexToolingAsync#diffWithRemote(expand("%:p"), "project", <f-args>)
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteFile :call apexToolingAsync#diffWithRemote(expand("%:p"), "file", <f-args>)
 
 
 	"Unit testing
