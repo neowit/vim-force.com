@@ -243,9 +243,9 @@ function apexToolingAsync#refreshFile(filePath, ...)
     let obj = {"_filePath": filePath, "_resourcePath": resourcePath}
     let obj["_isUnpackedResource"] = isUnpackedResource
     function! obj.callbackFuncRef(paths)
-        let filePath = a:paths._filePath
-        let resourcePath = a:paths._resourcePath
-        let isUnpackedResource = a:paths._isUnpackedResource
+        let filePath = self._filePath
+        let resourcePath = self._resourcePath
+        let isUnpackedResource = self._isUnpackedResource
         
         if len(a:paths) > 1 && filereadable(a:paths['remoteFile'])
             call apexOs#copyFile(a:paths['remoteFile'], filePath)
@@ -263,10 +263,10 @@ function apexToolingAsync#refreshFile(filePath, ...)
 	if a:0 > 0 && len(a:1) > 0
         " specific project, not necessarily the current one
 		let projectName = apexUtil#unescapeFileName(a:1)
-        call apexToolingAsync#retrieveSpecific(filePath, 'file', obj, projectName )
+        call apexToolingAsync#retrieveSpecific(filePath, 'file', obj.callbackFuncRef, projectName )
     else    
         " current project
-        call apexToolingAsync#retrieveSpecific(filePath, 'file', obj)
+        call apexToolingAsync#retrieveSpecific(filePath, 'file', obj.callbackFuncRef)
 	endif
 
 endfunction
@@ -279,8 +279,7 @@ endfunction
 "                     return its location
 "       - 'file' - will retrieve a single file (or aura bundle) and return
 "                 single file location
-"Param3: callbackObj - object which contains 'callbackFuncRef' and other
-"       '_...' parameters
+"Param3: callbackFuncRef -  funcref of callback function
 "       when callbackFuncRef is called it receives 
 "       {'remoteSrcDir': '...', 'remoteFile': '...'}
 "       as well as original '_...' parameters
@@ -288,7 +287,7 @@ endfunction
 "       callbackFuncRef({'remoteSrcDir': '...', 'remoteFile': '...', '_param': '...'}
 "Param4: [optional] name of remote <project>.properties file
 "Return: dictionary: {'remoteSrcDir': '/path/to/temp/src...', 'remoteFile': '/path/to/temp/src/.../file'}
-function apexToolingAsync#retrieveSpecific(filePath, mode, callbackObj, ...)
+function apexToolingAsync#retrieveSpecific(filePath, mode, callbackFuncRef, ...)
     let leftFile = a:filePath
     let l:mode = a:mode
     
@@ -300,8 +299,9 @@ function apexToolingAsync#retrieveSpecific(filePath, mode, callbackObj, ...)
 	endif
 
     let l:extraParams = {"typesFileFormat" : "packageXml"}
-    let l:extraParams["_internalCallbackFuncRef"] = a:callbackObj.callbackFuncRef
-    let l:extraParams["_callbackObj"] = a:callbackObj
+    let l:extraParams["_internalCallbackFuncRef"] = a:callbackFuncRef
+    let l:extraParams["_leftFile"] = leftFile
+    let l:extraParams["_mode"] = l:mode
 
     if 'file' == l:mode
 
@@ -324,21 +324,17 @@ function apexToolingAsync#retrieveSpecific(filePath, mode, callbackObj, ...)
 
         let l:extraParams["typesFileFormat"] = "file-paths"
         let l:extraParams["specificTypes"] = tempFile
-        let l:extraParams["_leftFile"] = leftFile
-        let l:extraParams["_mode"] = l:mode
     endif
 
     " ================= apexToolingAsync#retrieveSpecific: internal callback ============================
     function l:extraParams.callbackFuncRef(resMap)
-        let self.callbackFunc = a:resMap._internalCallbackFuncRef 
-        let callbackObj = a:resMap._callbackObj
-        let leftFile =    a:resMap._leftFile
-        let l:mode =    a:resMap._mode
+        let leftFile = self._leftFile
+        let l:mode = self._mode
 
         let resObj = {}
         " workaround for vim issue with losing scope when using nested
         " callbacks
-        call s:copyUnderscoredParams(a:resMap, resObj)
+        "call s:copyUnderscoredParams(a:resMap, resObj)
 
         if "true" == a:resMap["success"]
             let responseFilePath = a:resMap["responseFilePath"]
@@ -357,8 +353,9 @@ function apexToolingAsync#retrieveSpecific(filePath, mode, callbackObj, ...)
                 endif
         endif
         " workaround for lost scope
-        call s:copyUnderscoredParams(callbackObj, resObj)
-        call self.callbackFunc(resObj)
+        "call s:copyUnderscoredParams(callbackObj, resObj)
+        "call self.callbackFunc(resObj)
+        call call(get(self, '_internalCallbackFuncRef'), [resObj])
 
     endfunction    
     " ================= END internal callback ============================
@@ -758,7 +755,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     endif
 
 	let l:EXCLUDE_KEYS = ["isSilent", "useLocationList", "callbackFuncRef"]
-    " also exclude keys wich start with underscore '_'
+    " also exclude keys which start with underscore '_'
 	if len(a:extraParams) > 0
 		for key in keys(a:extraParams)
 			if index(l:EXCLUDE_KEYS, key) < 0 && key !~ '^_'
@@ -801,7 +798,6 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 
     let l:startTime = reltime()
     " ================= internal callback =========================
-    "let obj = {"responseFilePath": responseFilePath, "callbackFuncRef": function('s:dummyCallback')}
     let obj = {"responseFilePath": responseFilePath}
     let obj.projectPath = a:projectPath
     let obj.projectName = a:projectName
@@ -818,7 +814,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     endif    
     " workaround for vim losing scope of object to which
     " callbackFuncRef belongs
-    call s:copyUnderscoredParams(a:extraParams, obj)
+    "call s:copyUnderscoredParams(a:extraParams, obj)
     
     function obj.callbackInternal(channel, ...)
         "echomsg "a:0=" . a:0
@@ -881,9 +877,11 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         if ( has_key(self, "callbackFuncRef") )
             " workaround for vim losing scope of object to which
             " callbackFuncRef belongs
-            call s:copyUnderscoredParams(self, l:result)
+            "call s:copyUnderscoredParams(self, l:result)
             
-            call self.callbackFuncRef(l:result)
+            "call self.callbackFuncRef(l:result)
+            call call(get(self, 'callbackFuncRef'), [l:result])
+
         endif    
     endfunction    
     " ================= END internal callback =========================
@@ -902,13 +900,13 @@ endfunction
 " function obj1.func1() {
 "   call self.callback()
 " }
-function! s:copyUnderscoredParams(source, dest)
-    for key in keys(a:source)
-        if key =~ '^_'
-            let a:dest[key] = a:source[key]
-        endif
-    endfor
-endfunction    
+" function! s:copyUnderscoredParams(source, dest)
+"     for key in keys(a:source)
+"         if key =~ '^_'
+"             let a:dest[key] = a:source[key]
+"         endif
+"     endfor
+" endfunction    
 
 
 " check if user has defined g:apex_OnCommandComplete
