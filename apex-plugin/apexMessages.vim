@@ -11,10 +11,7 @@ if exists("g:loaded_apexMessages") || &compatible
 endif
 let g:loaded_apexMessages = 1
 
-let s:BUFFER_NUMBER = -1
 let s:BUFFER_NAME = "apex_messages"
-
-
 
 function! apexMessages#open()
     if exists('g:APEX_MESSAGES_BUFFER_DISABLED') && g:APEX_MESSAGES_BUFFER_DISABLED
@@ -22,7 +19,7 @@ function! apexMessages#open()
         return
     endif    
     let l:bufNumber = s:getBufNumber()
-    echomsg "apexMessages#open l:bufNumber=" . l:bufNumber
+    "echomsg "apexMessages#open l:bufNumber=" . l:bufNumber
 
     " do not open buffer if it is empty
     if len(getbufline(l:bufNumber, 1, 2)) < 1 && len(s:cachedLines) < 1
@@ -31,9 +28,11 @@ function! apexMessages#open()
     endif    
     
     call s:setupBuffer()
+    let l:bufNumber = s:getBufNumber()
+    "echomsg "apexMessages#open l:bufNumber(2)=" . l:bufNumber
     "redraw
     " show content
-	if bufloaded(bufnr(s:BUFFER_NAME))
+	if bufloaded(l:bufNumber)
         if !s:isVisible()
             execute 'b '.l:bufNumber
         endif
@@ -160,16 +159,22 @@ endfunction
 
 " execute give comamnd in "apex_messages" buffer
 function! s:execInBuffer(command)
+    let l:bufNumber = s:getBufNumber()
+    if l:bufNumber >=0
         " briefly switch to ApexMessage window, dump content and get back
         let currentWinNr = winnr()
-        let targetWinNr = bufwinnr(s:getBufNumber())
-        execute targetWinNr . 'wincmd w'
+        if !bufloaded(l:bufNumber)
+            execute 'noautocmd b '.l:bufNumber
+        endif    
+        let targetWinNr = bufwinnr(l:bufNumber)
+        execute 'noautocmd ' . targetWinNr . 'wincmd w'
         try
             execute a:command
             let s:cachedLines = []
         finally
-            silent execute currentWinNr . 'wincmd w'
+            silent execute 'noautocmd ' . currentWinNr . 'wincmd w'
         endtry
+    endif
 
 endfunction    
 
@@ -205,35 +210,50 @@ function! s:setupBuffer()
     
     call apexUtil#log("inside setupBuffer")
     if !s:isSetupCorrectly()
-        
         " create new buffer if necessary
-        if bufnr(s:BUFFER_NAME) < 1
+        if bufnr(s:BUFFER_NAME) < 0
             :new
-            " set attributes
-			exec 'file ' . fnameescape(s:BUFFER_NAME)
-            " Set the buffer name if not already set
-            setlocal buftype=nofile
-            setlocal buftype=nowrite
-            setlocal bufhidden=hide " when user switches to another buffer, just hide meta buffer but do not delete
-            "setlocal nomodifiable
-            setlocal noswapfile
-            setlocal nobuflisted
-            setlocal autoread
-
-            " Define key mapping for current buffer
-            exec 'nnoremap <buffer> <silent> q :call <SNR>'.s:sid.'_Close()<CR>'
-
-            " syntax highlight
-            if has("syntax")
-                syntax on
-                setlocal filetype=apex_messages
-                setlocal syntax=apex_messages
-            endif
+        endif    
+        " make sure that attributes are being set in the correct buffer
+        let l:bufNum = s:getBufNumber()
+        let originalBufNum = bufnr("%")
+        if l:bufNum >= 0 && originalBufNum != l:bufNum
+            execute 'b '.s:getBufNumber()
+        endif    
+        " setup necessary attributes
+        call s:setupBufferAttributes()
+        " restore original buffer if necessary
+        if originalBufNum >= 0 && originalBufNum != s:getBufNumber()
+            execute 'b '.originalBufNum
         endif    
 
     endif    
     return 1
     
+endfunction    
+
+function! s:setupBufferAttributes()
+    " set attributes
+    exec 'file ' . fnameescape(s:BUFFER_NAME)
+    " Set the buffer name if not already set
+    setlocal buftype=nofile
+    "setlocal buftype=nowrite
+    setlocal bufhidden=hide " when user switches to another buffer, just hide 'apex_messages' buffer but do not delete
+    "setlocal nomodifiable
+    setlocal noswapfile
+    setlocal nobuflisted
+    "setlocal autoread
+
+    " Define key mapping for current buffer
+    exec 'nnoremap <buffer> <silent> q :call <SNR>'.s:sid.'_Close()<CR>'
+
+    " syntax highlight
+    if has("syntax")
+        syntax on
+        setlocal filetype=apex_messages
+        setlocal syntax=apex_messages
+    endif
+
 endfunction    
 
 function! s:showHint()
@@ -255,21 +275,12 @@ function! s:isActive()
 endfunction    
 
 function! s:isSetupCorrectly()
-	return s:getBufNumber() > 0 "&& getbufvar(s:getBufNumber(), '&syntax') == 'apex_messages'
+	return s:getBufNumber() > 0 && getbufvar(s:getBufNumber(), '&syntax') == 'apex_messages'
 endfunction    
 
 function! s:getBufNumber()
     return bufnr(s:BUFFER_NAME)
 endfunction    
-
-"function! s:show()
-"    if s:isVisible()
-"       exec bnr . "wincmd w"
-"    else
-"       echo a:buffername . ' is not existent'
-"       silent execute 'split ' . a:buffername
-"    endif
-"endfunction
 
 function! s:SID()
   " Return the SID number for this file
@@ -286,3 +297,16 @@ function! <SID>Close()
     endif
     "exec 'buffer #'
 endfunction    
+
+"function! s:openBufInSplit(num, splitType )
+"    if a:num != bufnr("%")
+"        let l:originalSplitBelow = &splitbelow
+"        if "splitbelow" == a:splitType
+"            set splitbelow
+"        endif
+"        execute 'b '.a:num
+"        if !l:originalSplitBelow
+"            set nosplitbelow
+"        endif    
+"    endif    
+"endf    
