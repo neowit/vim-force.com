@@ -12,14 +12,8 @@ endif
 let g:loaded_apexMessages = 1
 
 let s:BUFFER_NUMBER = -1
+let s:BUFFER_NAME = "apex_messages"
 
-let s:tempFile = tempname() . ".apex_messages"
-let g:tempFile = s:tempFile
-augroup apex_messages
-	au!
-	au! BufRead,BufNewFile  *.apex_messages call s:setupBuffer()
-	"exec 'au! BufRead,BufNewFile "'.s:tempFile.'" call s:setupBuffer()'
-augroup END
 
 
 function! apexMessages#open()
@@ -27,26 +21,27 @@ function! apexMessages#open()
         call apexUtil#info("Message buffer is disabled by 'g:APEX_MESSAGES_BUFFER_DISABLED' valiable")
         return
     endif    
+    let l:bufNumber = s:getBufNumber()
+    echomsg "apexMessages#open l:bufNumber=" . l:bufNumber
 
-    if !filereadable(s:tempFile)
+    " do not open buffer if it is empty
+    if len(getbufline(l:bufNumber, 1, 2)) < 1 && len(s:cachedLines) < 1
         call apexUtil#info("No messages to display")
         return
     endif    
     
-    "call s:setupBuffer()
-
+    call s:setupBuffer()
     "redraw
     " show content
-	if s:BUFFER_NUMBER > 0 && bufloaded(s:BUFFER_NUMBER)
-		execute 'b '.s:BUFFER_NUMBER
-        " make sure we have up-to-date version loaded
-        exec 'view ' . fnameescape(s:tempFile)
-    else 
-        call apexUtil#log("view: inside apexMessages#open")
-        exec 'view ' . fnameescape(s:tempFile)
+	if bufloaded(bufnr(s:BUFFER_NAME))
+        if !s:isVisible()
+            execute 'b '.l:bufNumber
+        endif
+        call s:dumpCached()
+        call s:showHint()
+        " go to the last line
+        call s:execInBuffer("normal G")
     endif
-    " go to the last line
-    normal G
 endfunction    
 
 "Param: displayMessageTypes list of message types to display, other types will
@@ -126,31 +121,58 @@ endfunction
 function! s:logHeader(msgType, msg)
     let l:msgType = len(a:msgType) > 0? a:msgType . ':' : ''
     "call append( line('$'), l:msgType . ' ' . a:msg )
-    call s:dump(l:msgType . ' ' . a:msg)
+    call s:cacheLines(l:msgType . ' ' . a:msg)
     if s:isVisible()
         "redraw
         call apexUtil#log("view: inside logHeader")
-        exec 'view ' . s:tempFile
-        normal G
     endif    
 endfunction    
 function! s:logDetail(msgType, msg)
     "call append( line('$'), a:msgType . ':    ' . a:msg)
     let l:msgType = len(a:msgType) > 0? a:msgType . ':' : ''
-    call s:dump(l:msgType . '    ' . a:msg)
+    call s:cacheLines(l:msgType . '    ' . a:msg)
 
     if s:isVisible()
         " scroll to the bottom of the file
         "redraw
         call apexUtil#log("view: inside logDetail")
-        exec 'view ' . s:tempFile
-        normal G
     endif    
 endfunction    
 
-function! s:dump(line)
-    call writefile([a:line], s:tempFile, "a")
+let s:cachedLines = []
+function! s:cacheLines(lines)
+    if type(a:lines) == type([])
+        call extend(s:cachedLines, a:lines)
+    else " add single string
+        call add(s:cachedLines, a:lines)
+    endif
+    if s:isActive()
+        call s:dumpCached()
+    endif    
 endfunction
+
+function! s:dumpCached()
+    if s:setupBuffer()
+        call s:execInBuffer("call append(line('$'), s:cachedLines)")
+        let s:cachedLines = []
+    endif
+endfunction
+
+" execute give comamnd in "apex_messages" buffer
+function! s:execInBuffer(command)
+        " briefly switch to ApexMessage window, dump content and get back
+        let currentWinNr = winnr()
+        let targetWinNr = bufwinnr(s:getBufNumber())
+        execute targetWinNr . 'wincmd w'
+        try
+            execute a:command
+            let s:cachedLines = []
+        finally
+            silent execute currentWinNr . 'wincmd w'
+        endtry
+
+endfunction    
+
 
 function! apexMessages#logInfo(msg)
     call s:logHeader("INFO", a:msg)
@@ -167,60 +189,77 @@ function! apexMessages#log(msg)
     "echo a:msg
 endfunction    
 
+
+function! s:isEnabled()
+    return !exists('g:APEX_MESSAGES_BUFFER_DISABLED') || !g:APEX_MESSAGES_BUFFER_DISABLED
+endfunction    
+
 let s:hintDisplayed = 0
 "Variables:
 "   g:APEX_MESSAGES_BUFFER_DISABLED - set to 1 if message buffer must NOT be
 "   created/used
 function! s:setupBuffer()
-    if exists('g:APEX_MESSAGES_BUFFER_DISABLED') && g:APEX_MESSAGES_BUFFER_DISABLED
-        return
+    if !s:isEnabled()
+        return 0
     endif    
     
     call apexUtil#log("inside setupBuffer")
     if !s:isSetupCorrectly()
-        let s:BUFFER_NUMBER = bufnr('%')
-        " create new buffer
-        "exec 'view ' fnameescape(s:tempFile)
-        " set attributes
-		"setlocal buftype=nofile
-		setlocal buftype=nowrite
-		setlocal bufhidden=hide " when user switches to another buffer, just hide meta buffer but do not delete
-		setlocal nomodifiable
-		setlocal noswapfile
-		setlocal nobuflisted
-        setlocal autoread
         
-		" Define key mapping for current buffer
-		exec 'nnoremap <buffer> <silent> q :call <SNR>'.s:sid.'_Close()<CR>'
-        if !s:hintDisplayed
-            let l:separator = "************************************"
-            call writefile([l:separator," press 'q' to close this buffer",l:separator], s:tempFile, "a")
-            let s:hintDisplayed = 1
-            " reload with hint visible
-            call apexUtil#log("view: inside setupBuffer")
+        " create new buffer if necessary
+        if bufnr(s:BUFFER_NAME) < 1
+            :new
+            " set attributes
+			exec 'file ' . fnameescape(s:BUFFER_NAME)
+            " Set the buffer name if not already set
+            setlocal buftype=nofile
+            setlocal buftype=nowrite
+            setlocal bufhidden=hide " when user switches to another buffer, just hide meta buffer but do not delete
+            "setlocal nomodifiable
+            setlocal noswapfile
+            setlocal nobuflisted
+            setlocal autoread
 
-            exec 'view ' fnameescape(s:tempFile)
-        endif
-        
-        " syntax highlight
-        if has("syntax")
-            syntax on
-            setlocal filetype=apex_messages
-            setlocal syntax=apex_messages
-        endif
+            " Define key mapping for current buffer
+            exec 'nnoremap <buffer> <silent> q :call <SNR>'.s:sid.'_Close()<CR>'
+
+            " syntax highlight
+            if has("syntax")
+                syntax on
+                setlocal filetype=apex_messages
+                setlocal syntax=apex_messages
+            endif
+        endif    
 
     endif    
+    return 1
     
 endfunction    
 
-function! s:isVisible()
-    call apexUtil#log("isVisible: s:BUFFER_NUMBER=" . s:BUFFER_NUMBER . "; bufwinnr(s:BUFFER_NUMBER)=" . bufwinnr(s:BUFFER_NUMBER))
+function! s:showHint()
+    if !s:hintDisplayed
+        let l:separator = "************************************"
+        call s:cacheLines([l:separator," press 'q' to close this buffer",l:separator])
+        let s:hintDisplayed = 1
+    endif
+endfunction    
 
-	return bufwinnr(s:BUFFER_NUMBER) > 0
+function! s:isVisible()
+    call apexUtil#log("isVisible: s:getBufNumber=" . s:getBufNumber() . "; bufwinnr(s:getBufNumber())=" . bufwinnr(s:getBufNumber()))
+
+	return bufwinnr(s:getBufNumber()) > 0
+endfunction    
+
+function! s:isActive()
+	return bufwinnr(s:getBufNumber()) == bufwinnr("%")
 endfunction    
 
 function! s:isSetupCorrectly()
-	return s:BUFFER_NUMBER > 0 && 'apex_messages' && getbufvar(s:BUFFER_NUMBER, "&syntax")
+	return s:getBufNumber() > 0 "&& getbufvar(s:getBufNumber(), '&syntax') == 'apex_messages'
+endfunction    
+
+function! s:getBufNumber()
+    return bufnr(s:BUFFER_NAME)
 endfunction    
 
 "function! s:show()
@@ -240,8 +279,9 @@ let s:sid = s:SID()
 
 " close buffer
 function! <SID>Close()
-	if s:BUFFER_NUMBER > 0 && bufloaded(s:BUFFER_NUMBER)
-        execute 'bdelete '.s:BUFFER_NUMBER
+    let l:bufNumber = s:getBufNumber()
+	if l:bufNumber > 0 && bufloaded(l:bufNumber)
+        execute 'bdelete '.l:bufNumber
         "hide
     endif
     "exec 'buffer #'
