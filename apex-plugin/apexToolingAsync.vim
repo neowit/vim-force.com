@@ -1141,6 +1141,7 @@ function! s:execAsync(command, callbackFuncRef)
             let l:port = s:getServerPort()
             let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
             call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
+            echo '... in progress ...'
             break
         catch /^Vim\%((\a\+)\)\=:E906/
             "echom 'server not started: ' v:exception
