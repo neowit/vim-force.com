@@ -1035,7 +1035,8 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 
         let l:currentBufWinNum = bufwinnr("%")
         let quickfixMessageCount = apexToolingCommon#fillQuickfix(a:logFilePath, a:projectPath, l:useLocationList)
-        if  quickfixMessageCount < 1 && messageCount > 1 && !a:isSilent
+
+        if  quickfixMessageCount < 1 && messageCount > 0 && !a:isSilent
             " open messages only if there are more than 1 and quickfix is empty
             " and not silent mode
             call apexMessages#open()
