@@ -11,36 +11,23 @@ if exists("g:loaded_apexMessages") || &compatible
 endif
 let g:loaded_apexMessages = 1
 
-let s:BUFFER_NAME = "apex_messages"
+function! apexMessages#open(...)
+    let displayMode = 'vsplit'
+    if a:0 > 0
+        let displayMode = a:1
+    endif    
 
-function! apexMessages#open()
     if exists('g:APEX_MESSAGES_BUFFER_DISABLED') && g:APEX_MESSAGES_BUFFER_DISABLED
         call apexUtil#info("Message buffer is disabled by 'g:APEX_MESSAGES_BUFFER_DISABLED' valiable")
         return
     endif    
-    let l:bufNumber = s:getBufNumber()
-    "echomsg "apexMessages#open l:bufNumber=" . l:bufNumber
-
-    " do not open buffer if it is empty
-    if len(getbufline(l:bufNumber, 1, 2)) < 1 && len(s:cachedLines) < 1
-        call apexUtil#info("No messages to display")
-        return
-    endif    
     
-    call s:setupBuffer()
-    let l:bufNumber = s:getBufNumber()
-    "echomsg "apexMessages#open l:bufNumber(2)=" . l:bufNumber
-    "redraw
+    call s:setupBuffer(displayMode)
     " show content
-	if bufloaded(l:bufNumber)
-        if !s:isVisible()
-            execute 'b '.l:bufNumber
-        endif
-        call s:dumpCached()
-        call s:showHint()
-        " go to the last line
-        call s:execInBuffer("normal G")
-    endif
+    call s:dumpCached()
+    call s:showHint()
+    " go to the last line
+    call s:execInBuffer("normal G")
 endfunction    
 
 "Param: displayMessageTypes list of message types to display, other types will
@@ -145,7 +132,7 @@ function! s:cacheLines(lines)
     else " add single string
         call add(s:cachedLines, a:lines)
     endif
-    if s:isActive()
+    if s:isVisible()
         call s:dumpCached()
     endif    
 endfunction
@@ -154,7 +141,13 @@ function! s:dumpCached()
     if s:setupBuffer()
         call s:execInBuffer("call append(line('$'), s:cachedLines)")
         let s:cachedLines = []
+        call s:scrollToBottomIfInactive()
     endif
+endfunction
+
+function! s:scrollToBottomIfInactive()
+    " go to the last line
+    call s:execInBuffer("normal G")
 endfunction
 
 " execute give comamnd in "apex_messages" buffer
@@ -199,49 +192,51 @@ function! s:isEnabled()
     return !exists('g:APEX_MESSAGES_BUFFER_DISABLED') || !g:APEX_MESSAGES_BUFFER_DISABLED
 endfunction    
 
-let s:hintDisplayed = 0
-"Variables:
+" Variables:
 "   g:APEX_MESSAGES_BUFFER_DISABLED - set to 1 if message buffer must NOT be
 "   created/used
-function! s:setupBuffer()
+function! s:setupBuffer(...)
     if !s:isEnabled()
         return 0
     endif    
     
     call apexUtil#log("inside setupBuffer")
-    if !s:isSetupCorrectly()
-        " create new buffer if necessary
-        if bufnr(s:BUFFER_NAME) < 0
-            :new
-        endif    
-        " make sure that attributes are being set in the correct buffer
-        let l:bufNum = s:getBufNumber()
-        let originalBufNum = bufnr("%")
-        if l:bufNum >= 0 && originalBufNum != l:bufNum
-            execute 'b '.s:getBufNumber()
-        endif    
-        " setup necessary attributes
-        call s:setupBufferAttributes()
-        " restore original buffer if necessary
-        if originalBufNum >= 0 && originalBufNum != s:getBufNumber()
-            execute 'b '.originalBufNum
-        endif    
 
+    let displayMode = 'vsplit'
+    if a:0 > 0
+        let displayMode = a:1
     endif    
-    return 1
-    
-endfunction    
 
-function! s:setupBufferAttributes()
-    " set attributes
-    exec 'file ' . fnameescape(s:BUFFER_NAME)
-    " Set the buffer name if not already set
+    let buffer_name = s:getBufferName()
+
+    let l:winNum = s:getWinNumber()
+
+    if ( l:winNum > 0)
+        silent execute 'noautocmd ' . l:winNum . "wincmd w"
+    elseif ( displayMode == 'vsplit' )
+        silent execute "vnew " . buffer_name
+    elseif ( displayMode == 'hsplit' )
+        silent execute "new " . buffer_name
+    else
+        if ( !bufexists(buffer_name) )
+            if ( bufname("%") == "" )
+                silent keepalt enew
+            else
+                silent enew
+            endif
+            silent execute "file " . buffer_name
+        endif
+    endif
+
+    silent execute "buffer " . buffer_name
+
     setlocal buftype=nofile
-    "setlocal buftype=nowrite
     setlocal bufhidden=hide " when user switches to another buffer, just hide 'apex_messages' buffer but do not delete
-    "setlocal nomodifiable
     setlocal noswapfile
-    setlocal nobuflisted
+    "setlocal nobuflisted " TODO: uncomment
+    
+    "setlocal buftype=nowrite
+    "setlocal nomodifiable
     "setlocal autoread
 
     " Define key mapping for current buffer
@@ -254,8 +249,11 @@ function! s:setupBufferAttributes()
         setlocal syntax=apex_messages
     endif
 
+    return 1
+    
 endfunction    
 
+let s:hintDisplayed = 0
 function! s:showHint()
     if !s:hintDisplayed
         let l:separator = "************************************"
@@ -270,16 +268,34 @@ function! s:isVisible()
 	return bufwinnr(s:getBufNumber()) > 0
 endfunction    
 
-function! s:isActive()
-	return bufwinnr(s:getBufNumber()) == bufwinnr("%")
-endfunction    
+"function! s:isActive()
+"	return bufwinnr(s:getBufNumber()) == bufwinnr("%")
+"endfunction    
 
-function! s:isSetupCorrectly()
-	return s:getBufNumber() > 0 && getbufvar(s:getBufNumber(), '&syntax') == 'apex_messages'
-endfunction    
+" function! s:isSetupCorrectly()
+" 	return s:getBufNumber() > 0 && getbufvar(s:getBufNumber(), '&syntax') == 'apex_messages'
+" endfunction    
 
 function! s:getBufNumber()
-    return bufnr(s:BUFFER_NAME)
+    let buffer_name = s:getBufferName()
+    return bufnr(buffer_name)
+endfunction    
+
+function! s:getWinNumber()
+    let l:bufNumber = s:getBufNumber()
+    return l:bufNumber > 0 ? bufwinnr(l:bufNumber) : 0
+endfunction    
+
+function! apexMessages#BufNumber()
+    return s:getBufNumber()
+endfunction    
+
+let b:projectDir = ''
+function! s:getBufferName()
+    let b:projectDir = get(b:, 'projectDir', apex#getApexProjectSrcPath()) 
+    "let buffer_name = 'apex_messages://' . fnameescape(projectDir)
+    let buffer_name = 'apex_messages'
+    return buffer_name
 endfunction    
 
 function! s:SID()
@@ -290,13 +306,14 @@ let s:sid = s:SID()
 
 " close buffer
 function! <SID>Close()
-    let l:bufNumber = s:getBufNumber()
-	if l:bufNumber > 0 && bufloaded(l:bufNumber)
-        execute 'bdelete '.l:bufNumber
+    let l:winNumber = s:getWinNumber()
+	if l:winNumber > 0
+        execute 'close '.l:winNumber
         "hide
     endif
     "exec 'buffer #'
 endfunction    
+
 
 "function! s:openBufInSplit(num, splitType )
 "    if a:num != bufnr("%")
