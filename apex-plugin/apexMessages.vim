@@ -12,7 +12,7 @@ endif
 let g:loaded_apexMessages = 1
 
 function! apexMessages#open(...)
-    let displayMode = 'vsplit'
+    let displayMode = get(g:, 'apex_messages_split_type', 'vsplit')
     if a:0 > 0
         let displayMode = a:1
     endif    
@@ -202,7 +202,9 @@ function! s:setupBuffer(...)
     
     call apexUtil#log("inside setupBuffer")
 
-    let displayMode = 'vsplit'
+    let splitSize = get(g:, 'apex_messages_split_size', 0)
+    let displayMode = get(g:, 'apex_messages_split_type', 'vsplit')
+    
     if a:0 > 0
         let displayMode = a:1
     endif    
@@ -210,30 +212,22 @@ function! s:setupBuffer(...)
     let buffer_name = s:getBufferName()
 
     let l:winNum = s:getWinNumber()
+    let splitSizeStr = splitSize <=0 ? '' : string(splitSize)
 
     if ( l:winNum > 0)
-        silent execute 'noautocmd ' . l:winNum . "wincmd w"
+        silent execute 'keepalt noautocmd ' . l:winNum . "wincmd w"
     elseif ( displayMode == 'vsplit' )
-        silent execute "vnew " . buffer_name
-    elseif ( displayMode == 'hsplit' )
-        silent execute "new " . buffer_name
-    else
-        if ( !bufexists(buffer_name) )
-            if ( bufname("%") == "" )
-                silent keepalt enew
-            else
-                silent enew
-            endif
-            silent execute "file " . buffer_name
-        endif
+        silent execute "keepalt rightbelow ".splitSizeStr." vnew " . buffer_name
+    else "if ( displayMode == 'hsplit' )
+        silent execute "keepalt rightbelow ".splitSizeStr." new " . buffer_name
     endif
 
-    silent execute "buffer " . buffer_name
+    "silent execute "buffer " . buffer_name
 
     setlocal buftype=nofile
     setlocal bufhidden=hide " when user switches to another buffer, just hide 'apex_messages' buffer but do not delete
     setlocal noswapfile
-    "setlocal nobuflisted " TODO: uncomment
+    setlocal nobuflisted 
     
     "setlocal buftype=nowrite
     "setlocal nomodifiable
