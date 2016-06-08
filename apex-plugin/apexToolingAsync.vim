@@ -964,6 +964,8 @@ let s:timers = {}
 function! s:progress.showProgress(timer, ...)
     if a:0 > 0
         let s:progress.lastMessage = a:1
+        " restart timer
+        call s:stopProgressTimer()
     endif    
     echo s:progress.states[s:progress.index] " => " s:progress.lastMessage
     let s:progress.index = (s:progress.index + 1) % len(s:progress.states)
