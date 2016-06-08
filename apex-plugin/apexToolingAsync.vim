@@ -887,6 +887,9 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
             " channel only. assume that channel has been closed
         endif    
 
+        " hide progress indicator
+        call s:stopProgressTimer()
+        
         " echo 'one=' . self.one. '; two=' . self.two . '; ' . a:msg 
         silent let logFileRes = apexToolingCommon#grepValues(self.responseFilePath, "LOG_FILE=")
 
@@ -935,13 +938,15 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
             "call self.callbackFuncRef(l:result)
             call call(get(self, 'callbackFuncRef'), [l:result])
             
-            call s:stopProgressTimer()
-
         endif    
+
     endfunction    
     " ================= END internal callback =========================
-
-    call s:showProgress('')
+    
+    " display progress indicator
+    if !isSilent
+        call s:showProgress('')
+    endif
 	call s:runCommand(l:command, isSilent, function(obj.callbackInternal))
 
 endfunction
@@ -986,7 +991,6 @@ function! s:startProgressTimer()
     let l:maxRepeats = 20
     let s:progress.timerId = timer_start(500, s:progress.showProgress, {'repeat': l:maxRepeats})
     let s:timers[s:progress.timerId] = l:maxRepeats
-    "echomsg "s:progress.timerId=" . s:progress.timerId 
 endfunction    
 
 function! s:stopProgressTimer(...)
@@ -1203,7 +1207,7 @@ function! s:execAsync(command, callbackFuncRef)
             let l:port = s:getServerPort()
             let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
             call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
-            echo '... in progress ...'
+            
             break
         catch /^Vim\%((\a\+)\)\=:E906/
             "echom 'server not started: ' v:exception
