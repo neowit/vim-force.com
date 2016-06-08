@@ -879,7 +879,8 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
                 call apexMessages#log(l:msg)
             endif
             if len(l:msg) > 0
-                echo l:msg
+                "echo l:msg
+                call s:showProgress(l:msg)
             endif
             return
         elseif 0 == a:0
@@ -933,14 +934,72 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
             
             "call self.callbackFuncRef(l:result)
             call call(get(self, 'callbackFuncRef'), [l:result])
+            
+            call s:stopProgressTimer()
 
         endif    
     endfunction    
     " ================= END internal callback =========================
 
+    call s:showProgress('')
 	call s:runCommand(l:command, isSilent, function(obj.callbackInternal))
 
 endfunction
+
+
+function! ShowProgress(msg)
+    call s:showProgress(a:msg)
+endfunction    
+
+function! s:showProgress(msg)
+    call s:progress.showProgress(-1, a:msg)
+endfunction    
+
+let s:progress = {}
+let s:progress.lastMessage = ''
+let s:progress.states = ['-', '\', '|', '/']
+let s:progress.index = 0
+let s:progress.timerId = -1
+let s:timers = {}
+function! s:progress.showProgress(timer, ...)
+    if a:0 > 0
+        let s:progress.lastMessage = a:1
+    endif    
+    echo s:progress.states[s:progress.index] " => " s:progress.lastMessage
+    let s:progress.index = (s:progress.index + 1) % len(s:progress.states)
+    if s:progress.timerId <= 0
+        call s:startProgressTimer()
+    else
+        if a:timer >0 && has_key(s:timers, a:timer)
+            let s:timers[a:timer] = s:timers[a:timer] - 1
+            if s:timers[a:timer] <= 1
+                call s:stopProgressTimer(a:timer)
+            endif    
+        endif    
+    endif    
+endfunction    
+
+function! s:startProgressTimer()
+    call s:stopProgressTimer()
+    let l:maxRepeats = 20
+    let s:progress.timerId = timer_start(500, s:progress.showProgress, {'repeat': l:maxRepeats})
+    let s:timers[s:progress.timerId] = l:maxRepeats
+    "echomsg "s:progress.timerId=" . s:progress.timerId 
+endfunction    
+
+function! s:stopProgressTimer(...)
+    let l:timerId = a:0 > 0 ? a:1 : s:progress.timerId
+    "let s:progress.lastMessage = ''
+    if l:timerId > 0
+        call timer_stop(l:timerId)
+        if has_key(s:timers, l:timerId)
+            call remove(s:timers, l:timerId)
+        endif    
+        if a:0 < 1
+            let s:progress.timerId = -1
+        endif
+    endif    
+endfunction    
 
 " vim appears to lose scope of outer object in a situation like this
 " let obj1 = {"test": 'test1'}
