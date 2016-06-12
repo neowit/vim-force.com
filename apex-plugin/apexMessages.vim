@@ -156,10 +156,13 @@ function! s:execInBuffer(command)
     if l:bufNumber >=0
         " briefly switch to ApexMessage window, dump content and get back
         let currentWinNr = winnr()
+        "call apexUtil#log('s:execInBuffer('.a:command.')')
+        "call apexUtil#log('currentWinNr='.currentWinNr)
         if !bufloaded(l:bufNumber)
             execute 'noautocmd b '.l:bufNumber
         endif    
         let targetWinNr = bufwinnr(l:bufNumber)
+        "call apexUtil#log('targetWinNr='.targetWinNr)
         execute 'noautocmd ' . targetWinNr . 'wincmd w'
         try
             execute a:command
@@ -200,48 +203,54 @@ function! s:setupBuffer(...)
         return 0
     endif    
     
-    call apexUtil#log("inside setupBuffer")
+    let currentWinNr = winnr()
+    try 
+        call apexUtil#log("inside setupBuffer")
 
-    let splitSize = get(g:, 'apex_messages_split_size', 0)
-    let displayMode = get(g:, 'apex_messages_split_type', 'vsplit')
-    
-    if a:0 > 0
-        let displayMode = a:1
-    endif    
+        let splitSize = get(g:, 'apex_messages_split_size', 0)
+        let displayMode = get(g:, 'apex_messages_split_type', 'vsplit')
 
-    let buffer_name = s:getBufferName()
+        if a:0 > 0
+            let displayMode = a:1
+        endif    
 
-    let l:winNum = s:getWinNumber()
-    let splitSizeStr = splitSize <=0 ? '' : string(splitSize)
+        let buffer_name = s:getBufferName()
 
-    if ( l:winNum > 0)
-        silent execute 'keepalt noautocmd ' . l:winNum . "wincmd w"
-    elseif ( displayMode == 'vsplit' )
-        silent execute "keepalt rightbelow ".splitSizeStr." vnew " . buffer_name
-    else "if ( displayMode == 'hsplit' )
-        silent execute "keepalt rightbelow ".splitSizeStr." new " . buffer_name
-    endif
+        let l:winNum = s:getWinNumber()
+        let splitSizeStr = splitSize <=0 ? '' : string(splitSize)
 
-    "silent execute "buffer " . buffer_name
+        if ( l:winNum > 0)
+            silent execute 'keepalt noautocmd ' . l:winNum . "wincmd w"
+        elseif ( displayMode == 'vsplit' )
+            silent execute "keepalt rightbelow ".splitSizeStr." vnew " . buffer_name
+        else "if ( displayMode == 'hsplit' )
+            silent execute "keepalt rightbelow ".splitSizeStr." new " . buffer_name
+        endif
 
-    setlocal buftype=nofile
-    setlocal bufhidden=hide " when user switches to another buffer, just hide 'apex_messages' buffer but do not delete
-    setlocal noswapfile
-    setlocal nobuflisted 
-    
-    "setlocal buftype=nowrite
-    "setlocal nomodifiable
-    "setlocal autoread
+        "silent execute "buffer " . buffer_name
 
-    " Define key mapping for current buffer
-    exec 'nnoremap <buffer> <silent> q :call <SNR>'.s:sid.'_Close()<CR>'
+        setlocal buftype=nofile
+        setlocal bufhidden=hide " when user switches to another buffer, just hide 'apex_messages' buffer but do not delete
+        setlocal noswapfile
+        setlocal nobuflisted 
 
-    " syntax highlight
-    if has("syntax")
-        syntax on
-        setlocal filetype=apex_messages
-        setlocal syntax=apex_messages
-    endif
+        "setlocal buftype=nowrite
+        "setlocal nomodifiable
+        "setlocal autoread
+
+        " Define key mapping for current buffer
+        exec 'nnoremap <buffer> <silent> q :call <SNR>'.s:sid.'_Close()<CR>'
+
+        " syntax highlight
+        if has("syntax")
+            syntax on
+            setlocal filetype=apex_messages
+            setlocal syntax=apex_messages
+        endif
+
+    finally
+        silent execute 'noautocmd ' . currentWinNr . 'wincmd w'
+    endtry    
 
     return 1
     
