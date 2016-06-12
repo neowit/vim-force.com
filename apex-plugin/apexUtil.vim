@@ -423,5 +423,8 @@ function! apexUtil#getOrElse(var, defaultValue)
 endfunction
 
 function! apexUtil#log(msg)
-    call writefile([a:msg], "/Users/andrey/temp/vim/_job-test/log.txt", "a")
+    let l:dir = '/Users/andrey/temp/vim/_job-test/'
+    if filewritable(l:dir) > 0
+        call writefile([a:msg], l:dir . "/log.txt", "a")
+    endif
 endfunction    
