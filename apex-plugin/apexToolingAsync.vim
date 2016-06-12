@@ -1007,25 +1007,6 @@ function! s:stopProgressTimer(...)
     endif    
 endfunction    
 
-" vim appears to lose scope of outer object in a situation like this
-" let obj1 = {"test": 'test1'}
-" function obj1.func1() {
-"   " next line will cause error
-"   echo self.test " this will result in: 'dictionary self does not have key: test'
-" }
-" let obj2 = {"test": 'test2', 'callback': obj1.func1}
-" function obj1.func1() {
-"   call self.callback()
-" }
-" function! s:copyUnderscoredParams(source, dest)
-"     for key in keys(a:source)
-"         if key =~ '^_'
-"             let a:dest[key] = a:source[key]
-"         endif
-"     endfor
-" endfunction    
-
-
 " check if user has defined g:apex_OnCommandComplete
 function! s:hasOnCommandComplete()
     return exists('g:apex_OnCommandComplete') && type({}) == type(g:apex_OnCommandComplete)
@@ -1189,7 +1170,7 @@ function! s:getServerTimeoutSec()
 endfunction
 
 function! s:execAsync(command, callbackFuncRef)
-    call ch_logfile('/Users/andrey/temp/vim/_job-test/channel.log', 'w')
+    "call ch_logfile('/Users/andrey/temp/vim/_job-test/channel.log', 'w')
 
     let l:reEnableMore = &more
     "set nomore
@@ -1211,7 +1192,7 @@ function! s:execAsync(command, callbackFuncRef)
             break
         catch /^Vim\%((\a\+)\)\=:E906/
             "echom 'server not started: ' v:exception
-            echo "Starting server..."
+            call s:showProgress("Starting server...")
             call s:startServer()
             sleep 1000m
         catch /.*/
@@ -1222,8 +1203,7 @@ function! s:execAsync(command, callbackFuncRef)
 endfunction    
 
 function! s:startServer()
-    call ch_logfile('/Users/andrey/temp/vim/_job-test/channel-startServer.log', 'w')
-
+    "call ch_logfile('/Users/andrey/temp/vim/_job-test/channel-startServer.log', 'w')
 
     let obj = {}
     
