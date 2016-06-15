@@ -1196,7 +1196,7 @@ function! s:execAsync(command, callbackFuncRef)
             call s:startServer()
             sleep 1000m
         catch /.*/
-            call apexUtil#error("Failed to execute command. " . v:exception)
+            call apexMessages#logError("Failed to execute command. " . v:exception)
             break
         endtry    
     endwhile
@@ -1210,7 +1210,7 @@ function! s:startServer()
     function obj.callback(channel, msg)
         "echomsg "callback: msg=" . a:msg
         if a:msg =~ "Error"
-            call apexUtil#error("Failed to start server: " . a:msg)
+            call apexMessages#logError("Failed to start server: " . a:msg)
         elseif a:msg =~ "Awaiting connection"    
             call ch_close(a:channel)
         endif    
