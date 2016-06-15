@@ -182,7 +182,7 @@ endfunction
 
 function! apexMessages#logError(msg)
     call s:logHeader("ERROR", a:msg)
-    call apexUtil#info(a:msg)
+    call apexUtil#error(a:msg)
 endfunction    
 
 function! apexMessages#log(msg)
