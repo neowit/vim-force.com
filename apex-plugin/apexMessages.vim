@@ -203,6 +203,7 @@ function! s:setupBuffer(...)
         return 0
     endif    
     
+    " record current window number
     let currentWinNr = winnr()
     try 
         call apexUtil#log("inside setupBuffer")
@@ -249,7 +250,10 @@ function! s:setupBuffer(...)
         endif
 
     finally
-        silent execute 'noautocmd ' . currentWinNr . 'wincmd w'
+        " switch back to original window if it still exists
+        if winbufnr(currentWinNr) >=0 
+            silent execute 'noautocmd ' . currentWinNr . 'wincmd w'
+        endif
     endtry    
 
     return 1
