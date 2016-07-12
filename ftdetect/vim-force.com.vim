@@ -36,12 +36,12 @@ au BufRead,BufNewFile */resources_unpacked/*.html set filetype=apexcode.html | s
 " aura files
 augroup aura
 	au!
-	au BufRead,BufNewFile */src/aura/*.app set filetype=apexcode.aura.html | set syntax=aura
-	au BufRead,BufNewFile */src/aura/*.cmp set filetype=apexcode.aura.html | set syntax=aura
-	au BufRead,BufNewFile */src/aura/*.evt set filetype=apexcode.aura.html | set syntax=aura
+	au BufRead,BufNewFile */src/aura/*.app set filetype=aura-xml | set syntax=aura-xml
+	au BufRead,BufNewFile */src/aura/*.cmp set filetype=aura-xml | set syntax=aura-xml
+	au BufRead,BufNewFile */src/aura/*.evt set filetype=aura-xml | set syntax=aura-xml
 	au BufRead,BufNewFile */src/aura/*.intf set filetype=apexcode.aura.html | set syntax=html
-	au BufRead,BufNewFile */src/aura/*.js set filetype=apexcode.aura.javascript | set syntax=javascript
-	au BufRead,BufNewFile */src/aura/*.css set filetype=apexcode.aura.css | set syntax=css
+	au BufRead,BufNewFile */src/aura/*.js set filetype=aura-javascript | set syntax=javascript
+	au BufRead,BufNewFile */src/aura/*.css set filetype=aura-css | set syntax=css
 	au BufRead,BufNewFile */src/aura/*.auradoc set filetype=apexcode.aura.html | set syntax=html
 augroup END
 
