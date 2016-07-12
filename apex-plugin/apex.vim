@@ -195,7 +195,7 @@ endfun
 " return full path to SRC folder
 " ex: "/path/to/project-name/src"
 " Args:
-" filePath - [optional] if provided then this fiel is used to determine src
+" filePath - [optional] if provided then this file is used to determine src
 " path, otherwise expand("%:p") is used
 function! apex#getApexProjectSrcPath(...)
 	let filePath = expand("%:p")

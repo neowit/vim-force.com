@@ -293,9 +293,9 @@ function! apexMessages#BufNumber()
     return s:getBufNumber()
 endfunction    
 
-let b:projectDir = ''
+"let b:projectDir = ''
 function! s:getBufferName()
-    let b:projectDir = get(b:, 'projectDir', apex#getApexProjectSrcPath()) 
+    "let b:projectDir = get(b:, 'projectDir', apex#getApexProjectSrcPath()) 
     "let buffer_name = 'apex_messages://' . fnameescape(projectDir)
     let buffer_name = 'apex_messages'
     return buffer_name
