@@ -1151,6 +1151,10 @@ function! s:getJavaCommand()
 		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
 		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
 	endif
+    if l:java_command !~ "-Dfile.encoding"
+        " force UTF-8 encoding if user did not set an alternative explicitly
+		let l:java_command = l:java_command  . " -Dfile.encoding=UTF-8 "
+    endif    
 	let l:java_command = l:java_command  . " -jar " . fnameescape(g:apex_tooling_force_dot_com_path)
 
     return l:java_command
