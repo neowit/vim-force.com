@@ -2,7 +2,8 @@
 Author: Andrey Gavrikov
 License: Same terms as Vim itself (see |license|)
 
-force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
+force.com plugin for Vim                         *vim-force.com* |  *force.com*
+                                                 *salesforce* | *apex*
 
 |force.com-description|   Description
 |force.com-features|      Features
