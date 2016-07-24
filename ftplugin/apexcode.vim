@@ -10,6 +10,11 @@ if exists("b:did_ftplugin")
 endif
 let b:did_ftplugin = 1 
 
+if exists("g:did_ftplugin_apexcode")
+  finish
+endif
+let g:did_ftplugin_apexcode = 1 
+
 let s:FTPLUGIN_FOLDER = expand("<sfile>:h")
 
 "load all force.com/apex-plugin scripts after vim starts and when apexcode
