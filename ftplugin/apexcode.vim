@@ -4,11 +4,12 @@
 " setup environment for Apex Code development
 "
 
-" Only do this when not done yet for this buffer
-if exists("b:did_ftplugin")
-  finish
-endif
-let b:did_ftplugin = 1 
+" do NOT enable this as this will stop all apex initialisation when user
+" opened &ft != 'apexcode' files like 'visualforce' or 'aura-xml'
+"if exists("b:did_ftplugin")
+"  finish
+"endif
+"let b:did_ftplugin = 1 
 
 if exists("g:did_ftplugin_apexcode")
   finish
