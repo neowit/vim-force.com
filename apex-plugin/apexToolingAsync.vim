@@ -921,8 +921,10 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         let errCount = s:parseErrorLog(self.responseFilePath, self.projectPath, self.displayMessageTypes, self.isSilent, l:disableMorePrompt, self.extraParams)
         "echo "l:startTime=" . string(l:startTime)
         """temporary disabled"" call s:onCommandComplete(reltime(self.startTime))
+        
+        let l:success = len(apexUtil#grepFile(self.responseFilePath, 'RESULT=SUCCESS')) > 0 && 0 == errCount ? "true": "false"
 
-        let l:result = {"success": 0 == errCount? "true": "false",
+        let l:result = {"success": l:success,
                     \ "responseFilePath": self.responseFilePath,
                     \ "projectPath": self.projectPath,
                     \ "projectName": self.projectName}
@@ -933,7 +935,6 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         if ( has_key(self, "callbackFuncRef") )
             " workaround for vim losing scope of object to which
             " callbackFuncRef belongs
-            "call s:copyUnderscoredParams(self, l:result)
             
             "call self.callbackFuncRef(l:result)
             call call(get(self, 'callbackFuncRef'), [l:result])
