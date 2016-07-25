@@ -1174,11 +1174,11 @@ function! s:getServerTimeoutSec()
 	return apexUtil#getOrElse("g:apex_server_timeoutSec", 60)
 endfunction
 
-function! s:execAsync(command, callbackFuncRef)
+function! s:execAsync(command, callbackFuncRef) abort
     "call ch_logfile('/Users/andrey/temp/vim/_job-test/channel.log', 'w')
 
     let l:reEnableMore = &more
-    "set nomore
+    set nomore
     call apexMessages#log("")
     call apexMessages#log(a:command)
     if l:reEnableMore
@@ -1205,6 +1205,7 @@ function! s:execAsync(command, callbackFuncRef)
             break
         endtry    
     endwhile
+    
 endfunction    
 
 function! s:startServer()

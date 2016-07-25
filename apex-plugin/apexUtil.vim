@@ -316,7 +316,7 @@ function! apexUtil#grepFileLineNums(filePath, expr, ...)
 	
 	try
 		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
-		exe exprStr
+		silent exe exprStr
 		"expression found
 		"get line numbers from quickfix
 		for qfLine in getqflist()
@@ -349,7 +349,7 @@ function! apexUtil#grepFile(filePath, expr, ...)
 	
 	try
 		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
-		exe exprStr
+		silent exe exprStr
 		"expression found
 		"get line numbers from quickfix
 		for qfLine in getqflist()
