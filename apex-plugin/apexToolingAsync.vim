@@ -1194,6 +1194,9 @@ function! s:execAsync(command, callbackFuncRef) abort
             let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
             call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
             
+            " get rid of any previous messages (e.g. server start) in status line
+            redrawstatus! 
+            
             break
         catch /^Vim\%((\a\+)\)\=:E906/
             "echom 'server not started: ' v:exception
