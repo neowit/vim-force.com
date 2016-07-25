@@ -1127,14 +1127,14 @@ function! s:runCommand(commandLine, isSilent, callbackFuncRef)
 		let l:flags .= 's' " silent
 	endif
 
-    let l:java_command = s:getJavaCommand()
 
-	if isServerEnabled 
+	"if isServerEnabled 
         call s:execAsync(a:commandLine, a:callbackFuncRef)
-	else
-		let l:command = l:java_command . a:commandLine
-		call apexOs#exe(l:command, l:flags)
-	endif
+	"else
+    "    let l:java_command = s:getJavaCommand()
+	"	let l:command = l:java_command . a:commandLine
+	"	call apexOs#exe(l:command, l:flags)
+	"endif
 endfunction
 
 function! s:getJavaCommand()
