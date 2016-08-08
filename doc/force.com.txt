@@ -556,10 +556,16 @@ updates selected local file but does not touch local timestamp cache, hence
 during saving / deploying file to SFDC file still will be considered as 
 outdated.
 
-                                                            *ApexRefreshProject*
+                                 *ApexRefreshProject* | *ApexRefreshProjectAsync*
 
-Refresh current project and download new/modified files from SFDC replacing
+Refresh current project and download new/modified files from SFDC, replacing
 all local files.
+Note: there are two versions of this command: synchronous and asynchronous.
+|ApexRefreshProject| is mapped to synchronous refresh.
+|ApexRefreshProjectAsync| is mapped to asynchronous refresh.
+It is ussually not recommended to mess with project files while
+'ApexRefreshProject' is running, therefore use |ApexRefreshProject| (instead
+of its async counterpart) unless you really know what you are doing.
 
                                                               *ApexRemoveStaged*
 
