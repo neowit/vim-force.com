@@ -8,8 +8,12 @@
 " async job
 "
 if exists("g:loaded_apexToolingAsync") || &compatible
-  finish
+    finish
 endif
+if !has('job')
+    throw "Vim version with 'job' support is required"
+    finish
+endif    
 let g:loaded_apexToolingAsync = 1
 
 let s:SESSION_FOLDER = ".vim-force.com"
