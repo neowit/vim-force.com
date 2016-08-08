@@ -1107,6 +1107,10 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
             endif
 		endif
 		return 0
+    else
+        " response file is either missing or contains neither explicit success nor failure, 
+        " let user figure out what the problem was
+        call apexMessages#open()
 	endif
     
 	return 1
