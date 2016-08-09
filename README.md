@@ -166,3 +166,6 @@ making the world's best editor (IMHO). I also want to thank everyone who
 helped and gave me suggestions. I wouldn't want to leave anyone out so I
 won't list names.
 
+<!--- 
+vim:nofoldenable: 
+--->
