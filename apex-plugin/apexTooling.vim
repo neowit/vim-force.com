@@ -76,7 +76,7 @@ function apexTooling#loadTestSuiteNamesList(projectName, projectPath, outputFile
     let l:extraParams = {}
     let l:extraParams["testSuiteAction"] = "dumpNames"
     let l:extraParams["dumpToFile"] = apexOs#shellescape(a:outputFilePath)
-	call apexTooling#execute("testSuiteManage", a:projectName, a:projectPath, l:extraParams, [])
+	call apexToolingAsync#executeBlocking("testSuiteManage", a:projectName, a:projectPath, l:extraParams, [])
 endfunction	
 
 
@@ -214,7 +214,7 @@ endfunction
 
 "load metadata description into a local file
 function apexTooling#loadMetadataList(projectName, projectPath, allMetaTypesFilePath)
-	return apexTooling#execute("describeMetadata", a:projectName, a:projectPath, {"allMetaTypesFilePath": apexOs#shellescape(a:allMetaTypesFilePath)}, [])
+	return apexToolingAsync#executeBlocking("describeMetadata", a:projectName, a:projectPath, {"allMetaTypesFilePath": apexOs#shellescape(a:allMetaTypesFilePath)}, [])
 endfunction	
 
 " retrieve members of specified metadata types
@@ -237,7 +237,7 @@ function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePat
 	endif
 	let extraParams["updateSessionDataOnSuccess"] = "true"
 	
-	let resMap = apexTooling#execute("bulkRetrieve", a:projectName, a:projectPath, extraParams, [])
+	let resMap = apexToolingAsync#executeBlocking("bulkRetrieve", a:projectName, a:projectPath, extraParams, [])
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
 		let resultFolder = s:grepValues(logFilePath, "RESULT_FOLDER=")
@@ -249,7 +249,7 @@ endfunction
 
 "load list of components of specified metadata types into a local file
 function apexTooling#listMetadata(projectName, projectPath, specificTypesFilePath)
-	let resMap = apexTooling#execute("listMetadata", a:projectName, a:projectPath, {"specificTypes": apexOs#shellescape(a:specificTypesFilePath)}, [])
+	let resMap = apexToolingAsync#executeBlocking("listMetadata", a:projectName, a:projectPath, {"specificTypes": apexOs#shellescape(a:specificTypesFilePath)}, [])
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
 		let resultFile = s:grepValues(logFilePath, "RESULT_FILE=")
@@ -305,7 +305,7 @@ function apexTooling#deleteMetadata(filePath, projectName, specificComponentsFil
 		let l:extraParams["updateSessionDataOnSuccess"] = 'true'
 	endif
 
-	let resMap = apexTooling#execute("deleteMetadata", a:projectName, projectPair.path, l:extraParams, [])
+	let resMap = apexToolingAsync#executeBlocking("deleteMetadata", a:projectName, projectPair.path, l:extraParams, [])
 	return resMap
 endfunction	
 
