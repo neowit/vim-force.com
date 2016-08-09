@@ -25,7 +25,7 @@ force.com plugin for Vim                         *vim-force.com* |  *force.com*
 |Recommended-Plugins|     other recommended Vim plugins
 |force.com-credits|       Credits 
 
-For Vim version 7.3 or later.
+For Vim version 7.4 (with 'job' support) or later.
 Requires :set nocompatible
 
 ==============================================================================

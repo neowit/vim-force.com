@@ -1,6 +1,19 @@
 # Vim plugin for developing on force.com      
 
-salesforce.com / force.com plugin for Vim version 7.3 or later.  
+salesforce.com / force.com plugin for Vim version 7.4 (with 'job' support) or later.  
+
+##### Update August 2016  
+Note 1:  
+Majority of plugin functions have been migrated to async jobs added in vim not
+so long ago.  
+If you use MacVim then you may need to have a very recent version because some
+initial MacVim versions had problems with properly supporting new vim job
+functionality. Minimum MacVim version which is known to work is `7.4, Included patches: 1-1831`.  
+
+If you have to use older vim version or want to continue using synchronous
+version of all commands then switch to
+[vim-sync](https://github.com/neowit/vim-force.com/tree/vim-sync) branch.
+
 
 ##### Update July 2015  
 If you do not get code coverage data when running `:ApexTestWithCoverage` using
