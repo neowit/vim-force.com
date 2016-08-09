@@ -59,7 +59,11 @@ function apexTooling#listCompletions(filePath, attributeMap)
 	let l:extraParams["currentFilePath"] = apexOs#shellescape(a:filePath)
 	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(attributeMap["currentFileContentPath"])
 
-	let resMap = apexTooling#execute("listCompletions", projectName, projectPath, l:extraParams, [])
+    if apexOs#isWindows()
+	    let resMap = apexToolingAsync#executeBlocking("listCompletions", projectName, projectPath, l:extraParams, [])
+    else     
+        let resMap = apexTooling#execute("listCompletions", projectName, projectPath, l:extraParams, [])
+    endif    
 	let responseFilePath = resMap["responseFilePath"]
 	return responseFilePath
 endfunction

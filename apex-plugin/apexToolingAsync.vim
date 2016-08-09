@@ -773,11 +773,34 @@ function apexToolingAsync#diffWithRemote(filePath, mode, ...)
 endfunction	
 
 " ==================================================================================================
-" this callback is used when no explicit callback method specified by caller
-" of apexToolingAsync#execute()
-function! s:dummyCallback(msg)
-    "echo "dummyCallback: " . string(a:msg)
+" this is intended for MS Windows only do not use unless really necessary
+" because this methods adds about 1 second delay to response time (not sure
+" where this delay comes from)
+function! apexToolingAsync#executeBlocking(action, projectName, projectPath, extraParams, displayMessageTypes) abort
+    " ================= internal callback ===========================
+    let l:extraParams = a:extraParams
+    function! l:extraParams.callbackFuncRef(resMap)
+        let self.resMap = a:resMap
+    endfunction    
+    " ================= END internal callback ===========================
+
+    "unlet responseByAction[a:action]
+	call apexToolingAsync#execute(a:action, a:projectName, a:projectPath, l:extraParams, a:displayMessageTypes)
+    " wait for response to become available
+    "let dots = '.'
+    let mills = 3
+    while !has_key(l:extraParams, "resMap")
+        "echomsg "waiting" . dots
+        "let dots .= '.'
+        "sleep for NN milliseconds
+        exec 'sleep ' .mills. 'm' 
+        if mills < 100
+            let mills += 1
+        endif
+    endwhile    
+    return l:extraParams["resMap"]
 endfunction    
+" ==================================================================================================
 
 "Returns: dictionary: 
 "	{
