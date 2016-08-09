@@ -105,7 +105,7 @@ endfunction
 function apexTooling#refreshProject(filePath, ...)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let extraParams = a:0 > 0 && a:1 ? {"skipModifiedFilesCheck":"true"} : {}
-	let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, extraParams, ["ERROR", "INFO"])
+	let resMap = apexToolingAsync#executeBlocking("refresh", projectPair.name, projectPair.path, extraParams, ["ERROR", "INFO"])
 	let logFilePath = resMap["responseFilePath"]
 	" check if SFDC client reported modified files
 	let modifiedFiles = s:grepValues(logFilePath, "MODIFIED_FILE=")
@@ -120,7 +120,7 @@ function apexTooling#refreshProject(filePath, ...)
 			return 
 		endif
 		" forced refresh when there are modified files
-		let resMap = apexTooling#execute("refresh", projectPair.name, projectPair.path, {"skipModifiedFilesCheck":"true"}, ["ERROR", "INFO"])
+		let resMap = apexToolingAsync#executeBlocking("refresh", projectPair.name, projectPair.path, {"skipModifiedFilesCheck":"true"}, ["ERROR", "INFO"])
 	endif
 
 	if "true" == resMap["success"]
