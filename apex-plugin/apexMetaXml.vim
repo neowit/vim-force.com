@@ -30,7 +30,8 @@ function apexMetaXml#createFileAndSwitch(filePath)
 	if len(typeAndName) < 1
 		echo "\n"
 		echomsg "Selection aborted"
-		return " user aborted
+        " user aborted
+		return 
 	endif
 	let fileContent = s:getFilesContent{typeAndName.fileType}(typeAndName.fileName)
 	"check that required file does not exist
