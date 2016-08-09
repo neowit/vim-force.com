@@ -886,7 +886,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
             if !self.isSilent
                 call apexMessages#log(l:msg)
             endif
-            if len(l:msg) > 0
+            if !self.isSilent && len(l:msg) > 0
                 "echo l:msg
                 call s:showProgress(l:msg)
             endif
@@ -896,7 +896,9 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         endif    
 
         " hide progress indicator
-        call s:stopProgressTimer()
+        if !self.isSilent
+            call s:stopProgressTimer()
+        endif
         
         " echo 'one=' . self.one. '; two=' . self.two . '; ' . a:msg 
         silent let logFileRes = apexToolingCommon#grepValues(self.responseFilePath, "LOG_FILE=")
