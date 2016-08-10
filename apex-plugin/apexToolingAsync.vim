@@ -1258,7 +1258,11 @@ function! s:startServer()
         if a:msg =~ "Error"
             call apexMessages#logError("Failed to start server: " . a:msg)
         elseif a:msg =~ "Awaiting connection"    
-            call ch_close(a:channel)
+            try 
+                call ch_close(a:channel) 
+            catch
+                " ignore
+            endtry
         endif    
 
     endfunction    
