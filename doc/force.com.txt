@@ -1,4 +1,4 @@
-force.com.txt: Plugin for developing on force.com      
+*force.com.txt* Plugin for developing on force.com      
 Author: Andrey Gavrikov
 License: Same terms as Vim itself (see |license|)
 
@@ -208,6 +208,9 @@ Run :|ApexInitProject| and follow the wizard
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*
 
+|ApexMessages|                      special buffer which displays log of all
+                                    commands
+
 |ApexCompare|                       compare files in two local projects
 |ApexCompareLocalProjects|          compare two local projects
 |ApexCompareWithPreRefreshVersion|  compare with pre refresh project state
@@ -262,6 +265,13 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexToolingVersion|                show version of tooling-force.com.jar
 
 ------------------------------------------------------------------------------
+
+                                                                 *ApexMessages*
+
+Every time you run :Apex[Something] command which makes a call to server the
+log of this command is recorded in 'apex_messages' buffer. In some cases this
+buffer is opened automatically. If you have executed a command and not sure
+what its result was - run :ApexMessages
 
                                                                    *ApexCompare*
 
