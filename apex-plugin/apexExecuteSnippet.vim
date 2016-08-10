@@ -112,7 +112,8 @@ function s:executeAnonymous(filePath, projectName, codeFile)
 	if projectPair.name != a:projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
 	endif
-	let resMap = apexTooling#execute("executeAnonymous", a:projectName, projectPath, l:extraParams, [])
+
+	let resMap = apexToolingAsync#executeBlocking("executeAnonymous", a:projectName, projectPath, l:extraParams, [])
 	if exists('g:apex_test_debuggingHeader')
 		if "true" == resMap.success
 			:ApexLog
@@ -132,7 +133,8 @@ function s:executeSoqlQuery(filePath, api, projectName, codeFile)
 		let l:extraParams["callingAnotherOrg"] = "true"
 	endif
     let l:extraParams["api"] = a:api
-	let resMap = apexTooling#execute("soqlQuery", a:projectName, projectPath, l:extraParams, [])
+
+	let resMap = apexToolingAsync#executeBlocking("soqlQuery", a:projectName, projectPath, l:extraParams, [])
 	if "true" == resMap.success
         let s:lastSoqlQueryFilePath = a:codeFile
 		" load result file if available and show it in a read/only buffer

@@ -59,11 +59,12 @@ function apexTooling#listCompletions(filePath, attributeMap)
 	let l:extraParams["currentFilePath"] = apexOs#shellescape(a:filePath)
 	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(attributeMap["currentFileContentPath"])
 
-    if apexOs#isWindows()
-	    let resMap = apexToolingAsync#executeBlocking("listCompletions", projectName, projectPath, l:extraParams, [])
-    else     
-        let resMap = apexTooling#execute("listCompletions", projectName, projectPath, l:extraParams, [])
-    endif    
+    let resMap = apexToolingAsync#executeBlocking("listCompletions", projectName, projectPath, l:extraParams, [])
+    "if apexOs#isWindows()
+	"    let resMap = apexToolingAsync#executeBlocking("listCompletions", projectName, projectPath, l:extraParams, [])
+    "else     
+    "    let resMap = apexTooling#execute("listCompletions", projectName, projectPath, l:extraParams, [])
+    "endif    
 	let responseFilePath = resMap["responseFilePath"]
 	return responseFilePath
 endfunction
@@ -78,8 +79,6 @@ function apexTooling#loadTestSuiteNamesList(projectName, projectPath, outputFile
     let l:extraParams["dumpToFile"] = apexOs#shellescape(a:outputFilePath)
 	call apexToolingAsync#executeBlocking("testSuiteManage", a:projectName, a:projectPath, l:extraParams, [])
 endfunction	
-
-
 
 function s:reportModifiedFiles(modifiedFiles)
 	let modifiedFiles = a:modifiedFiles
@@ -547,160 +546,16 @@ function! s:grepValues(filePath, prefix)
 endfunction
 
 
-"Returns: dictionary/pair: 
-"	{
-"	"success": "true" if RESULT=SUCCESS
-"	"responseFilePath" : "path to current response/log file"
-"	}
-"
-function! apexTooling#execute(action, projectName, projectPath, extraParams, displayMessageTypes) abort
-	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
 
-	if has_key(a:extraParams, "ignoreConflicts")
-		call apexUtil#warning("skipping conflict check with remote")
-	endif
-
-	let l:java_command = "java "
-	if exists("g:apex_java_cmd")
-		" set user defined path to java
-		let l:java_command = g:apex_java_cmd
-	endif
-	if exists('g:apex_tooling_force_dot_com_java_params')
-		" if defined then add extra JVM params
-		let l:java_command = l:java_command  . " " . g:apex_tooling_force_dot_com_java_params
-	else
-		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
-		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
-		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
-	endif
-	let l:java_command = l:java_command  . " -jar " . apexOs#shellescape(g:apex_tooling_force_dot_com_path)
-
-	let l:command = " --action=" . a:action
-	if exists("g:apex_temp_folder")
-		let l:command = l:command  . " --tempFolderPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
-	endif
-	let l:command = l:command  . " --config=" . apexOs#shellescape(projectPropertiesPath)
-	let l:command = l:command  . " --projectPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(a:projectPath))
-
-	if exists('g:apex_tooling_force_dot_com_extra_params') && len(g:apex_tooling_force_dot_com_extra_params) > 0
-		let l:command = l:command  . " " . g:apex_tooling_force_dot_com_extra_params
-	endif
-	
-"	if exists('g:apex_test_logType')
-"		let l:command = l:command  . " --logLevel=" . g:apex_test_logType
-"	endif
-    if exists('g:apex_test_debuggingHeader')
-        let tempLogConfigFilePath = apexLogActions#saveTempTraceFlagConfig(g:apex_test_debuggingHeader)
-        " let l:extraParams["debuggingHeaderConfig"] = apexOs#shellescape(tempLogConfigFilePath)
-        let l:command = l:command  . " --debuggingHeaderConfig=" . apexOs#shellescape(tempLogConfigFilePath)
-    endif
-
-	let l:EXCLUDE_KEYS = ["isSilent", "useLocationList"]
-	if len(a:extraParams) > 0
-		for key in keys(a:extraParams)
-			if index(l:EXCLUDE_KEYS, key) < 0
-				let l:command = l:command  . " --" . key . "=" . a:extraParams[key]
-			endif
-		endfor
-	endif
-
-	if has_key(a:extraParams, 'responseFilePath')
-		let responseFilePath = a:extraParams["responseFilePath"]
-	else
-		" default responseFilePath
-		let responseFilePath = apexOs#joinPath(a:projectPath, s:SESSION_FOLDER, "response_" . a:action)
-		let l:command = l:command  . " --responseFilePath=" . apexOs#shellescape(responseFilePath)
-	endif
-
-	" set default maxPollRequests and pollWaitMillis values if not specified
-	" by user
-	if exists("g:apex_pollWaitMillis")
-		let l:command = l:command  . " --pollWaitMillis=" . g:apex_pollWaitMillis
-	endif
-	if exists("g:apex_maxPollRequests")
-		let l:command = l:command  . " --maxPollRequests=" . g:apex_maxPollRequests
-	endif
-	
-	
-	let isSilent = 0 " do we need to run command in silent mode?
-	if has_key(a:extraParams, "isSilent") && a:extraParams["isSilent"]
-		let isSilent = 1
-	endif
-
-	" make console output start from new line and do not mix with whatever was
-	" previously on the same line
-	if !isSilent
-		echo "\n"
-	endif
- 
-	" make sure we do not accidentally reuse old responseFile
-	call delete(responseFilePath)
-
-    let l:startTime = reltime()
-	"call apexOs#exe(l:command, 'M') "disable --more--
-	call s:runCommand(l:java_command, l:command, isSilent)
-
-	let logFileRes = s:grepValues(responseFilePath, "LOG_FILE=")
-	
-	if !empty(logFileRes)
-        call apexToolingCommon#setLastLog(logFileRes[0])
-		if s:show_log_hint
-			call apexUtil#info("Log file is available, use :ApexLog to open it")
-			let s:show_log_hint = 0
-		endif
-	else
-        call apexToolingCommon#clearLastLog()
-
-        "try LOG_FILE_BY_CLASS_NAME map
-        let logFileRes = s:grepValues(responseFilePath, "LOG_FILE_BY_CLASS_NAME=")
-
-        if !empty(logFileRes)
-            call apexToolingCommon#setLastLogByFileName( eval(logFileRes[0]) )
-            if s:show_log_hint
-                call apexUtil#info("Log file is available, use :ApexLog to open it")
-                let s:show_log_hint = 0
-            endif
-        else
-            call apexToolingCommon#clearLastLogByFileName()
-        endif    
-	endif
-
-    let l:disableMorePrompt = s:hasOnCommandComplete()
-
-	let errCount = s:parseErrorLog(responseFilePath, a:projectPath, a:displayMessageTypes, isSilent, l:disableMorePrompt, a:extraParams)
-    "echo "l:startTime=" . string(l:startTime)
-    call s:onCommandComplete(reltime(l:startTime))
-	return {"success": 0 == errCount? "true": "false", "responseFilePath": responseFilePath}
-endfunction
-
-" check if user has defined g:apex_OnCommandComplete
-function! s:hasOnCommandComplete()
-    return exists('g:apex_OnCommandComplete') && type({}) == type(g:apex_OnCommandComplete)
-endfunction
-
-" if user defined custom function to run on command complete then run it
-function! s:onCommandComplete(timeElapsed)
-    if s:hasOnCommandComplete()
-        let l:command = g:apex_OnCommandComplete['script']
-        if len(l:command) > 0
-            let l:flags = 's' " silent
-            "echo "a:timeElapsed=" . string(a:timeElapsed)
-            if has_key(g:apex_OnCommandComplete, 'timeoutSec')
-                if a:timeElapsed[0] > str2nr(g:apex_OnCommandComplete['timeoutSec'])
-                    call apexOs#exe(l:command, l:flags)
-                endif
-            else
-                call apexOs#exe(l:command, l:flags)
-            endif
-        endif
-            
-    endif
-endfunction
 "================= server mode commands ==========================
 
 " send server 'shutdown' command to stop it
 function! apexTooling#serverShutdown()
-	call s:sendCommandToServer("shutdown", "")
+	"call s:sendCommandToServer("shutdown", "")
+    let obj = {}
+    function! obj.dummyCallback(...)
+    endfunction
+	call apexServer#send("shutdown", obj.dummyCallback, {})
 endfunction
 
 " depending on the configuration either spawn a brand new java process to run
@@ -709,52 +564,47 @@ endfunction
 " g:apex_use_server - if <> 0 then server will be used
 "
 function! s:runCommand(java_command, commandLine, isSilent)
-	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
 	let l:flags = 'M' "disable --more--
 	if a:isSilent
 		let l:flags .= 's' " silent
 	endif
 
-	if isServerEnabled && s:ensureServerRunning(a:java_command)
-		"let l:command = s:prepareServerCommand(a:commandLine)
-		"call apexOs#exe(l:command, l:flags)	
-		call s:sendCommandToServer(a:commandLine, l:flags)
-	else
-		let l:command = a:java_command . a:commandLine
-		call apexOs#exe(l:command, l:flags)
-	endif
+    call apexServer#eval(a:commandLine, {"silent": a:isSilent})
+	"if s:ensureServerRunning(a:java_command)
+	"	call s:sendCommandToServer(a:commandLine, l:flags)
+	"endif
 endfunction
 
-function! s:ensureServerRunning(java_command)
-	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
-	if !isServerEnabled
-		"server not enabled
-		return 0
-	else
-		let pong = s:sendCommandToServer("ping", "s")
-		
-		if pong !~? "pong"
-			" start server
-			let l:command = a:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
-			call apexOs#exe(l:command, 'bMp') "start in background, disable --more--, try to use python if MS Windows
-			"wait a little to make sure it had a chance to start
-			echo "wait for server to start..."
-			let l:count = 15 " wait for server to start no more than 15 seconds
-			while (s:sendCommandToServer("ping", "s") !~? "pong" ) && l:count > 0
-				sleep 1
-				let l:count = l:count - 1
-			endwhile
-			" echo 'had to wait for ' . (5-l:count) . ' second(s)'
-		endif
-	endif
-	return 1
-endfunction
+"function! s:ensureServerRunning(java_command)
+"	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
+"	if !isServerEnabled
+"		"server not enabled
+"		return 0
+"	else
+"		let pong = string(apexServer#send("ping", {"silent": 1}))
+"		
+"		if pong !~? "pong"
+"			" start server
+"			let l:command = a:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
+"			call apexOs#exe(l:command, {'background': 1, 'nomore': 1}) "start in background, disable --more--
+"			"wait a little to make sure it had a chance to start
+"			echo "wait for server to start..."
+"			let l:count = 15 " wait for server to start no more than 15 seconds
+"			while (string(apexServer#send("ping", {"silent": 1})) !~? "pong" ) && l:count > 0
+"				sleep 1
+"				let l:count = l:count - 1
+"			endwhile
+"			" echo 'had to wait for ' . (5-l:count) . ' second(s)'
+"		endif
+"	endif
+"	return 1
+"endfunction
 
-function! s:prepareServerCommand(commandLine)
-	let l:host = s:getServerHost()
-	let l:port = s:getServerPort()
-	return 'echo "' . a:commandLine . '" | nc ' . l:host . ' ' . l:port
-endfunction
+"function! s:prepareServerCommand(commandLine)
+"	let l:host = s:getServerHost()
+"	let l:port = s:getServerPort()
+"	return 'echo "' . a:commandLine . '" | nc ' . l:host . ' ' . l:port
+"endfunction
 
 function! s:getServerHost()
 	return apexUtil#getOrElse("g:apex_server_host", "127.0.0.1")
@@ -769,75 +619,90 @@ function! s:getServerTimeoutSec()
 endfunction
 
 
-function! s:sendCommandToServer(commandLine, flags) abort
-	let l:host = s:getServerHost()
-	let l:port = s:getServerPort()
-	let isSilent = a:flags =~# "s"
-    let l:usePython = apexOs#isPythonAvailable() && apexOs#isWindows()	
-	
-	if l:usePython
-		if !isSilent
-			call s:updateProgress("working ...")
-		endif
-		return s:sendCommandToServerPython(a:commandLine, l:host, l:port, isSilent)
-	else
-		if isSilent
-			return system(s:prepareServerCommand(a:commandLine))
-		else
-			let l:command = s:prepareServerCommand(a:commandLine)
-			call apexOs#exe(l:command, a:flags)	
-		endif
-	endif
-endfunction
+"function! s:sendCommandToServer(command, flags) abort
+"	let l:host = s:getServerHost()
+"	let l:port = s:getServerPort()
+"	let isSilent = a:flags =~# "s"
+"	
+"    "if isSilent
+"    "    return system(s:prepareServerCommand(a:commandLine))
+"    "else
+"    "    let l:command = s:prepareServerCommand(a:commandLine)
+"    "    call apexOs#exe(l:command, {})	
+"    "endif
+"    return apexToolingAsync#execBlocking(a:command)
+"    
+"endfunction
 
-function! s:updateProgress(msg)
-	let l:msg = substitute(a:msg, "\\\\r\\\\n$", "", "")
-	let l:msg = substitute(l:msg, "\\\\n$", "", "")
-	echo l:msg
-	sleep 100m " without sleep screen will not update, even when forced with :redraw!
-endfunction
+"function! s:sendCommandToServer2(commandLine, flags) abort
+"	let l:host = s:getServerHost()
+"	let l:port = s:getServerPort()
+"	let isSilent = a:flags =~# "s"
+"    let l:usePython = apexOs#isPythonAvailable() && apexOs#isWindows()	
+"	
+"	if l:usePython
+"		if !isSilent
+"			call s:updateProgress("working ...")
+"		endif
+"		return s:sendCommandToServerPython(a:commandLine, l:host, l:port, isSilent)
+"	else
+"		if isSilent
+"			return system(s:prepareServerCommand(a:commandLine))
+"		else
+"			let l:command = s:prepareServerCommand(a:commandLine)
+"			call apexOs#exe(l:command, a:flags)	
+"		endif
+"	endif
+"endfunction
+
+"function! s:updateProgress(msg)
+"	let l:msg = substitute(a:msg, "\\\\r\\\\n$", "", "")
+"	let l:msg = substitute(l:msg, "\\\\n$", "", "")
+"	echo l:msg
+"	sleep 100m " without sleep screen will not update, even when forced with :redraw!
+"endfunction
 
 
 " this function uses python to send stuff to socket
-function! s:sendCommandToServerPython(commandLine, host, port, isSilent) abort
-python << endpython
-import vim
-commandLine = vim.eval("a:commandLine")
-
-import socket
-
-TCP_IP = vim.eval("a:host")
-TCP_PORT = int(vim.eval("a:port"))
-BUFFER_SIZE = 1024
-MESSAGE = commandLine
-isSilent = (1 == int(vim.eval("a:isSilent")) )
-
-allData = ""
-try:
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((TCP_IP, TCP_PORT))
-    s.sendall(MESSAGE)
-    s.shutdown(socket.SHUT_WR)
-    while 1:
-        data = s.recv(BUFFER_SIZE)
-        if data == "":
-            break
-        allData += data
-    	#print "Received:", repr(data)
-        if not isSilent:
-    	    vim.command("call s:updateProgress("+repr(data)+")")
-    
-    #print "Connection closed."
-    #print "allData=", allData
-    s.close()
-except socket.error as e:
-    #vim.command("call s:updateProgress('socket.error' . '"+str(msg)+"')")
-    allData = "socket.error: " + str(e)
-except Exception as e:
-    allData = "unexpected error: " + str(e)
-	#vim.command("call s:updateProgress('"+str(e)+"')")
-
-
-vim.command("return " + repr(allData)) # return from the Vim function!
-endpython
-endfunction
+"function! s:sendCommandToServerPython(commandLine, host, port, isSilent) abort
+"python << endpython
+"import vim
+"commandLine = vim.eval("a:commandLine")
+"
+"import socket
+"
+"TCP_IP = vim.eval("a:host")
+"TCP_PORT = int(vim.eval("a:port"))
+"BUFFER_SIZE = 1024
+"MESSAGE = commandLine
+"isSilent = (1 == int(vim.eval("a:isSilent")) )
+"
+"allData = ""
+"try:
+"    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+"    s.connect((TCP_IP, TCP_PORT))
+"    s.sendall(MESSAGE)
+"    s.shutdown(socket.SHUT_WR)
+"    while 1:
+"        data = s.recv(BUFFER_SIZE)
+"        if data == "":
+"            break
+"        allData += data
+"    	#print "Received:", repr(data)
+"        if not isSilent:
+"    	    vim.command("call s:updateProgress("+repr(data)+")")
+"    
+"    #print "Connection closed."
+"    #print "allData=", allData
+"    s.close()
+"except socket.error as e:
+"    #vim.command("call s:updateProgress('socket.error' . '"+str(msg)+"')")
+"    allData = "socket.error: " + str(e)
+"except Exception as e:
+"    allData = "unexpected error: " + str(e)
+"	#vim.command("call s:updateProgress('"+str(e)+"')")
+"
+"
+"vim.command("return " + repr(allData)) # return from the Vim function!
+"endpython
+"endfunction
