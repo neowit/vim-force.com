@@ -564,47 +564,9 @@ endfunction
 " g:apex_use_server - if <> 0 then server will be used
 "
 function! s:runCommand(java_command, commandLine, isSilent)
-	let l:flags = 'M' "disable --more--
-	if a:isSilent
-		let l:flags .= 's' " silent
-	endif
-
     call apexServer#eval(a:commandLine, {"silent": a:isSilent})
-	"if s:ensureServerRunning(a:java_command)
-	"	call s:sendCommandToServer(a:commandLine, l:flags)
-	"endif
 endfunction
 
-"function! s:ensureServerRunning(java_command)
-"	let isServerEnabled = apexUtil#getOrElse("g:apex_server", 0) > 0
-"	if !isServerEnabled
-"		"server not enabled
-"		return 0
-"	else
-"		let pong = string(apexServer#send("ping", {"silent": 1}))
-"		
-"		if pong !~? "pong"
-"			" start server
-"			let l:command = a:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
-"			call apexOs#exe(l:command, {'background': 1, 'nomore': 1}) "start in background, disable --more--
-"			"wait a little to make sure it had a chance to start
-"			echo "wait for server to start..."
-"			let l:count = 15 " wait for server to start no more than 15 seconds
-"			while (string(apexServer#send("ping", {"silent": 1})) !~? "pong" ) && l:count > 0
-"				sleep 1
-"				let l:count = l:count - 1
-"			endwhile
-"			" echo 'had to wait for ' . (5-l:count) . ' second(s)'
-"		endif
-"	endif
-"	return 1
-"endfunction
-
-"function! s:prepareServerCommand(commandLine)
-"	let l:host = s:getServerHost()
-"	let l:port = s:getServerPort()
-"	return 'echo "' . a:commandLine . '" | nc ' . l:host . ' ' . l:port
-"endfunction
 
 function! s:getServerHost()
 	return apexUtil#getOrElse("g:apex_server_host", "127.0.0.1")
@@ -618,91 +580,3 @@ function! s:getServerTimeoutSec()
 	return apexUtil#getOrElse("g:apex_server_timeoutSec", 60)
 endfunction
 
-
-"function! s:sendCommandToServer(command, flags) abort
-"	let l:host = s:getServerHost()
-"	let l:port = s:getServerPort()
-"	let isSilent = a:flags =~# "s"
-"	
-"    "if isSilent
-"    "    return system(s:prepareServerCommand(a:commandLine))
-"    "else
-"    "    let l:command = s:prepareServerCommand(a:commandLine)
-"    "    call apexOs#exe(l:command, {})	
-"    "endif
-"    return apexToolingAsync#execBlocking(a:command)
-"    
-"endfunction
-
-"function! s:sendCommandToServer2(commandLine, flags) abort
-"	let l:host = s:getServerHost()
-"	let l:port = s:getServerPort()
-"	let isSilent = a:flags =~# "s"
-"    let l:usePython = apexOs#isPythonAvailable() && apexOs#isWindows()	
-"	
-"	if l:usePython
-"		if !isSilent
-"			call s:updateProgress("working ...")
-"		endif
-"		return s:sendCommandToServerPython(a:commandLine, l:host, l:port, isSilent)
-"	else
-"		if isSilent
-"			return system(s:prepareServerCommand(a:commandLine))
-"		else
-"			let l:command = s:prepareServerCommand(a:commandLine)
-"			call apexOs#exe(l:command, a:flags)	
-"		endif
-"	endif
-"endfunction
-
-"function! s:updateProgress(msg)
-"	let l:msg = substitute(a:msg, "\\\\r\\\\n$", "", "")
-"	let l:msg = substitute(l:msg, "\\\\n$", "", "")
-"	echo l:msg
-"	sleep 100m " without sleep screen will not update, even when forced with :redraw!
-"endfunction
-
-
-" this function uses python to send stuff to socket
-"function! s:sendCommandToServerPython(commandLine, host, port, isSilent) abort
-"python << endpython
-"import vim
-"commandLine = vim.eval("a:commandLine")
-"
-"import socket
-"
-"TCP_IP = vim.eval("a:host")
-"TCP_PORT = int(vim.eval("a:port"))
-"BUFFER_SIZE = 1024
-"MESSAGE = commandLine
-"isSilent = (1 == int(vim.eval("a:isSilent")) )
-"
-"allData = ""
-"try:
-"    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-"    s.connect((TCP_IP, TCP_PORT))
-"    s.sendall(MESSAGE)
-"    s.shutdown(socket.SHUT_WR)
-"    while 1:
-"        data = s.recv(BUFFER_SIZE)
-"        if data == "":
-"            break
-"        allData += data
-"    	#print "Received:", repr(data)
-"        if not isSilent:
-"    	    vim.command("call s:updateProgress("+repr(data)+")")
-"    
-"    #print "Connection closed."
-"    #print "allData=", allData
-"    s.close()
-"except socket.error as e:
-"    #vim.command("call s:updateProgress('socket.error' . '"+str(msg)+"')")
-"    allData = "socket.error: " + str(e)
-"except Exception as e:
-"    allData = "unexpected error: " + str(e)
-"	#vim.command("call s:updateProgress('"+str(e)+"')")
-"
-"
-"vim.command("return " + repr(allData)) # return from the Vim function!
-"endpython
-"endfunction
