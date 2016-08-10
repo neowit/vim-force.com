@@ -118,10 +118,14 @@ endfunction
 " create Git repo for current Apex project and add files
 function! apexUtil#gitInit()
 	if !executable('git')
-		echomsg 'force.com plugin: Git (http://git-scm.com/) ' .
-                \ 'not found in PATH. apexUtil#gitInit() is not available.'
-		finish
+        call apexUtil#error("git (http://git-scm.com/) executable not found in $PATH.")
+		return
 	endif	
+    
+    if apexOs#isWindows()
+        call apexUtil#error("Git repository initialisation is not supported on MS Windows")
+        return
+    endif    
 
 	let filePath = expand("%:p")
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
