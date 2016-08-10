@@ -148,8 +148,6 @@ Example of minimal _vimrc configuration for win32    *force.com-config-example*
  		" full path required here, relative may not work
  		let g:apex_properties_folder="c:\\temp\\vim-force.com-tests\\secure-properties"
  	endif
- 	let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
- 	let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
  endif	
 
  set autowrite " not strictly required, but without it you will be getting
@@ -896,10 +894,6 @@ Required
 |'g:apex_tooling_force_dot_com_path'|      
                                   full path to tooling.jar
 
-Required MS Windows only
-|'g:apex_binary_tee'|             full path to tee.exe executable
-|'g:apex_binary_touch'|           full path to touch.exe executable
-
 Optional
 |'g:apex_diff_cmd'|                 path to file comparison tool
 |'g:apex_ctags_cmd'|                path to exuberant ctags 
@@ -962,40 +956,14 @@ or for win32, assuming that Truecrypt volume is T: >
 	let g:apex_properties_folder="t:"
 <
                                                           *force.com-unix_utils*
-Plugin is using unix utilities 'tee' and 'touch'
-On MS Windows these commands are not available out of the box.
-UnixUtils for Win32 can be found here: http://unxutils.sourceforge.net/
-
-See |'g:apex_binary_tee'| and |'g:apex_binary_touch'|
-On Unix setting these variables is not strictly necessary, unless 'tee' and 'touch'
-are not available via $PATH
-
-Plugin also uses other built in shell commands like
+Plugin uses some built in shell commands like:
 'rm', 'mkdir', 'cp' on unix
 and
 'rmdir', 'copy' on ms windows
-But it is assumed that these are generally available out of the box.
+It is assumed that these are generally available out of the box.
 If you are using non standard environment then you can define paths to those commands.
 See apexOs.vim for details
 
-                                                           *'g:apex_binary_tee'*
-Full path to shell command 'tee'
-tee - read from standard input and write to standard output and files
-
-ex: >
-	let g:apex_binary_tee = "/usr/bin/tee"
-<or for win32 >
-	let g:apex_binary_tee = "d:\\bin\\UnixUtils\\tee.exe"
-<
-                                                         *'g:apex_binary_touch'*
-Full path to shell command 'touch'
-tee - read from standard input and write to standard output and files
-
-ex: >
-	let g:apex_binary_touch = "/usr/bin/touch"
-<or for win32 >
-	let g:apex_binary_touch = "d:\\bin\\UnixUtils\\touch.exe"
-<
                                                              *'g:apex_diff_cmd'*
 /path/to/file/compare/tool
 ex: >

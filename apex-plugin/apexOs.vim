@@ -61,23 +61,10 @@ endfunction
 " space at the end of command is important
 if s:is_windows
 	call s:let('g:apex_binary_remove_dir', 'rmdir /s /q ')
-	call s:let('g:apex_binary_touch', 'touch.exe ')
-	call s:let('g:apex_binary_tee', 'tee.exe ')
 else
 	call s:let('g:apex_binary_create_dir', 'mkdir ')
 	call s:let('g:apex_binary_remove_dir', 'rm -R ')
-	call s:let('g:apex_binary_touch', 'touch ')
-	call s:let('g:apex_binary_tee', 'tee ')
 endif
-" check if unix utils are executable
-if !executable(s:trim(g:apex_binary_touch))
-	echoerr g:apex_binary_touch." is not available or not executable. see :help force.com-unix_utils"
-	finish
-endif	
-if !executable(s:trim(g:apex_binary_tee))
-	echoerr g:apex_binary_tee." is not available or not executable. see :help force.com-unix_utils"
-	finish
-endif	
 
 "set desired API version
 call s:let('g:apex_API_version', '37.0')
@@ -201,23 +188,6 @@ function! apexOs#copyFile(srcPath, destPath)
 		echoerr 'failed to copy '. a:srcPath . " to " . a:destPath
 	endif	
 endfunction
-
-"OS dependent set file time
-"Args:
-" filePath: full file path
-" time: result returned getftime({fname}), measured as seconds since 1st Jan 1970, 
-function! apexOs#setftime(filePath, time)
-	if has("unix")
-		let stamp = strftime("%Y%m%d%H%M.%S", a:time)
-		silent exe "!touch -t ".stamp." ".shellescape(a:filePath)
-	elseif s:is_windows
-		" win32 format is: MMDDhhmm[[CC]YY][.ss]
-		let stamp = strftime("%m%d%H%M%Y.%S", a:time)
-		silent exe "!".g:apex_binary_touch." -t ".stamp." ".shellescape(a:filePath)
-	else
-		echoerr "Not implemented"
-	endif
-endfun
 
 " remove trailing path separator
 " i.e. make /path/to/folder from /path/to/folder/
