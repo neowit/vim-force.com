@@ -72,11 +72,6 @@ Before vim-force.com plugin can be used following requirements must be met:
 	vim-force.com will be calling tooling-force.com.jar and passing many
 	parameters via command line and some MS Window version struggle with long
 	command lines. 
-	Consider installing python and configuring your vim with |+python|
-	support, this will help to remove annoying CMD/DOS popups on every
-	operation. See also |vim-python-ms-windows|
-	If you do not want to go with python then consider vimproc, see
-	|force.com-limitations|
 
 5. Unpack vim-force.com plugin archive anywhere you like
 
@@ -360,7 +355,7 @@ Note 2: All commands in :|ApexDeploy|* family support <bang>, see
 
                                                       *ApexDeployAllDestructive*
 
-*WARNING:*
+WARNING:
 This is a dangerous and destructive operation - use it at your peril!
 
 In addition to behaving like :|ApexDeployAll|, it also removes files that live
@@ -380,7 +375,7 @@ Note 2: All commands in :|ApexDeploy|* family support <bang>, see
 
                                                          *ApexDeployDestructive*
 
-*WARNING:* 
+WARNING: 
 This is a dangerous and destructive operation - use it at your peril!
 
 You can think of :ApexDeployDestructive as a combination of :|ApexDeploy| and
@@ -903,7 +898,7 @@ Optional
                                     poll of Salesforce to retrieve the results
 |'g:apex_maxPollRequests'|          The number of times to poll Salesforce for
                                     the results of the task
-|'g:apex_test_debuggingHeader'|             The debug logging level for tests. 
+|'g:apex_test_debuggingHeader'|     The debug logging level for tests. 
 |'g:apex_conflict_check'|           Control (on/off) conflict check with SFDC before deployment
 
 |'g:apex_java_cmd'|                 custom path to java executable
@@ -955,7 +950,7 @@ ex: >
 or for win32, assuming that Truecrypt volume is T: >
 	let g:apex_properties_folder="t:"
 <
-                                                          *force.com-unix_utils*
+                                                          *force.com-shell_utils*
 Plugin uses some built in shell commands like:
 'rm', 'mkdir', 'cp' on unix
 and
@@ -1117,14 +1112,6 @@ root folder to use when creating new project with :|ApexInitProject|
                                         *server-mode* *server* *'g:apex_server'*
                                         *g:apex_server_timeoutSec*
                                         *g:apex_server_port*
-Optional.
-Use |'g:apex_server'| to enable/disable server mode.
-Warning: server mode uses substantial amount of RAM and is not suitable for
-underpowered machines.
-
-In order to use Server mode you either have to be on *nix system which has
-'echo' and 'nc'(netcat) commands, or have your vim instance compiled with
-|+python| or |+python/dyn|. See |vim-python-ms-windows|.
 
 In the old (non server) mode tooling-force.com.jar binary is loaded into memory
 every time when it is needed, e.g. every time when apex class is saved to SFDC.
@@ -1155,27 +1142,6 @@ e.g. >
 Server is accessed via a TCP socket on port 8888. If you want to change the
 port then define |'g:apex_server_port'| global variable in your .vimrc, e.g. >
 	let g:apex_server_port = 65000
-<
-
-MS Windows: when executing first command and tooling-force.com server
-is not yet running you will see a new DOS/CMD window popup. Do NOT close it,
-just minimise and leave it running.
-
-                                                        *vim-python-ms-windows*
-In order to eliminate CMD.exe window popups on MS Windows current version of
-vim-force.com plugin (when run in |server-mode|) takes advantage of python
-support in vim.
-To check if your vim supports python run following in vim: >
-	:echo has("python")
-<line above must respond: 1 
-if it does then make further check: >
-	:python print 'hello'
-<
-If you get 'hello' in response (no quotes) and no error messages then you are
-good to go. If not then use your favourite search engine to find out how to
-install vim with python support and also check: >
-	:help python 
-	:help python-dynamic
 <
 
 ==============================================================================
@@ -1304,13 +1270,6 @@ Salesforce Metadata API does not (in most cases) report error line numbers
 in Visualforce pages making it impossible to go-to actual problem line if
 compile/save fails due to syntax error. This is similar to Force.com IDE for
 Eclipse.
-
-On MS Windows default configuration spawns separate DOS/CMD window on every call
-to command line utility.
-There are two ways to mitigate this:
-1. install vimproc: https://github.com/Shougo/vimproc.vim
-OR
-2. use |server-mode|
 
 ==============================================================================
 RECOMMENDED-PLUGINS                             *force.com-recommended-plugins*
