@@ -36,7 +36,7 @@ function! apexcode#UpdateIdeCtags()
 	let l:cmdRest .= " --options=" . s:getCtagsConfigPath()
 	let l:cmdRest .= " -f ./tags -R ."
 
-    silent call apexOs#exe(ctags_cmd.l:cmdRest)
+    silent call apexOs#exe(ctags_cmd.l:cmdRest, {})
 endfunction
 command! -nargs=0 -bar ApexUpdateCtags call apexcode#UpdateIdeCtags()
 

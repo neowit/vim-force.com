@@ -51,7 +51,7 @@ function! apexUtil#compareFiles(...)
 		"echo "command=".command
 	
 		":exe "!".command
-		call apexOs#exe(command, 'b')
+		call apexOs#exe(command, {"background": 0})
 	else
 		" use built-in diff
 		:exe "vert diffsplit ".substitute(rightFilePath, " ", "\\\\ ", "g")
@@ -82,7 +82,7 @@ function! apexUtil#compareProjects(leftFilePath)
 
 		let command = scriptPath.' '.apexOs#shellescape(leftSrcPath).' '.apexOs#shellescape(rightSrcPath)
 		
-		call apexOs#exe(command, 'b')
+		call apexOs#exe(command, {"background": 0})
 	else
 		call apexUtil#error("For project comparison external diff tool must be defined via 'g:apex_diff_cmd' ")
 	endif
@@ -136,7 +136,7 @@ function! apexUtil#gitInit()
 
 	let response = input('Init new Git repository at: "'.projectPath.'" [a/y/n]? ')
 	if 'y' == response || 'Y' == response || 'a' == response || 'A' == response
-		call apexOs#exe("git init '".projectPath."'")
+		call apexOs#exe("git init ".shellescape(projectPath), {"background": 0})
 	endif	
 	let dirs =keys(supportedFiles)
 	for dirName in dirs
@@ -150,7 +150,7 @@ function! apexUtil#gitInit()
 			endif
 
 			if 'y' == response || 'Y' == response || 'a' == response || 'A' == response
-				call apexOs#exe("git add ".maskPath)
+				call apexOs#exe("git add ".maskPath, {"background": 0})
 			endif	
 		else
 			" echo fullPath." is not existing directory"

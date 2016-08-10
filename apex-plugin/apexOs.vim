@@ -255,20 +255,39 @@ function! apexOs#glob(expr)
 endfunction
 
 " check if python is available
-function! apexOs#isPythonAvailable()
-	return has('python3') || has('python')
-endfunction
+"function! apexOs#isPythonAvailable()
+"	return has('python3') || has('python')
+"endfunction
 
 
 "when python is available it may be beneficial to run command using it
-function! s:runWithPython(command)
-python << endpython
-COMMAND = vim.eval("a:command")
-import subprocess
-subprocess.Popen(COMMAND)
-endpython
-endfunction
+"function! s:runWithPython(command)
+"python << endpython
+"COMMAND = vim.eval("a:command")
+"import subprocess
+"subprocess.Popen(COMMAND)
+"endpython
+"endfunction
 
+
+"
+"Param: params - dictionary
+"   - 'background' 0|1, if 0 then use system(), otherwise job_start()
+function! apexOs#exe(command, params)
+    if has_key(a:params, "background") && !a:params.background
+        "echomsg "command=".a:command
+        return system(a:command)
+    else    
+        let obj = {}
+        function obj.callback(channel, msg)
+            echo a:msg 
+        endfunction    
+        let job = job_start(a:command, {"callback": function(obj.callback)})
+
+        let s:job = job
+        return job
+    endif
+endfunction    
 " windows XP requires command which contains spaces to be enclosed in quotes
 " twice, ex:
 " ""d:\my path\build.cmd" "param 1" "param 2" param3"
@@ -279,49 +298,50 @@ endfunction
 "	M - disable --more-- prompt when screen fills up with messages
 "	s - run in silent mode
 "	p - use python if available
-function! apexOs#exe(command, ...)
-	let result = a:command
-	let disableMore = 0
-	let l:background = a:0 > 0 && a:1 =~# "b"
-	if s:is_windows
-		let result = result
-	elseif a:0 > 0 
-		if l:background
-			let result .= ' &'
-		endif
-		let disableMore = a:1 =~# "M"
-	endif
 
-	"temporarily disable more if enabled
-	"also see :help hit-enter
-	let reEnableMore = 0
-	if disableMore
-		let reEnableMore = &more
-		set nomore
-	endif
-
-	if s:is_windows && a:0 > 0 && a:1 =~# "p" && apexOs#isPythonAvailable()
-		call s:runWithPython(result)
-	elseif s:is_windows && exists(':VimProcBang')
-		"on windows attempt to use vimproc to prevent console window popup
-		echo "working..."
-		sleep 100m " give vim a chance to refresh screen and display message
-		"echo "command=" . result
-		"sleep 10m
-		call vimproc#cmd#system(result)
-	else
-		if a:0 > 0 && a:1 =~# "s"
-			silent exe "!".result
-		else
-			exe "!".result
-		endif
-	endif
-
-	if disableMore && reEnableMore
-		set more
-	endif
-	"call system(result) " system() does not show any progress
-endfunction	
+"function! apexOs#exe2(command, ...)
+"	let result = a:command
+"	let disableMore = 0
+"	let l:background = a:0 > 0 && a:1 =~# "b"
+"	if s:is_windows
+"		let result = result
+"	elseif a:0 > 0 
+"		if l:background
+"			let result .= ' &'
+"		endif
+"		let disableMore = a:1 =~# "M"
+"	endif
+"
+"	"temporarily disable more if enabled
+"	"also see :help hit-enter
+"	let reEnableMore = 0
+"	if disableMore
+"		let reEnableMore = &more
+"		set nomore
+"	endif
+"
+"	if s:is_windows && a:0 > 0 && a:1 =~# "p" && apexOs#isPythonAvailable()
+"		call s:runWithPython(result)
+"	elseif s:is_windows && exists(':VimProcBang')
+"		"on windows attempt to use vimproc to prevent console window popup
+"		echo "working..."
+"		sleep 100m " give vim a chance to refresh screen and display message
+"		"echo "command=" . result
+"		"sleep 10m
+"		call vimproc#cmd#system(result)
+"	else
+"		if a:0 > 0 && a:1 =~# "s"
+"			silent exe "!".result
+"		else
+"			exe "!".result
+"		endif
+"	endif
+"
+"	if disableMore && reEnableMore
+"		set more
+"	endif
+"	"call system(result) " system() does not show any progress
+"endfunction	
 
 " @return: true of given path name has trailing path separator
 " ex: 
