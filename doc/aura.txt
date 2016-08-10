@@ -1,4 +1,4 @@
-*force.com.txt*	Plugin for developing on force.com      
+*aura.txt*	Plugin for developing on force.com      
 Author: Andrey Gavrikov
 License: Same terms as Vim itself (see |license|)
 
