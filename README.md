@@ -1,21 +1,25 @@
 # Vim plugin for developing on force.com      
 
-salesforce.com / force.com plugin for Vim version 7.4 (with 'job' support) or later.  
+salesforce.com / force.com plugin for Vim version 7.4 (with `job` & `channel` support) or later.  
 
 ##### Update August 2016  
 Note 1:  
-Majority of plugin functions have been migrated to async jobs added in vim not
+Majority of plugin functions have been migrated to async jobs and channels added in vim not
 so long ago.  
-If you use MacVim then you may need to have a very recent version because some
-initial MacVim versions had problems with properly supporting new vim job
-functionality. Minimum MacVim version which is known to work is `7.4, Included patches: 1-1831`.  
+If you use MacVim then you may need to update to a very recent version because some
+initial MacVim versions with `job` support had problems with properly supporting this functionality. 
+Minimum MacVim version which is known to work is `7.4, Included patches: 1-1831`.  
 
 Note 2:  
-This version have not been tested on MS Windows yet.
+This version have not been tested on MS Windows yet.  
+If you want to try it out - make sure to use **latest** version of vim. Those
+available from [vim.org](http://www.vim.org/download.php#pc) are outdated and
+as of August 2016 do not include necessary level of `job` & `channel` support. 
+If you feel adventurous try [a nightly build](https://github.com/vim/vim-win32-installer).
 
 If you have to use older vim version or want to continue using synchronous
 version of all commands then switch to
-[vim-sync](https://github.com/neowit/vim-force.com/tree/vim-sync) branch.
+[legacy-vim-sync](https://github.com/neowit/vim-force.com/tree/legacy-vim-sync) branch.
 
 
 ##### Update July 2015  
@@ -135,9 +139,9 @@ Apex/SOQL auto-completion is a work in progress and there are many cases when it
 
 Before vim-force.com plugin can be used the following requirements must be met:
 
-1. Vim version 7.3 or later with `:set nocompatible`  
+1. Vim version 7.4 (with `job` & `channel` support) or later, with `:set nocompatible`  
 
-2. Java JDK/JRE, Version 7 or greater  
+2. Java JDK/JRE, Version 8 or greater  
    - Oracle JDK
      http://www.oracle.com/technetwork/java/javase/downloads/index.html       
 JDK is not strictly required, JRE will suffice.  
