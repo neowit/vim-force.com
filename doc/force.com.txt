@@ -1,4 +1,4 @@
-*force.com.txt*	Plugin for developing on force.com      
+force.com.txt: Plugin for developing on force.com      
 Author: Andrey Gavrikov
 License: Same terms as Vim itself (see |license|)
 
@@ -56,9 +56,9 @@ Note 2: it is recommended to use absolute paths in your config to avoid problems
 
 Before vim-force.com plugin can be used following requirements must be met:
 
-1. Vim version 7.3 or later with :set nocompatible
+1. Vim version 7.4 (with `job` & `channel` support) or later, with `:set nocompatible` 
 
-2. Java JDK/JRE, Version 7 or greater
+2. Java JDK/JRE, Version 8 or greater
    - Oracle JDK
      http://www.oracle.com/technetwork/java/javase/downloads/index.html
 
