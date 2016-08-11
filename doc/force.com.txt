@@ -149,9 +149,8 @@ Example of minimal _vimrc configuration for win32    *force.com-config-example*
                " errors when running commands that open new buffer 
 			   " (e.g. :ApexQuery or :ApexExecuteAnonymous) on unsaved file
 
- " (optional) if you want to enable server mode, uncoment 2 lines below
- "let g:apex_server=1 " start server on first call
- "let g:apex_server_timeoutSec=60*30 " allow server to wait for new connections within 30 minutes
+ " (optional) 
+ let g:apex_server_timeoutSec=60*30 " allow server to wait for new connections within 30 minutes
 <
 """""""""""""""""""""" end config example """"""""""""""""""""""""""""""""""""
 
@@ -838,12 +837,10 @@ Current version includes basic auto completion support for Apex classes and
 some standard Apex library namespaces.
 
 Current limitations:
-- works best in |server-mode|. 
-  In non-server mode you have to wait for tooling-force.com.jar to load every time.
 - does not support completion of SObject fields inside SOQL statements
   
 Usage:
-- configure |server-mode| and try following in .cls file (do not type single quote characters)
+- try following in .cls file (do not type single quote characters)
     'System.' Ctrl-X,Ctrl-O
 	'String str = "abc"; str.' Ctrl-X,Ctrl-O
 
@@ -929,7 +926,6 @@ Optional
 |'g:apex_OnCommandComplete'|        script to execute at the end of long running
                                     command
 
-|'g:apex_server'|                   enable/disable server mode
 |'g:apex_server_timeoutSec'|        automatic server shutdown timeout
 
                                                         *'g:apex_backup_folder'*
@@ -1119,21 +1115,8 @@ if command runs for more than 10 seconds then upon completion you will hear
 Optional.
 root folder to use when creating new project with :|ApexInitProject|
 
-                                        *server-mode* *server* *'g:apex_server'*
                                         *g:apex_server_timeoutSec*
                                         *g:apex_server_port*
-
-In the old (non server) mode tooling-force.com.jar binary is loaded into memory
-every time when it is needed, e.g. every time when apex class is saved to SFDC.
-This allows to minimise RAM usage but makes every operation slower by the
-number of seconds required to read from disk and load tooling-force.com.jar
-binary.  Some operations (e.g. auto-completion) may not be practical in non
-server mode due to the time it takes for operation to complete.
-
-Server mode allows to keep tooling-force.com binary in RAM after it was first
-loaded, as well as cache some data in RAM, so all subsequent operations use
-already loaded tooling-force.com.jar instance which may noticeably reduce the
-time taken by every operation involving tooling-force.com.jar binary.
 
 Once loaded tooling-force.com.jar will keep itself loaded until
 |'g:apex_server_timeoutSec'| timeout since last touch is reached.
@@ -1144,7 +1127,6 @@ vim-force.com called it.
 Use |'g:apex_server_timeoutSec'| to set the timeout and minimise RAM usage when
 you are not working with vim-force.com plugin.
 e.g. >
-	let g:apex_server=1 " start server on first call
 	" allow server to wait for new connections within 30 minutes
 	let g:apex_server_timeoutSec=60*30
 <
