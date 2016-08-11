@@ -121,11 +121,6 @@ function! apexUtil#gitInit()
         call apexUtil#error("git (http://git-scm.com/) executable not found in $PATH.")
 		return
 	endif	
-    
-    if apexOs#isWindows()
-        call apexUtil#error("Git repository initialisation is not supported on MS Windows")
-        return
-    endif    
 
 	let filePath = expand("%:p")
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
@@ -136,7 +131,11 @@ function! apexUtil#gitInit()
 
 	let response = input('Init new Git repository at: "'.projectPath.'" [a/y/n]? ')
 	if 'y' == response || 'Y' == response || 'a' == response || 'A' == response
-		call apexOs#exe("git init ".shellescape(projectPath), {"background": 0})
+		let res = apexOs#exe("git init ".shellescape(projectPath), {"background": 0})
+        echo "\n".res
+        if res =~? "^fatal"
+            return
+        endif    
 	endif	
 	let dirs =keys(supportedFiles)
 	for dirName in dirs
@@ -144,13 +143,16 @@ function! apexUtil#gitInit()
 		let fullPath = apexOs#joinPath([projectSrcPath, dirName])
 		if isdirectory(fullPath)
 			let fileExtention = supportedFiles[dirName]
-			let maskPath = "'".fullPath."/*.".fileExtention."'"
+			let maskPath = fullPath."/*.".fileExtention
 			if  'a' != response && 'A' != response
 				let response = input('add files: "'.maskPath.'" [a/y/n]? ')
 			endif
 
 			if 'y' == response || 'Y' == response || 'a' == response || 'A' == response
-				call apexOs#exe("git add ".maskPath, {"background": 0})
+				let res = apexOs#exe("git add ".shellescape(maskPath), {"background": 0})
+                if len(res) > 0
+                    echo "\n".res
+                endif
 			endif	
 		else
 			" echo fullPath." is not existing directory"

@@ -230,7 +230,12 @@ endfunction
 function! apexOs#exe(command, params)
     if has_key(a:params, "background") && !a:params.background
         "echomsg "command=".a:command
-        return system(a:command)
+        let command = a:command
+        if apexOs#isWindows()
+            " change all '\' in path to '/'
+            let command = substitute(command, '\', '/', "g")
+        endif    
+        return system(command)
     else    
         let obj = {}
         function obj.callback(channel, msg)
