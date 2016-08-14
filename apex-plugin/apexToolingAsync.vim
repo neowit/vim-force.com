@@ -1010,17 +1010,20 @@ function! s:startProgressTimer()
 endfunction    
 
 function! s:stopProgressTimer(...)
-    let l:timerId = a:0 > 0 ? a:1 : s:progress.timerId
-    "let s:progress.lastMessage = ''
-    if l:timerId > 0
-        call timer_stop(l:timerId)
-        if has_key(s:timers, l:timerId)
-            call remove(s:timers, l:timerId)
-        endif    
-        if a:0 < 1
-            let s:progress.timerId = -1
+    try
+        let l:timerId = a:0 > 0 ? a:1 : s:progress.timerId
+        "let s:progress.lastMessage = ''
+        if l:timerId > 0
+            call timer_stop(l:timerId)
+            if has_key(s:timers, l:timerId)
+                call remove(s:timers, l:timerId)
+            endif    
+            if a:0 < 1
+                let s:progress.timerId = -1
+            endif
         endif
-    endif    
+    catch
+    endtry    
 endfunction    
 
 " check if user has defined g:apex_OnCommandComplete
