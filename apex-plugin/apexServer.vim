@@ -32,7 +32,7 @@ function! apexServer#eval(command, paramsMap) abort
 	let l:host = s:getServerHost()
 	let l:port = s:getServerPort()
     
-    return a:execBlocking(a:command)
+    return s:execBlocking(a:command)
     
 endfunction
 
@@ -87,57 +87,70 @@ function! s:execAsync(command, callbackFuncRef) abort
         set more
     endif
 
-    let attempts = 15
-    while attempts > 0 
-        let attempts -= 1
-        try
-            let l:host = s:getServerHost()
-            let l:port = s:getServerPort()
-            let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
-            call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
-            
-            " get rid of any previous messages (e.g. server start) in status line
-            redrawstatus! 
-            
-            break
-        catch /^Vim\%((\a\+)\)\=:E906/
-            "echom 'server not started: ' v:exception
-            if "shutdown" != a:command
-                "call s:showProgress("Starting server...")
-                call s:startServer()
-                sleep 1000m
-            endif
-        catch /.*/
-            call apexMessages#logError("Failed to execute command. " . v:exception)
-            break
-        endtry    
-    endwhile
+    try
+        let l:host = s:getServerHost()
+        let l:port = s:getServerPort()
+        let s:channel = ch_open(l:host . ':' . l:port, {"callback": a:callbackFuncRef, "close_cb": a:callbackFuncRef, "mode": "nl"})
+        call ch_sendraw(s:channel, a:command . "\n") " each message must end with NL
+
+        " get rid of any previous messages (e.g. server start) in status line
+        redrawstatus! 
+    catch /^Vim\%((\a\+)\)\=:E906/
+        "echom 'server not started: ' v:exception
+        if "shutdown" != a:command
+            "call s:showProgress("Starting server...")
+            call s:startServer(a:command, a:callbackFuncRef)
+        endif
+    catch /.*/
+        call apexMessages#logError("Failed to execute command. " . v:exception)
+        break
+    endtry    
     
 endfunction    
 
-function! s:startServer()
+function! s:serverStartCallback(command, callbackFuncRef, ...)
+    " a:1 - channel, a:2 - message
+    let l:msg = a:0 > 1 ? a:2 : ""
+    
+    "echomsg "callback: msg=" . a:msg
+    if l:msg =~ "Error"
+        call apexMessages#logError("Failed to start server: " . l:msg)
+        call apexToolingAsync#stopProgressTimer()
+        let s:serverStartFailed = 1
+        call apexMessages#open()
+
+    elseif l:msg =~ "Awaiting connection"    
+        let s:serverStartFailed = 0
+        try 
+            call ch_close(a:channel) 
+        catch
+            " ignore
+        endtry
+        " looks like server has started, can call the original command now
+        call s:execAsync(a:command, a:callbackFuncRef)
+    else    
+        " generic error, report as is
+        echoerr l:msg
+        call apexMessages#log(l:msg)
+        call apexMessages#open()
+        "call apexToolingAsync#stopProgressTimer()
+    endif    
+
+endfunction    
+
+function! s:startServer(command, callbackFuncRef)
     "call ch_logfile('/Users/andrey/temp/vim/_job-test/channel-startServer.log', 'w')
 
     let obj = {}
+    let l:command = a:command
+    let CallbackFuncRef = a:callbackFuncRef
     
-    function obj.callback(channel, msg)
-        "echomsg "callback: msg=" . a:msg
-        if a:msg =~ "Error"
-            call apexMessages#logError("Failed to start server: " . a:msg)
-        elseif a:msg =~ "Awaiting connection"    
-            try 
-                call ch_close(a:channel) 
-            catch
-                " ignore
-            endtry
-        endif    
-
-    endfunction    
     
     let l:java_command = s:getJavaCommand()
     let l:command = l:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
     "echom "l:command=" . l:command
-    let job = job_start(l:command, {"callback": obj.callback})
+    call apexMessages#log("Trying to start server using command: " . l:command)
+    let job = job_start(l:command, {"callback": function('s:serverStartCallback', [a:command, a:callbackFuncRef])})
     
 endfunction    
 
