@@ -147,7 +147,7 @@ function! s:serverStartCallback(command, callbackFuncRef, ...)
 endfunction    
 
 function! s:startServer(command, callbackFuncRef)
-    "call ch_logfile('/Users/andrey/temp/vim/_job-test/channel-startServer.log', 'w')
+    "call ch_logfile(expand("$HOME") . '/temp/vim/_job-test/channel-startServer.log', 'w')
 
     let l:command = a:command
     let CallbackFuncRef = a:callbackFuncRef
@@ -158,7 +158,7 @@ function! s:startServer(command, callbackFuncRef)
     "echom "l:command=" . l:command
     let s:callServerStartCallback = 1
     call apexMessages#log("Trying to start server using command: " . l:command)
-    let job = job_start(l:command, {"callback": function('s:serverStartCallback', [a:command, a:callbackFuncRef])})
+    let job = job_start(l:command, {"callback": function('s:serverStartCallback', [a:command, a:callbackFuncRef]), "stoponexit": "kill"})
     
 endfunction    
 
