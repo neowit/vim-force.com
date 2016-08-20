@@ -109,28 +109,37 @@ function! s:execAsync(command, callbackFuncRef) abort
 endfunction    
 
 let s:callServerStartCallback = 0
+function! s:closeChannelAndRunOriginalCommand(channel, command, callbackFuncRef)
+    try 
+        call ch_close(a:channel) 
+    catch
+        " ignore
+    endtry
+    let s:callServerStartCallback = 0
+    echomsg "calling original command: ". a:command
+    call s:execAsync(a:command, a:callbackFuncRef)
+endfunction
+
 function! s:serverStartCallback(command, callbackFuncRef, ...)
     " a:1 - channel, a:2 - message
     let l:channel = a:0 > 0 ? a:1 : -1
     let l:msg = a:0 > 1 ? a:2 : ""
     
-    echomsg "callback: channel=" . l:channel
-    echomsg "callback: msg=" . l:msg
-    if l:msg =~ "Error"
+    echomsg "serverStartCallback: channel=" . l:channel
+    echomsg "serverStartCallback: msg=" . l:msg
+    
+    if l:msg =~? "java.net.BindException: Address already in use"
+        " looks like multiple command have been called simultaneously and
+        " tryed to start more than 1 instance of the server
+        call s:closeChannelAndRunOriginalCommand(l:channel, a:command, a:callbackFuncRef)
+    elseif l:msg =~ "Error"
         call apexMessages#logError("Failed to start server: " . l:msg)
         call apexMessages#open()
         call apexToolingAsync#stopProgressTimer()
 
     elseif l:msg =~ "Awaiting connection"
-        try 
-            call ch_close(l:channel) 
-        catch
-            " ignore
-        endtry
         " looks like server has started, can call the original command now
-        let s:callServerStartCallback = 0
-        echomsg "calling original command: ". a:command
-        call s:execAsync(a:command, a:callbackFuncRef)
+        call s:closeChannelAndRunOriginalCommand(l:channel, a:command, a:callbackFuncRef)
     else    
         try 
             call ch_close(l:channel) 
