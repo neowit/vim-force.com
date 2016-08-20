@@ -769,15 +769,15 @@ function! apexToolingAsync#executeBlocking(action, projectName, projectPath, ext
 	call apexToolingAsync#execute(a:action, a:projectName, a:projectPath, l:extraParams, a:displayMessageTypes)
     " wait for response to become available
     "let dots = '.'
-    let mills = 3
+    let mills = 100
     while !has_key(l:extraParams, "resMap")
         "echomsg "waiting" . dots
         "let dots .= '.'
         "sleep for NN milliseconds
         exec 'sleep ' .mills. 'm' 
-        if mills < 100
-            let mills += 1
-        endif
+        " redraw screen to reduce chances of accumulating '/ =>' progress characters in
+        " status line/window
+        redraw
     endwhile    
     return l:extraParams["resMap"]
 endfunction    

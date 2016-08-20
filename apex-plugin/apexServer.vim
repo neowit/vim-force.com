@@ -63,13 +63,13 @@ function! s:execBlocking(command) abort
     call s:execAsync(a:command, function(obj.callbackInternal))
     
     " wait for response to become available
-    let mills = 3
+    let mills = 100
     while !has_key(obj, "done")
         "sleep for NN milliseconds
         exec 'sleep ' .mills. 'm' 
-        if mills < 100
-            let mills += 1
-        endif
+        " redraw screen to reduce chances of accumulating '/ =>' progress characters in
+        " status line/window
+        redraw
     endwhile    
 
     echo "obj.responseLines=" . string(obj.responseLines)
