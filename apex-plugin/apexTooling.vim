@@ -558,25 +558,7 @@ function! apexTooling#serverShutdown()
 	call apexServer#send("shutdown", obj.dummyCallback, {})
 endfunction
 
-" depending on the configuration either spawn a brand new java process to run
-" current command or try to execute on the running server
-" Global variables:
-" g:apex_use_server - if <> 0 then server will be used
-"
 function! s:runCommand(java_command, commandLine, isSilent)
     call apexServer#eval(a:commandLine, {"silent": a:isSilent})
-endfunction
-
-
-function! s:getServerHost()
-	return apexUtil#getOrElse("g:apex_server_host", "127.0.0.1")
-endfunction
-
-function! s:getServerPort()
-	return apexUtil#getOrElse("g:apex_server_port", 8888)
-endfunction
-
-function! s:getServerTimeoutSec()
-	return apexUtil#getOrElse("g:apex_server_timeoutSec", 60)
 endfunction
 
