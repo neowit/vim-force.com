@@ -108,32 +108,40 @@ function! s:execAsync(command, callbackFuncRef) abort
     
 endfunction    
 
+let s:callServerStartCallback = 0
 function! s:serverStartCallback(command, callbackFuncRef, ...)
     " a:1 - channel, a:2 - message
+    let l:channel = a:0 > 0 ? a:1 : -1
     let l:msg = a:0 > 1 ? a:2 : ""
     
-    "echomsg "callback: msg=" . a:msg
+    echomsg "callback: channel=" . l:channel
+    echomsg "callback: msg=" . l:msg
     if l:msg =~ "Error"
         call apexMessages#logError("Failed to start server: " . l:msg)
-        call apexToolingAsync#stopProgressTimer()
-        let s:serverStartFailed = 1
         call apexMessages#open()
+        call apexToolingAsync#stopProgressTimer()
 
-    elseif l:msg =~ "Awaiting connection"    
-        let s:serverStartFailed = 0
+    elseif l:msg =~ "Awaiting connection"
         try 
-            call ch_close(a:channel) 
+            call ch_close(l:channel) 
         catch
             " ignore
         endtry
         " looks like server has started, can call the original command now
+        let s:callServerStartCallback = 0
+        echomsg "calling original command: ". a:command
         call s:execAsync(a:command, a:callbackFuncRef)
     else    
+        try 
+            call ch_close(l:channel) 
+        catch
+            " ignore
+        endtry
         " generic error, report as is
         echoerr l:msg
         call apexMessages#log(l:msg)
         call apexMessages#open()
-        "call apexToolingAsync#stopProgressTimer()
+        call apexToolingAsync#stopProgressTimer()
     endif    
 
 endfunction    
@@ -141,7 +149,6 @@ endfunction
 function! s:startServer(command, callbackFuncRef)
     "call ch_logfile('/Users/andrey/temp/vim/_job-test/channel-startServer.log', 'w')
 
-    let obj = {}
     let l:command = a:command
     let CallbackFuncRef = a:callbackFuncRef
     
@@ -149,6 +156,7 @@ function! s:startServer(command, callbackFuncRef)
     let l:java_command = s:getJavaCommand()
     let l:command = l:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
     "echom "l:command=" . l:command
+    let s:callServerStartCallback = 1
     call apexMessages#log("Trying to start server using command: " . l:command)
     let job = job_start(l:command, {"callback": function('s:serverStartCallback', [a:command, a:callbackFuncRef])})
     

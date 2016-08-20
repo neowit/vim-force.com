@@ -1009,6 +1009,9 @@ function! s:startProgressTimer()
     let s:timers[s:progress.timerId] = l:maxRepeats
 endfunction    
 
+function! apexToolingAsync#stopProgressTimer()
+    call s:stopProgressTimer()
+endfunction    
 function! s:stopProgressTimer(...)
     try
         let l:timerId = a:0 > 0 ? a:1 : s:progress.timerId
