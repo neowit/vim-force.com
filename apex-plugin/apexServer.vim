@@ -130,7 +130,7 @@ function! s:serverStartCallback(command, callbackFuncRef, ...)
     
     if l:msg =~? "java.net.BindException: Address already in use"
         " looks like multiple command have been called simultaneously and
-        " tryed to start more than 1 instance of the server
+        " tried to start more than 1 instance of the server
         call s:closeChannelAndRunOriginalCommand(l:channel, a:command, a:callbackFuncRef)
     elseif l:msg =~ "Error"
         call apexMessages#logError("Failed to start server: " . l:msg)

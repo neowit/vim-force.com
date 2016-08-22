@@ -79,7 +79,7 @@ function! s:listOptions(filePath, line, column)
 	let l:completionList = []
 	if filereadable(responseFilePath)
 		for jsonLine in readfile(responseFilePath)
-			if jsonLine !~ "{"
+			if jsonLine !~ "^{"
 				continue " skip not JSON line
 			endif
 			let l:option = eval(jsonLine)
