@@ -218,18 +218,14 @@ function! s:startServer(command, callbackFuncRef)
     endif    
     let s:serverStartTime = localtime()
 
-    let l:command = a:command
-    let CallbackFuncRef = a:callbackFuncRef
-    
-    
     let l:java_command = s:getJavaCommand()
     let l:command = l:java_command . " --action=serverStart --port=" . s:getServerPort() . " --timeoutSec=" . s:getServerTimeoutSec()
-    "echom "l:command=" . l:command
+
     let s:callServerStartCallback = 1
     call apexMessages#log("Trying to start server using command: " . l:command)
     let job = job_start(l:command, {"callback": function('s:serverStartCallback', [a:command, a:callbackFuncRef]), "stoponexit": "kill"})
     
-endfunction    
+endfunction
 
 function! s:getJavaCommand()
 

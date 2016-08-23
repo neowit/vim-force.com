@@ -113,12 +113,17 @@ function s:executeAnonymous(filePath, projectName, codeFile)
 		let l:extraParams["callingAnotherOrg"] = "true"
 	endif
 
-	let resMap = apexToolingAsync#executeBlocking("executeAnonymous", a:projectName, projectPath, l:extraParams, [])
-	if exists('g:apex_test_debuggingHeader')
-		if "true" == resMap.success
-			:ApexLog
-		endif
-	endif
+    " =============== internal callback ====================
+    function! l:extraParams.callbackFuncRef(resMap)
+        if exists('g:apex_test_debuggingHeader')
+            if "true" == a:resMap.success
+                :ApexLog
+            endif
+        endif
+    endfunction    
+    " =============== END internal callback ====================
+
+	call apexToolingAsync#execute("executeAnonymous", a:projectName, projectPath, l:extraParams, [])
 endfunction	
 
 let s:lastSoqlQueryFilePath = ""
