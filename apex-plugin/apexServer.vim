@@ -26,7 +26,7 @@ function! s:getServerTimeoutSec()
 endfunction
 
 
-" blocking call: collects all response and waits till channels os closed
+" blocking call: collects all response and waits till channel is closed
 " Param: paramsMap - dictionary
 function! apexServer#eval(command, paramsMap) abort
 	let l:host = s:getServerHost()
@@ -45,6 +45,37 @@ function! apexServer#send(command, callbackFuncRef, paramsMap) abort
     call s:execAsync(a:command, a:callbackFuncRef)
     
 endfunction
+
+" for debug purposes only
+function! apexServer#evalRaw(command, paramsMap) abort
+    return s:evalRaw(a:command)
+endfunction    
+
+" blocking call
+" use this method to send a blocking command like 'ping' to already running server
+" no attempt to start a server is done
+" this function is not suitable for apex commands because does not collect all
+" server output, but only first line
+function! s:evalRaw(command)
+    let obj = {}
+    function! obj.dummyCallback(...)
+    endfunction
+    try
+        let l:host = s:getServerHost()
+        let l:port = s:getServerPort()
+        let s:channel = ch_open(l:host . ':' . l:port, {"callback": obj.dummyCallback, "close_cb": obj.dummyCallback, "mode": "nl"})
+        return ch_evalraw(s:channel, a:command . "\n") " each message must end with NL
+
+        " get rid of any previous messages (e.g. server start) in status line
+        redrawstatus! 
+    catch /^Vim\%((\a\+)\)\=:E906/
+        "echom 'server not started: ' v:exception
+    catch /.*/
+        call apexMessages#logError("Failed to execute command. " .a:command. "; " . v:exception)
+        break
+    endtry    
+    return ''
+endfunction    
 
 function! s:execBlocking(command) abort
     let obj = {}
@@ -109,6 +140,14 @@ function! s:execAsync(command, callbackFuncRef) abort
 endfunction    
 
 let s:callServerStartCallback = 0
+let s:serverStartTime = 0
+let s:serverStartTimeoutSec = exists("g:apex_server_start_timeout") ? eval("g:apex_server_start_timeout") : 7
+function! s:isServerStarting()
+    if 0 != s:serverStartTime && s:serverStartTimeoutSec > (localtime() - s:serverStartTime)
+        return 1
+    endif    
+    return 0
+endfunction    
 function! s:closeChannelAndRunOriginalCommand(channel, command, callbackFuncRef)
     try 
         call ch_close(a:channel) 
@@ -120,7 +159,21 @@ function! s:closeChannelAndRunOriginalCommand(channel, command, callbackFuncRef)
     call s:execAsync(a:command, a:callbackFuncRef)
 endfunction
 
+function! s:waitForServerToStartAndRunOriginalCommand(command, callbackFuncRef)
+    let l:count = s:serverStartTimeoutSec " wait no more than N seconds
+    while s:isServerStarting() && l:count > 0
+        sleep
+        let l:count -= 1
+    endwhile    
+
+    if !s:isServerStarting() && s:evalRaw("ping") =~? "pong"
+        call s:execAsync(a:command, a:callbackFuncRef)
+    endif
+
+endfunction    
+
 function! s:serverStartCallback(command, callbackFuncRef, ...)
+    let s:serverStartTime = 0
     " a:1 - channel, a:2 - message
     let l:channel = a:0 > 0 ? a:1 : -1
     let l:msg = a:0 > 1 ? a:2 : ""
@@ -157,6 +210,13 @@ endfunction
 
 function! s:startServer(command, callbackFuncRef)
     "call ch_logfile(expand("$HOME") . '/temp/vim/_job-test/channel-startServer.log', 'w')
+    if s:isServerStarting()
+        " looks like two or more commands have been called simultaneously but
+        " server was not running, let's wait
+        call s:waitForServerToStartAndRunOriginalCommand(a:command, a:callbackFuncRef)
+        return
+    endif    
+    let s:serverStartTime = localtime()
 
     let l:command = a:command
     let CallbackFuncRef = a:callbackFuncRef
