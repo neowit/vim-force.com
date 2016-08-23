@@ -391,7 +391,7 @@ function s:reportModifiedFiles(modifiedFiles)
 	endfor
 endfunction
 
-function! s:refreshProjectMainCallback(resMap)
+function! s:refreshProjectMainCallback(callbackObj, resMap)
 	if "true" == a:resMap["success"]
 		" TODO add a setting so user could chose whether they want
 		" backup of all files received in Refresh or only modified ones
@@ -464,16 +464,29 @@ function! s:refreshProjectMainCallback(resMap)
 			endfor
 			checktime "make sure that external changes are reported
 		endif
+        if len(a:callbackObj) > 0 && has_key(a:callbackObj, "callbackFuncRef")
+            call a:callbackObj.callbackFuncRef(a:resMap)
+        endif    
 	endif
 
 endfunction    
 
 "Args:
 "Param: filePath: path to file which belongs to apex project
-"Param1: skipModifiedFiles: (optional) 0 for false, anything else for true
-function! apexToolingAsync#refreshProject(filePath, ...)
+"Param: params: 
+"   'skipModifiedFilesCheck': (optional) 'false'|'true'
+"   'callbackObj': (optional) - if provided then expect an dictionary which
+"   looks like so {'callbackFuncRef': function-reference-here [, other-params]}
+function! apexToolingAsync#refreshProject(filePath, params)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let extraParams = a:0 > 0 && a:1 ? {"skipModifiedFilesCheck":"true"} : {}
+	"let extraParams = a:0 > 0 && a:1 ? {"skipModifiedFilesCheck":"true"} : {}
+    let extraParams = {}
+	if has_key(a:params, "skipModifiedFilesCheck") 
+        let extraParams["skipModifiedFilesCheck"] = a:params["skipModifiedFilesCheck"]
+    endif    
+	if has_key(a:params, "callbackObj") 
+        let extraParams["_callbackObj"] = a:params["callbackObj"]
+    endif    
 
     " ============ internal callback 1 ================
     function! extraParams.callbackFuncRef(resMap)
@@ -492,12 +505,17 @@ function! apexToolingAsync#refreshProject(filePath, ...)
                 return 
             endif
             " STEP 2: forced refresh when there are modified files
+            let refreshProjectCallbackObj = has_key(self, "_callbackObj") ? self._callbackObj : {}
             let extraParams = {"skipModifiedFilesCheck":"true"}
-            let extraParams.callbackFuncRef = function('s:refreshProjectMainCallback')
+            let extraParams.callbackFuncRef = function('s:refreshProjectMainCallback', [refreshProjectCallbackObj]) 
             call apexToolingAsync#execute("refresh", a:resMap["projectName"], a:resMap["projectPath"], extraParams, ["ERROR", "INFO"])
         else
             " no modified files detected, can proceed with Main callback
-            call s:refreshProjectMainCallback(a:resMap)
+            if (has_key(self, "_callbackObj"))
+                call s:refreshProjectMainCallback(self._callbackObj, a:resMap)
+            else    
+                call s:refreshProjectMainCallback({}, a:resMap)
+            endif    
         endif
 
     endfunction    
