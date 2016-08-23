@@ -132,21 +132,28 @@ function s:executeSoqlQuery(filePath, api, projectName, codeFile)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
 	let outputFilePath = tempname()
-	let l:extraParams = {"queryFilePath": apexOs#shellescape(a:codeFile), 'outputFilePath':  apexOs#shellescape(outputFilePath)}
+	let l:extraParams = {"queryFilePath": apexOs#shellescape(a:codeFile), 'outputFilePath':  apexOs#shellescape(outputFilePath), '_outputFilePathRaw': outputFilePath }
 	" another org?
 	if projectPair.name != a:projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
 	endif
     let l:extraParams["api"] = a:api
+    let l:extraParams["codeFile"] = a:codeFile
 
-	let resMap = apexToolingAsync#executeBlocking("soqlQuery", a:projectName, projectPath, l:extraParams, [])
-	if "true" == resMap.success
-        let s:lastSoqlQueryFilePath = a:codeFile
-		" load result file if available and show it in a read/only buffer
-		if len(apexUtil#grepFile(resMap.responseFilePath, 'RESULT_FILE')) > 0
-			execute "view " . fnameescape(outputFilePath)
-		endif
-	endif
+    " =============== internal callback ====================
+    function! l:extraParams.callbackFuncRef(resMap)
+        if "true" == a:resMap.success
+            let s:lastSoqlQueryFilePath = self.codeFile
+            " load result file if available and show it in a read/only buffer
+            if len(apexUtil#grepFile(a:resMap.responseFilePath, 'RESULT_FILE')) > 0
+                execute "view " . fnameescape(self._outputFilePathRaw)
+            endif
+        endif
+    endfunction    
+    " =============== END internal callback ====================
+
+
+	call apexToolingAsync#execute("soqlQuery", a:projectName, projectPath, l:extraParams, [])
 endfunction	
 
 " http://stackoverflow.com/a/6271254
