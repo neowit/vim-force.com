@@ -18,6 +18,8 @@ let g:loaded_apexCommands = 1
 " Apex commands 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " version of tooling-force.com
+command! ApexValidateJavaConfig :call apexServer#validateJavaConfig()
+" version of tooling-force.com
 command! ApexToolingVersion :call apexToolingAsync#getVersion(expand("%:p"))
 
 " staging

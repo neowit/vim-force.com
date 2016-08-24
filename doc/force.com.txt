@@ -114,6 +114,12 @@ e.g. >
 
 10. Have a look at the config example: :help |force.com-config-example|
 
+NOTE: depending on the vim flavour installed in your system `job_start()` may
+or may not call its callback function if job fails to start (e.g. due to bad
+configuration). Use :|ApexValidateJavaConfig| command to validate your
+settings.  If |ApexValidateJavaConfig| reports OK but you still have doubts
+then check :|ApexMessages| after calling an Apex[NNN] command (e.g.
+:|ApexToolingVersion| ).
 
 ==============================================================================
 Example of minimal _vimrc configuration for win32    *force.com-config-example*
@@ -207,6 +213,9 @@ Run :|ApexInitProject| and follow the wizard
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*
 
+|ApexValidateJavaConfig|            test your java/tooling-force.com.jar
+                                    configuration
+
 |ApexMessages|                      special buffer which displays log of all
                                     commands
 
@@ -264,6 +273,11 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexToolingVersion|                show version of tooling-force.com.jar
 
 ------------------------------------------------------------------------------
+
+                                                        *ApexValidateJavaConfig*
+Before running any Apex command for the first time you may want to test if
+your java & "tooling-force.com.jar" config looks good.
+Open any local apex class ".cls" file and run :ApexValidateJavaConfig.
 
                                                                  *ApexMessages*
 

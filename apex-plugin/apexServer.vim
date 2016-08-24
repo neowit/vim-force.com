@@ -227,6 +227,26 @@ function! s:startServer(command, callbackFuncRef)
     
 endfunction
 
+" used to test if "java" and "tooling-force.com.jar" config is valid
+function! apexServer#validateJavaConfig() abort
+    let l:java_command = s:getJavaCommand()
+    let l:command = l:java_command . " --action=version "
+    if apexOs#isWindows()
+        " change all '\' in path to '/'
+        let l:command = substitute(l:command, '\', '/', "g")
+    endif    
+    let projectPath = apexOs#createTempDir()
+    let responseFilePath = tempname() . "-test.txt"
+    execute "!".l:command . " --projectPath=".shellescape(projectPath) . " --responseFilePath=".shellescape(responseFilePath)
+    if filereadable(responseFilePath) && len(apexUtil#grepFile(responseFilePath, 'RESULT=SUCCESS')) > 0
+        call apexUtil#info("Config looks OK")
+        "exec "view ".fnameescape(responseFilePath)
+    else
+        call apexUtil#error("At first glance it does not look like your config is correct. Check error messages. On MS Windows also check messages in cmd.exe popup window.")
+    endif    
+
+endfunction
+
 function! s:getJavaCommand()
 
 	let l:java_command = "java "
