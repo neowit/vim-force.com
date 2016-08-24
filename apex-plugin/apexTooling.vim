@@ -448,7 +448,6 @@ function! s:grepValues(filePath, prefix)
 endfunction
 
 
-
 "================= server mode commands ==========================
 
 " send server 'shutdown' command to stop it
@@ -458,9 +457,5 @@ function! apexTooling#serverShutdown()
     function! obj.dummyCallback(...)
     endfunction
 	call apexServer#send("shutdown", obj.dummyCallback, {})
-endfunction
-
-function! s:runCommand(java_command, commandLine, isSilent)
-    call apexServer#eval(a:commandLine, {"silent": a:isSilent})
 endfunction
 
