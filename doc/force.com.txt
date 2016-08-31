@@ -70,7 +70,7 @@ Before vim-force.com plugin can be used following requirements must be met:
 4. On MS Windows 
 	Make sure that all paths in your configuration are as short as possible.
 	vim-force.com will be calling tooling-force.com.jar and passing many
-	parameters via command line and some MS Window version struggle with long
+	parameters via command line and some MS Window versions struggle with long
 	command lines. 
 
 5. Unpack vim-force.com plugin archive anywhere you like
@@ -186,7 +186,7 @@ Project Setup and Structure                                *apex-project-setup*
 		----...
 
 	So if you have existing eclipse project then you can start using force.com plugin
-	straight away by opening .class or .trigger file with vim
+	straight away by opening .cls or .trigger file with vim
 ------------------------------------------------------------------------------
 A. Using alongside Force.com IDE for Eclipse                *apex-with-eclipse* 
 
@@ -200,14 +200,26 @@ A. Using alongside Force.com IDE for Eclipse                *apex-with-eclipse*
 	at this point if class code is syntax highlighted then chances are that most of your 
 	config is right
 	
-	6. issue command 
-	   :ApexRefreshProject
+    6. check your config 
+        :ApexValidateJavaConfig
+       if no errors shown then proceed to next step.
+           
+	7. load current project version from SFDC 
+	    :ApexRefreshProject
 
 ------------------------------------------------------------------------------
 B. vim force.com plugin standalone                     *apex-plugin-standalone*
 
 In this mode Eclipse is not needed.
-Run :|ApexInitProject| and follow the wizard
+
+0. When using this plugin for the first time - check if you configuration looks ok
+    Open new vim insatnce and execute >
+    :setfiletype apexcode
+    :ApexValidateJavaConfig
+<
+Check that |ApexValidateJavaConfig| does not return any errors.
+
+1. Run :|ApexInitProject| and follow the wizard
 
 
 ------------------------------------------------------------------------------
