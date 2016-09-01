@@ -4,19 +4,24 @@ salesforce.com / force.com plugin for Vim version 7.4 (with `job` & `channel` su
 
 ##### Update August 2016  
 Note 1:  
-Majority of plugin functions have been migrated to async jobs and channels added in vim not
-so long ago.  
-If you use MacVim then you may need to update to a very recent version because some
-initial MacVim versions with `job` support had problems with properly supporting this functionality. 
-Minimum MacVim version which is known to work is `7.4, Included patches: 1-1831`.  
+Majority of plugin functions have been migrated to async [jobs and
+channels](https://github.com/vim/vim/blob/master/runtime/doc/channel.txt) added in vim not so long ago.  
+You may need to update to a very recent version of your vim flavour because some initial versions (e.g. MacVim) with `job` support had problems with properly supporting this functionality.  
+As always - make sure that you use latest [tooling-force.com.jar](https://github.com/neowit/tooling-force.com/releases).
 
-Note 2:  
-This version have not been tested on MS Windows yet.  
+Note 2:
+Minimum MacVim version which is known to (almost) work is `7.4, Included patches: 1-1831`.  
+Current versions of MacVim GUI (as well as GVim) suffer from [this issue](https://github.com/macvim-dev/macvim/issues/322).  
+The problem only manifests itelf if your `java` & `tooling-force.com.jar` confg is wrong. If in doubt - test your config with `:ApexValidateJavaConfig`
+
+Note 3:  
+This version have not been fully tested on MS Windows yet.  
 If you want to try it out - make sure to use **latest** version of vim. Those
 available from [vim.org](http://www.vim.org/download.php#pc) are outdated and
-as of August 2016 do not include necessary level of `job` & `channel` support. 
-If you feel adventurous try [a nightly build](https://github.com/vim/vim-win32-installer).
+as of August 2016 do not include necessary level of `job` & `channel` support.   
+If you feel adventurous - try [a nightly build](https://github.com/vim/vim-win32-installer).
 
+Note 4:  
 If you have to use older vim version or want to continue using synchronous
 version of all commands then switch to
 [legacy-vim-sync](https://github.com/neowit/vim-force.com/tree/legacy-vim-sync) branch.
@@ -34,7 +39,7 @@ Note: you will lose some of newer functions.
 If you are getting `Internal Server Error` when trying to deploy/save list of files which contain both Aura bundle(s) and Apex Class/Page then you are most likely affected by what appears to be a bug in Spring'15. 
 Current workaround is to deploy Apex Classes/Pages first (:ApexDeployOne or :ApexDeployOpen or :ApexDeployStaged) and then call :ApexDeploy or :ApexSave as usual.
 
-#### Update Oct. 2014  
+##### Update Oct. 2014  
 Best way to take advantage of [Apex code completion](http://youtu.be/u-6JQNuWRdE) is to use "server" mode.  
 If you are using server mode on MS Windows then you must have python available to vim.
 Read `:help server-mode` in vim-force.com documentation carefully.
