@@ -60,6 +60,8 @@ function! apexLogActions#askLogLevel(filePath, api)
     else " tooling api    
         let g:apex_test_traceFlag = s:askToolingLogLevels(a:filePath, "user", "")
     endif
+    " simulate <CR> press to skip: 'Press ENTER or type command to continue'
+    call feedkeys("\<CR>") 
 endfunction
 
 " function! s:askMetaLogLevels()
@@ -149,7 +151,7 @@ function! s:sendCommand(filePath, scope, tracedEntity, traceFlagJson)
     if !empty(a:tracedEntity)
         let l:extraParams["tracedEntity"] = a:tracedEntity
     endif
-	let resMap = apexTooling#execute("changeLogLevels", projectPair.name, projectPair.path, l:extraParams, [])
+	let resMap = apexToolingAsync#executeBlocking("changeLogLevels", projectPair.name, projectPair.path, l:extraParams, [])
 	let responsePath = resMap["responseFilePath"]
 endfunction
 

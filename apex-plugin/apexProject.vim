@@ -41,16 +41,23 @@ function apexProject#init() abort
 	call s:buildPropertiesFile(l:projectName)
 	call s:buildPackageFile(l:projectSrcPath)
 
-	call apexTooling#refreshProject(l:projectSrcPath, 1)
-	" check if we have existing files to open
-	let fullPaths = apexOs#glob(l:projectSrcPath . "**/*.cls")
-	if len(fullPaths) > 0
-		"open random class from just loaded files
-		execute 'e ' . fnameescape(fullPaths[0])
-	else
-		":ApexNewFile
-		call apexMetaXml#createFileAndSwitch(l:projectSrcPath)
-	endif
+    let obj = {}
+    let obj["_projectSrcPath"] = l:projectSrcPath
+    function! obj.callbackFuncRef(paramsMap)
+        echomsg "paramsMap=".string(a:paramsMap)
+        " check if we have existing files to open
+        let fullPaths = apexOs#glob(self._projectSrcPath . "**/*.cls")
+        if len(fullPaths) > 0
+            "open random class from just loaded files
+            execute 'e ' . fnameescape(fullPaths[0])
+            echo "Press Enter"
+        else
+            ":ApexNewFile
+            call apexMetaXml#createFileAndSwitch(self._projectSrcPath)
+        endif
+    endfunction
+
+	call apexToolingAsync#refreshProject(l:projectSrcPath, {"skipModifiedFilesCheck": "true", "callbackObj": obj})
 	
 endfunction
 

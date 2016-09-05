@@ -30,7 +30,8 @@ function apexMetaXml#createFileAndSwitch(filePath)
 	if len(typeAndName) < 1
 		echo "\n"
 		echomsg "Selection aborted"
-		return " user aborted
+        " user aborted
+		return 
 	endif
 	let fileContent = s:getFilesContent{typeAndName.fileType}(typeAndName.fileName)
 	"check that required file does not exist
@@ -52,9 +53,6 @@ function apexMetaXml#createFileAndSwitch(filePath)
 
 	let metaRes = writefile(fileContent.metaContent, metaFilePath )
 	if 0 == metaRes 
-		"set last modified time 10 seconds in the past to make sure file is picked up for
-		"deplyment due to difference betwen -meta.xml and actual file times
-		call apexOs#setftime(metaFilePath, localtime() -10 )
 		let fileRes = writefile(fileContent.mainFileContent, newFilePath)
 		if 0 == fileRes
 			"switch to the buffer with newly created file

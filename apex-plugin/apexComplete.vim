@@ -37,6 +37,10 @@ endfunction
 " end users
 function! apexComplete#checkSyntax(filePath) abort
     let l:filePath = a:filePath
+    
+    " check if this file is inside 'src' folder
+    try | call apex#getSFDCProjectPathAndName(l:filePath) | catch /.*/ | return | endtry    
+
 	let attributeMap = {}
 	"save content of current buffer in a temporary file
 	"let tempFilePath = tempname() . apexOs#splitPath(a:filePath).tail
@@ -46,7 +50,7 @@ function! apexComplete#checkSyntax(filePath) abort
 	" let attributeMap["currentFileContentPath"] = tempFilePath
 	let attributeMap["currentFileContentPath"] = a:filePath
 
-	let responseFilePath = apexTooling#checkSyntax(a:filePath, attributeMap)
+	let responseFilePath = apexToolingAsync#checkSyntax(a:filePath, attributeMap)
 
 	" temp file is no longer needed
 	"call delete(tempFilePath)
@@ -75,7 +79,7 @@ function! s:listOptions(filePath, line, column)
 	let l:completionList = []
 	if filereadable(responseFilePath)
 		for jsonLine in readfile(responseFilePath)
-			if jsonLine !~ "{"
+			if jsonLine !~ "^{"
 				continue " skip not JSON line
 			endif
 			let l:option = eval(jsonLine)

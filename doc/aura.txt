@@ -1,0 +1,63 @@
+*aura.txt*	Plugin for developing on force.com      
+Author: Andrey Gavrikov
+License: Same terms as Vim itself (see |license|)
+
+                                                          *aura* | *lightning*
+salesforce.com aura/lightning support in force.com plugin for Vim 
+
+|aura-description|   Description
+|aura-start|         Quick start
+|aura-map-example|   Recommended keyboard mapping
+
+For Vim version 7.4, Included patches: 1-1831 or later.
+
+==============================================================================
+DESCRIPTION                                                 *aura-description*
+
+|vim-force.com| includes some basic support of aura/lightning. 
+Supported functions:
+- aura bundle(s) reterieval (as part of |ApexRefreshProject|)
+- aura files save/deployment (as part of |ApexSave|)
+
+There is currently no wizard to create new aura files.
+To create new aura files/bundles use any of the following methods:
+- developer console + |ApexRefreshProject|
+- or normal vim or file system  commands to create files (and '-meta.xml') as
+  appropriate
+- or copy/rename existing aura bundle
+
+SYSTEM REQUIREMENTS                                  *aura-system-requirements*
+
+- installed vim-force.com + tooling-force.com.jar
+- Minimal Required VIM version 7.4, Included patches: 1-1831 or later.
+
+==============================================================================
+                                                                   *aura-start* 
+
+In order to start working with aura/lightning files call :|ApexRefreshProject|
+and navigate to ./src/aura/... to select appropriate aura file.
+
+==============================================================================
+RECOMMENDED KEYBOARD MAPPING                                 *aura-map-example*
+
+vim-force.com aura support includes convenience function to switch between
+files inside aura bundle, see autoload/aura.vim
+
+Below is a key mapping example for OSX/MacVim
+
+""""""""""""""""""""""""" .vim/after/ftplugin/aura.vim """""""""""""""""""""  >
+" add key bindings
+" on OSX/MacVim use literal key (e.g. '≈'), because <Alt-x> does not work
+" Alt-x
+map <buffer> ≈ :call aura#alternateFile('component')<CR>
+" Alt-c
+map <buffer> ç :call aura#alternateFile('controller')<CR>
+" Alt-h
+map <buffer> ˙ :call aura#alternateFile('helper')<CR>
+" Alt-s
+map <buffer> ß :call aura#alternateFile('css')<CR>
+
+<
+"""""""""""""""""""""" end config example """"""""""""""""""""""""""""""""""""
+
+ vim:textwidth=78:ts=4:ft=help:norl:wrap:expandtab:shiftwidth=4:

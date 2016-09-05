@@ -1,8 +1,9 @@
-*force.com.txt*	Plugin for developing on force.com      
+*force.com.txt* Plugin for developing on force.com      
 Author: Andrey Gavrikov
 License: Same terms as Vim itself (see |license|)
 
-force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
+force.com plugin for Vim                         *vim-force.com* |  *force.com*
+                                                 *salesforce* | *apex*
 
 |force.com-description|   Description
 |force.com-features|      Features
@@ -24,7 +25,7 @@ force.com plugin for Vim                    *force.com* | *salesforce* | *apex*
 |Recommended-Plugins|     other recommended Vim plugins
 |force.com-credits|       Credits 
 
-For Vim version 7.3 or later.
+For Vim version 7.4 (with 'job' support) or later.
 Requires :set nocompatible
 
 ==============================================================================
@@ -55,9 +56,9 @@ Note 2: it is recommended to use absolute paths in your config to avoid problems
 
 Before vim-force.com plugin can be used following requirements must be met:
 
-1. Vim version 7.3 or later with :set nocompatible
+1. Vim version 7.4 (with `job` & `channel` support) or later, with `:set nocompatible` 
 
-2. Java JDK/JRE, Version 7 or greater
+2. Java JDK/JRE, Version 8 or greater
    - Oracle JDK
      http://www.oracle.com/technetwork/java/javase/downloads/index.html
 
@@ -69,13 +70,8 @@ Before vim-force.com plugin can be used following requirements must be met:
 4. On MS Windows 
 	Make sure that all paths in your configuration are as short as possible.
 	vim-force.com will be calling tooling-force.com.jar and passing many
-	parameters via command line and some MS Window version struggle with long
+	parameters via command line and some MS Window versions struggle with long
 	command lines. 
-	Consider installing python and configuring your vim with |+python|
-	support, this will help to remove annoying CMD/DOS popups on every
-	operation. See also |vim-python-ms-windows|
-	If you do not want to go with python then consider vimproc, see
-	|force.com-limitations|
 
 5. Unpack vim-force.com plugin archive anywhere you like
 
@@ -118,6 +114,12 @@ e.g. >
 
 10. Have a look at the config example: :help |force.com-config-example|
 
+NOTE: depending on the vim flavour installed in your system `job_start()` may
+or may not call its callback function if job fails to start (e.g. due to bad
+configuration). Use :|ApexValidateJavaConfig| command to validate your
+settings.  If |ApexValidateJavaConfig| reports OK but you still have doubts
+then check :|ApexMessages| after calling an Apex[NNN] command (e.g.
+:|ApexToolingVersion| ).
 
 ==============================================================================
 Example of minimal _vimrc configuration for win32    *force.com-config-example*
@@ -147,17 +149,14 @@ Example of minimal _vimrc configuration for win32    *force.com-config-example*
  		" full path required here, relative may not work
  		let g:apex_properties_folder="c:\\temp\\vim-force.com-tests\\secure-properties"
  	endif
- 	let g:apex_binary_tee = "c:\\bin\\UnixUtils\\tee.exe"
- 	let g:apex_binary_touch = "c:\\bin\\UnixUtils\\touch.exe"
  endif	
 
  set autowrite " not strictly required, but without it you will be getting
                " errors when running commands that open new buffer 
 			   " (e.g. :ApexQuery or :ApexExecuteAnonymous) on unsaved file
 
- " (optional) if you want to enable server mode, uncoment 2 lines below
- "let g:apex_server=1 " start server on first call
- "let g:apex_server_timeoutSec=60*30 " allow server to wait for new connections within 30 minutes
+ " (optional) 
+ let g:apex_server_timeoutSec=60*30 " allow server to wait for new connections within 30 minutes
 <
 """""""""""""""""""""" end config example """"""""""""""""""""""""""""""""""""
 
@@ -187,7 +186,7 @@ Project Setup and Structure                                *apex-project-setup*
 		----...
 
 	So if you have existing eclipse project then you can start using force.com plugin
-	straight away by opening .class or .trigger file with vim
+	straight away by opening .cls or .trigger file with vim
 ------------------------------------------------------------------------------
 A. Using alongside Force.com IDE for Eclipse                *apex-with-eclipse* 
 
@@ -201,18 +200,36 @@ A. Using alongside Force.com IDE for Eclipse                *apex-with-eclipse*
 	at this point if class code is syntax highlighted then chances are that most of your 
 	config is right
 	
-	6. issue command 
-	   :ApexRefreshProject
+    6. check your config 
+        :ApexValidateJavaConfig
+       if no errors shown then proceed to next step.
+           
+	7. load current project version from SFDC 
+	    :ApexRefreshProject
 
 ------------------------------------------------------------------------------
 B. vim force.com plugin standalone                     *apex-plugin-standalone*
 
 In this mode Eclipse is not needed.
-Run :|ApexInitProject| and follow the wizard
+
+0. When using this plugin for the first time - check if you configuration looks ok
+    Open new vim insatnce and execute >
+    :setfiletype apexcode
+    :ApexValidateJavaConfig
+<
+Check that |ApexValidateJavaConfig| does not return any errors.
+
+1. Run :|ApexInitProject| and follow the wizard
 
 
 ------------------------------------------------------------------------------
 Plugin exposes following commands:                              *apex-commands*
+
+|ApexValidateJavaConfig|            test your java/tooling-force.com.jar
+                                    configuration
+
+|ApexMessages|                      special buffer which displays log of all
+                                    commands
 
 |ApexCompare|                       compare files in two local projects
 |ApexCompareLocalProjects|          compare two local projects
@@ -268,6 +285,18 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexToolingVersion|                show version of tooling-force.com.jar
 
 ------------------------------------------------------------------------------
+
+                                                        *ApexValidateJavaConfig*
+Before running any Apex command for the first time you may want to test if
+your java & "tooling-force.com.jar" config looks good.
+Open any local apex class ".cls" file and run :ApexValidateJavaConfig.
+
+                                                                 *ApexMessages*
+
+Every time you run :Apex[Something] command which makes a call to server the
+log of this command is recorded in 'apex_messages' buffer. In some cases this
+buffer is opened automatically. If you have executed a command and not sure
+what its result was - run :ApexMessages
 
                                                                    *ApexCompare*
 
@@ -361,7 +390,7 @@ Note 2: All commands in :|ApexDeploy|* family support <bang>, see
 
                                                       *ApexDeployAllDestructive*
 
-*WARNING:*
+WARNING:
 This is a dangerous and destructive operation - use it at your peril!
 
 In addition to behaving like :|ApexDeployAll|, it also removes files that live
@@ -381,7 +410,7 @@ Note 2: All commands in :|ApexDeploy|* family support <bang>, see
 
                                                          *ApexDeployDestructive*
 
-*WARNING:* 
+WARNING: 
 This is a dangerous and destructive operation - use it at your peril!
 
 You can think of :ApexDeployDestructive as a combination of :|ApexDeploy| and
@@ -555,9 +584,9 @@ updates selected local file but does not touch local timestamp cache, hence
 during saving / deploying file to SFDC file still will be considered as 
 outdated.
 
-                                                            *ApexRefreshProject*
+                                                             *ApexRefreshProject* 
 
-Refresh current project and download new/modified files from SFDC replacing
+Refresh current project and download new/modified files from SFDC, replacing
 all local files.
 
                                                               *ApexRemoveStaged*
@@ -834,12 +863,10 @@ Current version includes basic auto completion support for Apex classes and
 some standard Apex library namespaces.
 
 Current limitations:
-- works best in |server-mode|. 
-  In non-server mode you have to wait for tooling-force.com.jar to load every time.
 - does not support completion of SObject fields inside SOQL statements
   
 Usage:
-- configure |server-mode| and try following in .cls file (do not type single quote characters)
+- try following in .cls file (do not type single quote characters)
     'System.' Ctrl-X,Ctrl-O
 	'String str = "abc"; str.' Ctrl-X,Ctrl-O
 
@@ -850,7 +877,7 @@ Recommended .vimrc config for apex completion:
 	" map omni completion to Control + Space
 	""""""""""""""""""""""""""""""""""""""""""
 	inoremap <C-Space> <C-x><C-o>
-	inoremap <C-@> <C-Space>
+    inoremap <C-@> <C-x><C-o>
 <
 2. completion menu popup >
     set completeopt=menu,preview,longest
@@ -895,10 +922,6 @@ Required
 |'g:apex_tooling_force_dot_com_path'|      
                                   full path to tooling.jar
 
-Required MS Windows only
-|'g:apex_binary_tee'|             full path to tee.exe executable
-|'g:apex_binary_touch'|           full path to touch.exe executable
-
 Optional
 |'g:apex_diff_cmd'|                 path to file comparison tool
 |'g:apex_ctags_cmd'|                path to exuberant ctags 
@@ -908,7 +931,7 @@ Optional
                                     poll of Salesforce to retrieve the results
 |'g:apex_maxPollRequests'|          The number of times to poll Salesforce for
                                     the results of the task
-|'g:apex_test_debuggingHeader'|             The debug logging level for tests. 
+|'g:apex_test_debuggingHeader'|     The debug logging level for tests. 
 |'g:apex_conflict_check'|           Control (on/off) conflict check with SFDC before deployment
 
 |'g:apex_java_cmd'|                 custom path to java executable
@@ -929,7 +952,6 @@ Optional
 |'g:apex_OnCommandComplete'|        script to execute at the end of long running
                                     command
 
-|'g:apex_server'|                   enable/disable server mode
 |'g:apex_server_timeoutSec'|        automatic server shutdown timeout
 
                                                         *'g:apex_backup_folder'*
@@ -960,41 +982,15 @@ ex: >
 or for win32, assuming that Truecrypt volume is T: >
 	let g:apex_properties_folder="t:"
 <
-                                                          *force.com-unix_utils*
-Plugin is using unix utilities 'tee' and 'touch'
-On MS Windows these commands are not available out of the box.
-UnixUtils for Win32 can be found here: http://unxutils.sourceforge.net/
-
-See |'g:apex_binary_tee'| and |'g:apex_binary_touch'|
-On Unix setting these variables is not strictly necessary, unless 'tee' and 'touch'
-are not available via $PATH
-
-Plugin also uses other built in shell commands like
+                                                          *force.com-shell_utils*
+Plugin uses some built in shell commands like:
 'rm', 'mkdir', 'cp' on unix
 and
 'rmdir', 'copy' on ms windows
-But it is assumed that these are generally available out of the box.
+It is assumed that these are generally available out of the box.
 If you are using non standard environment then you can define paths to those commands.
 See apexOs.vim for details
 
-                                                           *'g:apex_binary_tee'*
-Full path to shell command 'tee'
-tee - read from standard input and write to standard output and files
-
-ex: >
-	let g:apex_binary_tee = "/usr/bin/tee"
-<or for win32 >
-	let g:apex_binary_tee = "d:\\bin\\UnixUtils\\tee.exe"
-<
-                                                         *'g:apex_binary_touch'*
-Full path to shell command 'touch'
-tee - read from standard input and write to standard output and files
-
-ex: >
-	let g:apex_binary_touch = "/usr/bin/touch"
-<or for win32 >
-	let g:apex_binary_touch = "d:\\bin\\UnixUtils\\touch.exe"
-<
                                                              *'g:apex_diff_cmd'*
 /path/to/file/compare/tool
 ex: >
@@ -1145,29 +1141,8 @@ if command runs for more than 10 seconds then upon completion you will hear
 Optional.
 root folder to use when creating new project with :|ApexInitProject|
 
-                                        *server-mode* *server* *'g:apex_server'*
                                         *g:apex_server_timeoutSec*
                                         *g:apex_server_port*
-Optional.
-Use |'g:apex_server'| to enable/disable server mode.
-Warning: server mode uses substantial amount of RAM and is not suitable for
-underpowered machines.
-
-In order to use Server mode you either have to be on *nix system which has
-'echo' and 'nc'(netcat) commands, or have your vim instance compiled with
-|+python| or |+python/dyn|. See |vim-python-ms-windows|.
-
-In the old (non server) mode tooling-force.com.jar binary is loaded into memory
-every time when it is needed, e.g. every time when apex class is saved to SFDC.
-This allows to minimise RAM usage but makes every operation slower by the
-number of seconds required to read from disk and load tooling-force.com.jar
-binary.  Some operations (e.g. auto-completion) may not be practical in non
-server mode due to the time it takes for operation to complete.
-
-Server mode allows to keep tooling-force.com binary in RAM after it was first
-loaded, as well as cache some data in RAM, so all subsequent operations use
-already loaded tooling-force.com.jar instance which may noticeably reduce the
-time taken by every operation involving tooling-force.com.jar binary.
 
 Once loaded tooling-force.com.jar will keep itself loaded until
 |'g:apex_server_timeoutSec'| timeout since last touch is reached.
@@ -1178,7 +1153,6 @@ vim-force.com called it.
 Use |'g:apex_server_timeoutSec'| to set the timeout and minimise RAM usage when
 you are not working with vim-force.com plugin.
 e.g. >
-	let g:apex_server=1 " start server on first call
 	" allow server to wait for new connections within 30 minutes
 	let g:apex_server_timeoutSec=60*30
 <
@@ -1186,27 +1160,6 @@ e.g. >
 Server is accessed via a TCP socket on port 8888. If you want to change the
 port then define |'g:apex_server_port'| global variable in your .vimrc, e.g. >
 	let g:apex_server_port = 65000
-<
-
-MS Windows: when executing first command and tooling-force.com server
-is not yet running you will see a new DOS/CMD window popup. Do NOT close it,
-just minimise and leave it running.
-
-                                                        *vim-python-ms-windows*
-In order to eliminate CMD.exe window popups on MS Windows current version of
-vim-force.com plugin (when run in |server-mode|) takes advantage of python
-support in vim.
-To check if your vim supports python run following in vim: >
-	:echo has("python")
-<line above must respond: 1 
-if it does then make further check: >
-	:python print 'hello'
-<
-If you get 'hello' in response (no quotes) and no error messages then you are
-good to go. If not then use your favourite search engine to find out how to
-install vim with python support and also check: >
-	:help python 
-	:help python-dynamic
 <
 
 ==============================================================================
@@ -1335,13 +1288,6 @@ Salesforce Metadata API does not (in most cases) report error line numbers
 in Visualforce pages making it impossible to go-to actual problem line if
 compile/save fails due to syntax error. This is similar to Force.com IDE for
 Eclipse.
-
-On MS Windows default configuration spawns separate DOS/CMD window on every call
-to command line utility.
-There are two ways to mitigate this:
-1. install vimproc: https://github.com/Shougo/vimproc.vim
-OR
-2. use |server-mode|
 
 ==============================================================================
 RECOMMENDED-PLUGINS                             *force.com-recommended-plugins*

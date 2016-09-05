@@ -23,7 +23,7 @@ function apexCoverage#quickFixOpen(...) abort
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
 	let projectPath = projectPair.path
 
-	let coverageReportFile = apexTooling#getLastCoverageReportFile()
+	let coverageReportFile = apexToolingAsync#getLastCoverageReportFile()
 	if filereadable(coverageReportFile)
 		let l:coverageList = []
 		for jsonLine in readfile(coverageReportFile)
@@ -155,7 +155,7 @@ endfunction
 function! s:loadCoverageData(filePath)
 	let resultMap = {}
 	let fileName = apexOs#splitPath(a:filePath).tail
-	let coverageReportFile = apexTooling#getLastCoverageReportFile()
+	let coverageReportFile = apexToolingAsync#getLastCoverageReportFile()
 	"TODO remove line below and uncomment one above
 	"let coverageReportFile = '/private/var/folders/j7/j2yjllg10wz5__x5f8h2w10c0000gn/T/coverage7187158401431933096.txt'
 	if filereadable(coverageReportFile) 

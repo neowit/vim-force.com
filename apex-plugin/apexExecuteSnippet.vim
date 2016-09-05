@@ -112,12 +112,18 @@ function s:executeAnonymous(filePath, projectName, codeFile)
 	if projectPair.name != a:projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
 	endif
-	let resMap = apexTooling#execute("executeAnonymous", a:projectName, projectPath, l:extraParams, [])
-	if exists('g:apex_test_debuggingHeader')
-		if "true" == resMap.success
-			:ApexLog
-		endif
-	endif
+
+    " =============== internal callback ====================
+    function! l:extraParams.callbackFuncRef(resMap)
+        if exists('g:apex_test_debuggingHeader')
+            if "true" == a:resMap.success
+                :ApexLog
+            endif
+        endif
+    endfunction    
+    " =============== END internal callback ====================
+
+	call apexToolingAsync#execute("executeAnonymous", a:projectName, projectPath, l:extraParams, [])
 endfunction	
 
 let s:lastSoqlQueryFilePath = ""
@@ -126,20 +132,28 @@ function s:executeSoqlQuery(filePath, api, projectName, codeFile)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
 	let outputFilePath = tempname()
-	let l:extraParams = {"queryFilePath": apexOs#shellescape(a:codeFile), 'outputFilePath':  apexOs#shellescape(outputFilePath)}
+	let l:extraParams = {"queryFilePath": apexOs#shellescape(a:codeFile), 'outputFilePath':  apexOs#shellescape(outputFilePath), '_outputFilePathRaw': outputFilePath }
 	" another org?
 	if projectPair.name != a:projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
 	endif
     let l:extraParams["api"] = a:api
-	let resMap = apexTooling#execute("soqlQuery", a:projectName, projectPath, l:extraParams, [])
-	if "true" == resMap.success
-        let s:lastSoqlQueryFilePath = a:codeFile
-		" load result file if available and show it in a read/only buffer
-		if len(apexUtil#grepFile(resMap.responseFilePath, 'RESULT_FILE')) > 0
-			execute "view " . fnameescape(outputFilePath)
-		endif
-	endif
+    let l:extraParams["codeFile"] = a:codeFile
+
+    " =============== internal callback ====================
+    function! l:extraParams.callbackFuncRef(resMap)
+        if "true" == a:resMap.success
+            let s:lastSoqlQueryFilePath = self.codeFile
+            " load result file if available and show it in a read/only buffer
+            if len(apexUtil#grepFile(a:resMap.responseFilePath, 'RESULT_FILE')) > 0
+                execute "view " . fnameescape(self._outputFilePathRaw)
+            endif
+        endif
+    endfunction    
+    " =============== END internal callback ====================
+
+
+	call apexToolingAsync#execute("soqlQuery", a:projectName, projectPath, l:extraParams, [])
 endfunction	
 
 " http://stackoverflow.com/a/6271254

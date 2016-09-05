@@ -74,7 +74,7 @@ syn keyword	apexcodeKeyword			webservice
 syn keyword apexcodeSelectKeywords	contained select from where with having limit offset
 								" use \< .. \> to match the whole word
 syn match	apexcodeSelectKeywords	contained "\<\(order by\|group by\|group by rollup\|group by cube\)\>"
-syn match	apexcodeSelectKeywords	contained "\<\(NULLS FIRST\|NULLS LAST\|asc\|desc\)\>"
+syn match	apexcodeSelectKeywords	contained "\c\<\(NULLS FIRST\|NULLS LAST\|asc\|desc\)\>"
 syn match	apexcodeSelectOperator	contained "\<\(in\|not in\)\>"
 syn keyword	apexcodeSelectOperator	contained or and true false
 syn keyword	apexcodeSelectOperator	contained toLabel includes excludes convertTimezone convertCurrency

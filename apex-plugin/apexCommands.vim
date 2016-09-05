@@ -18,7 +18,9 @@ let g:loaded_apexCommands = 1
 " Apex commands 
 """"""""""""""""""""""""""""""""""""""""""""""""
 " version of tooling-force.com
-command! ApexToolingVersion :call apexTooling#getVersion(expand("%:p"))
+command! ApexValidateJavaConfig :call apexServer#validateJavaConfig()
+" version of tooling-force.com
+command! ApexToolingVersion :call apexToolingAsync#getVersion(expand("%:p"))
 
 " staging
 command! ApexStage :call apexStage#open(expand("%:p"))
@@ -52,23 +54,33 @@ command! ApexGitInit :call apexUtil#gitInit()
 function! s:toolingJarSpecific()
 	"
 	" Deployment
-	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apexTooling#deploy('deploy', 'Modified', <bang>0, <f-args>)
-	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployDestructive :call apexTooling#deploy('deploy', 'ModifiedDestructive', <bang>0, <f-args>)
-	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAll :call apexTooling#deploy('deploy', 'All', <bang>0, <f-args>)
-	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAllDestructive :call apexTooling#deploy('deploy', 'AllDestructive', <bang>0, <f-args>)
-	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOpen :call apexTooling#deploy('deploy', 'Open', <bang>0, <f-args>)
-	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexTooling#deploy('deploy', 'Staged', <bang>0, <f-args>)
-	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOne :call apexTooling#deploy('deploy', 'One', <bang>0, <f-args>)
+	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apexTooling#deploy('deploy', 'Modified', <bang>0, <f-args>)
+	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployDestructive :call apexTooling#deploy('deploy', 'ModifiedDestructive', <bang>0, <f-args>)
+	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAll :call apexTooling#deploy('deploy', 'All', <bang>0, <f-args>)
+	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAllDestructive :call apexTooling#deploy('deploy', 'AllDestructive', <bang>0, <f-args>)
+	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOpen :call apexTooling#deploy('deploy', 'Open', <bang>0, <f-args>)
+	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexTooling#deploy('deploy', 'Staged', <bang>0, <f-args>)
+	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOne :call apexTooling#deploy('deploy', 'One', <bang>0, <f-args>)
+
 	" TODO
 	"command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployConfirm :call apexTooling#deploy('Confirm', <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apexToolingAsync#deploy('deploy', 'Modified', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployDestructive :call apexToolingAsync#deploy('deploy', 'ModifiedDestructive', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAll :call apexToolingAsync#deploy('deploy', 'All', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployAllDestructive :call apexToolingAsync#deploy('deploy', 'AllDestructive', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOpen :call apexToolingAsync#deploy('deploy', 'Open', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexToolingAsync#deploy('deploy', 'Staged', <bang>0, <f-args>)
+	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOne :call apexToolingAsync#deploy('deploy', 'One', <bang>0, <f-args>)
 
-	command! -nargs=0 ApexRefreshProject :call apexTooling#refreshProject(expand("%:p"))
-	command! -nargs=? -complete=customlist,apex#listProjectNames ApexRefreshFile :call apexTooling#refreshFile(expand("%:p"), <f-args>)
+    " Deployment - Async
 
-	command! ApexPrintChanged :call apexTooling#printChangedFiles(expand("%:p"))
-	command! ApexPrintConflicts :call apexTooling#printConflicts(expand("%:p"))
-	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteProject :call apexTooling#diffWithRemote(expand("%:p"), "project", <f-args>)
-	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteFile :call apexTooling#diffWithRemote(expand("%:p"), "file", <f-args>)
+	command! -nargs=0 ApexRefreshProject :call apexToolingAsync#refreshProject(expand("%:p"), {})
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexRefreshFile :call apexToolingAsync#refreshFile(expand("%:p"), <f-args>)
+
+	command! ApexPrintChanged :call apexToolingAsync#printChangedFiles(expand("%:p"))
+	command! ApexPrintConflicts :call apexToolingAsync#printConflicts(expand("%:p"))
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteProject :call apexToolingAsync#diffWithRemote(expand("%:p"), "project", <f-args>)
+	command! -nargs=? -complete=customlist,apex#listProjectNames ApexDiffWithRemoteFile :call apexToolingAsync#diffWithRemote(expand("%:p"), "file", <f-args>)
 
 
 	"Unit testing
@@ -90,15 +102,18 @@ function! s:toolingJarSpecific()
 	command! -nargs=* -complete=customlist,apex#completeQueryParams ApexQueryRepeat call apexExecuteSnippet#repeat('soqlQuery', expand("%:p"), <f-args>)
 
 	" display last log
-	command! ApexLog :call apexTooling#openLastLog()
+	command! ApexLog :call apexToolingCommon#openLastLog()
+
+    " display message buffer
+	command! ApexMessages :call apexMessages#open()
 
 	" open scratch buffer/file
 	command! ApexScratch :call apexTooling#openScratchFile(expand("%:p"))
 
 	" Tooling API commands
-	command! -bang -nargs=? -complete=customlist,apex#completeSaveParams ApexSave :call apexTooling#deploy('save', 'Modified', <bang>0, <f-args>)
-	command! -bang -nargs=? -complete=customlist,apex#completeSaveParams ApexSaveOpen :call apexTooling#deploy('save', 'Open', <bang>0, <f-args>)
-	command! -bang -nargs=? -complete=customlist,apex#completeSaveParams ApexSaveOne :call apexTooling#deploy('save', 'One', <bang>0, <f-args>)
+	command! -bang -nargs=? -complete=customlist,apex#completeSaveParams ApexSave :call apexToolingAsync#deploy('save', 'Modified', <bang>0, <f-args>)
+	command! -bang -nargs=? -complete=customlist,apex#completeSaveParams ApexSaveOpen :call apexToolingAsync#deploy('save', 'Open', <bang>0, <f-args>)
+	command! -bang -nargs=? -complete=customlist,apex#completeSaveParams ApexSaveOne :call apexToolingAsync#deploy('save', 'One', <bang>0, <f-args>)
 
     " Apex Parser 
 	command! ApexCheckSyntax :call apexComplete#checkSyntax(expand("%:p"))

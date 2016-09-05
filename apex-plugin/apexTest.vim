@@ -13,9 +13,6 @@ let g:loaded_apexTest = 1
 
 let s:ALL = '*ALL*'
 
-let b:projectPair = apex#getSFDCProjectPathAndName(expand("%:p"))
-let b:PROJECT_NAME = b:projectPair.name
-let b:PROJECT_PATH = b:projectPair.path
 " run test using apexTooling
 "Param: reportCoverage: 'reportCoverage' (means load lines report), anything
 "				        else means do not load lines coverage report
@@ -77,7 +74,7 @@ function! apexTest#runTest(reportCoverage, bang, ...)
 
     endif
 
-    call apexTooling#deployAndTest(filePath, attributes, projectName, a:reportCoverage, a:bang)
+    call apexToolingAsync#deployAndTest(filePath, attributes, projectName, a:reportCoverage, a:bang)
 
 endfunction
 
@@ -214,15 +211,41 @@ function! s:listModeNames(arg, line, pos)
 endfunction	
 "
 " list test suite names for argument auto-completion
-" arg may look like so
-" 
-" <Cla>
-" <Class.method,>
-" <Class.method,Cla>
 function! s:listTestSuiteNames(arg, line, pos)
-    let candidates = s:getTestSuiteNames(b:PROJECT_NAME, b:PROJECT_PATH, 0)
+    let candidates = s:getTestSuiteNames(s:getProjectName(), s:getProjectPath(), 0)
 	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, candidates)
 endfunction    
+
+function! s:getProjectName()
+    if !exists('b:PROJECT_NAME')
+        call s:loadProjectPathAndName()
+    endif
+    return b:PROJECT_NAME
+endfunction
+
+function! s:getProjectPath()
+    if !exists('b:PROJECT_PATH') || len(b:PROJECT_PATH) < 1
+        call s:loadProjectPathAndName()
+    endif
+    return b:PROJECT_PATH
+endfunction
+
+function! s:loadProjectPathAndName()
+    if !exists('b:PROJECT_NAME') || len(b:PROJECT_NAME) < 1
+        try 
+            let projectPair = apex#getSFDCProjectPathAndName(expand("%:p"))
+            let b:PROJECT_NAME = projectPair.name
+            let b:PROJECT_PATH = projectPair.path
+        catch
+            " ignore
+        endtry
+    endif    
+endfunction
+
+" try to load project path/name when this file is initially sourced
+" if this is not done then TestSuite name auto-completion seems to experience
+" problems when test suite names are first loaded
+call s:loadProjectPathAndName()
 
 " Using given file name and starting from lineNum try to identify method name
 " assuming that this is the last word before '('

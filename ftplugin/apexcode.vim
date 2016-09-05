@@ -4,11 +4,17 @@
 " setup environment for Apex Code development
 "
 
-" Only do this when not done yet for this buffer
-if exists("b:did_ftplugin")
+" do NOT enable this as this will stop all apex initialisation when user
+" opened &ft != 'apexcode' files like 'visualforce' or 'aura-xml'
+"if exists("b:did_ftplugin")
+"  finish
+"endif
+"let b:did_ftplugin = 1 
+
+if exists("g:did_ftplugin_apexcode")
   finish
 endif
-let b:did_ftplugin = 1 
+let g:did_ftplugin_apexcode = 1 
 
 let s:FTPLUGIN_FOLDER = expand("<sfile>:h")
 
@@ -30,7 +36,7 @@ function! apexcode#UpdateIdeCtags()
 	let l:cmdRest .= " --options=" . s:getCtagsConfigPath()
 	let l:cmdRest .= " -f ./tags -R ."
 
-    silent call apexOs#exe(ctags_cmd.l:cmdRest)
+    silent call apexOs#exe(ctags_cmd.l:cmdRest, {})
 endfunction
 command! -nargs=0 -bar ApexUpdateCtags call apexcode#UpdateIdeCtags()
 

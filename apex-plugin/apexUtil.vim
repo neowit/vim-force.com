@@ -51,7 +51,7 @@ function! apexUtil#compareFiles(...)
 		"echo "command=".command
 	
 		":exe "!".command
-		call apexOs#exe(command, 'b')
+		call apexOs#exe(command, {"background": 0})
 	else
 		" use built-in diff
 		:exe "vert diffsplit ".substitute(rightFilePath, " ", "\\\\ ", "g")
@@ -82,7 +82,7 @@ function! apexUtil#compareProjects(leftFilePath)
 
 		let command = scriptPath.' '.apexOs#shellescape(leftSrcPath).' '.apexOs#shellescape(rightSrcPath)
 		
-		call apexOs#exe(command, 'b')
+		call apexOs#exe(command, {"background": 0})
 	else
 		call apexUtil#error("For project comparison external diff tool must be defined via 'g:apex_diff_cmd' ")
 	endif
@@ -118,9 +118,8 @@ endfunction
 " create Git repo for current Apex project and add files
 function! apexUtil#gitInit()
 	if !executable('git')
-		echomsg 'force.com plugin: Git (http://git-scm.com/) ' .
-                \ 'not found in PATH. apexUtil#gitInit() is not available.'
-		finish
+        call apexUtil#error("git (http://git-scm.com/) executable not found in $PATH.")
+		return
 	endif	
 
 	let filePath = expand("%:p")
@@ -132,7 +131,11 @@ function! apexUtil#gitInit()
 
 	let response = input('Init new Git repository at: "'.projectPath.'" [a/y/n]? ')
 	if 'y' == response || 'Y' == response || 'a' == response || 'A' == response
-		call apexOs#exe("git init '".projectPath."'")
+		let res = apexOs#exe("git init ".shellescape(projectPath), {"background": 0})
+        echo "\n".res
+        if res =~? "^fatal"
+            return
+        endif    
 	endif	
 	let dirs =keys(supportedFiles)
 	for dirName in dirs
@@ -140,13 +143,16 @@ function! apexUtil#gitInit()
 		let fullPath = apexOs#joinPath([projectSrcPath, dirName])
 		if isdirectory(fullPath)
 			let fileExtention = supportedFiles[dirName]
-			let maskPath = "'".fullPath."/*.".fileExtention."'"
+			let maskPath = fullPath."/*.".fileExtention
 			if  'a' != response && 'A' != response
 				let response = input('add files: "'.maskPath.'" [a/y/n]? ')
 			endif
 
 			if 'y' == response || 'Y' == response || 'a' == response || 'A' == response
-				call apexOs#exe("git add ".maskPath)
+				let res = apexOs#exe("git add ".shellescape(maskPath), {"background": 0})
+                if len(res) > 0
+                    echo "\n".res
+                endif
 			endif	
 		else
 			" echo fullPath." is not existing directory"
@@ -316,7 +322,7 @@ function! apexUtil#grepFileLineNums(filePath, expr, ...)
 	
 	try
 		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
-		exe exprStr
+		silent exe exprStr
 		"expression found
 		"get line numbers from quickfix
 		for qfLine in getqflist()
@@ -349,7 +355,7 @@ function! apexUtil#grepFile(filePath, expr, ...)
 	
 	try
 		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
-		exe exprStr
+		silent exe exprStr
 		"expression found
 		"get line numbers from quickfix
 		for qfLine in getqflist()
@@ -421,3 +427,10 @@ function! apexUtil#getOrElse(var, defaultValue)
 	endif
 	return a:defaultValue
 endfunction
+
+function! apexUtil#log(msg)
+    let l:dir = '/Users/andrey/temp/vim/_job-test/'
+    if filewritable(l:dir) > 0
+        call writefile([a:msg], l:dir . "/log.txt", "a")
+    endif
+endfunction    

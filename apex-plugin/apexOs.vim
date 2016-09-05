@@ -61,26 +61,13 @@ endfunction
 " space at the end of command is important
 if s:is_windows
 	call s:let('g:apex_binary_remove_dir', 'rmdir /s /q ')
-	call s:let('g:apex_binary_touch', 'touch.exe ')
-	call s:let('g:apex_binary_tee', 'tee.exe ')
 else
 	call s:let('g:apex_binary_create_dir', 'mkdir ')
 	call s:let('g:apex_binary_remove_dir', 'rm -R ')
-	call s:let('g:apex_binary_touch', 'touch ')
-	call s:let('g:apex_binary_tee', 'tee ')
 endif
-" check if unix utils are executable
-if !executable(s:trim(g:apex_binary_touch))
-	echoerr g:apex_binary_touch." is not available or not executable. see :help force.com-unix_utils"
-	finish
-endif	
-if !executable(s:trim(g:apex_binary_tee))
-	echoerr g:apex_binary_tee." is not available or not executable. see :help force.com-unix_utils"
-	finish
-endif	
 
 "set desired API version
-call s:let('g:apex_API_version', '34.0')
+call s:let('g:apex_API_version', '37.0')
 
 " set pollWaitMillis for ant tasks. See ant-salesforce.jar
 " documentation for 'pollWaitMillis' parameter
@@ -202,23 +189,6 @@ function! apexOs#copyFile(srcPath, destPath)
 	endif	
 endfunction
 
-"OS dependent set file time
-"Args:
-" filePath: full file path
-" time: result returned getftime({fname}), measured as seconds since 1st Jan 1970, 
-function! apexOs#setftime(filePath, time)
-	if has("unix")
-		let stamp = strftime("%Y%m%d%H%M.%S", a:time)
-		silent exe "!touch -t ".stamp." ".shellescape(a:filePath)
-	elseif s:is_windows
-		" win32 format is: MMDDhhmm[[CC]YY][.ss]
-		let stamp = strftime("%m%d%H%M%Y.%S", a:time)
-		silent exe "!".g:apex_binary_touch." -t ".stamp." ".shellescape(a:filePath)
-	else
-		echoerr "Not implemented"
-	endif
-endfun
-
 " remove trailing path separator
 " i.e. make /path/to/folder from /path/to/folder/
 function! apexOs#removeTrailingPathSeparator (path)
@@ -254,74 +224,29 @@ function! apexOs#glob(expr)
   return split(glob(substitute(a:expr, '\', '/', 'g')), "\n")
 endfunction
 
-" check if python is available
-function! apexOs#isPythonAvailable()
-	return has('python3') || has('python')
-endfunction
+"
+"Param: params - dictionary
+"   - 'background' 0|1, if 0 then use system(), otherwise job_start()
+function! apexOs#exe(command, params)
+    if has_key(a:params, "background") && !a:params.background
+        "echomsg "command=".a:command
+        let command = a:command
+        if apexOs#isWindows()
+            " change all '\' in path to '/'
+            let command = substitute(command, '\', '/', "g")
+        endif    
+        return system(command)
+    else    
+        let obj = {}
+        function obj.callback(channel, msg)
+            echo a:msg 
+        endfunction    
+        let job = job_start(a:command, {"callback": function(obj.callback)})
 
-
-"when python is available it may be beneficial to run command using it
-function! s:runWithPython(command)
-python << endpython
-COMMAND = vim.eval("a:command")
-import subprocess
-subprocess.Popen(COMMAND)
-endpython
-endfunction
-
-" windows XP requires command which contains spaces to be enclosed in quotes
-" twice, ex:
-" ""d:\my path\build.cmd" "param 1" "param 2" param3"
-"Args:
-" param 1: command to execute
-" param 2: [optional] string of options - 
-"	b - command will be executed in background (ignored on MS Windows)
-"	M - disable --more-- prompt when screen fills up with messages
-"	s - run in silent mode
-"	p - use python if available
-function! apexOs#exe(command, ...)
-	let result = a:command
-	let disableMore = 0
-	let l:background = a:0 > 0 && a:1 =~# "b"
-	if s:is_windows
-		let result = result
-	elseif a:0 > 0 
-		if l:background
-			let result .= ' &'
-		endif
-		let disableMore = a:1 =~# "M"
-	endif
-
-	"temporarily disable more if enabled
-	"also see :help hit-enter
-	let reEnableMore = 0
-	if disableMore
-		let reEnableMore = &more
-		set nomore
-	endif
-
-	if s:is_windows && a:0 > 0 && a:1 =~# "p" && apexOs#isPythonAvailable()
-		call s:runWithPython(result)
-	elseif s:is_windows && exists(':VimProcBang')
-		"on windows attempt to use vimproc to prevent console window popup
-		echo "working..."
-		sleep 100m " give vim a chance to refresh screen and display message
-		"echo "command=" . result
-		"sleep 10m
-		call vimproc#cmd#system(result)
-	else
-		if a:0 > 0 && a:1 =~# "s"
-			silent exe "!".result
-		else
-			exe "!".result
-		endif
-	endif
-
-	if disableMore && reEnableMore
-		set more
-	endif
-	"call system(result) " system() does not show any progress
-endfunction	
+        let s:job = job
+        return job
+    endif
+endfunction    
 
 " @return: true of given path name has trailing path separator
 " ex: 
