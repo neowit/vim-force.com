@@ -3,16 +3,17 @@
 salesforce.com / force.com plugin for Vim version 7.4 (with `job` & `channel` support) or later.  
 
 ##### Update August 2016  
+
 Note 1:  
 Majority of plugin functions have been migrated to async [jobs and
 channels](https://github.com/vim/vim/blob/master/runtime/doc/channel.txt) added in vim not so long ago.  
-You may need to update to a very recent version of your vim flavour because some initial versions (e.g. MacVim) with `job` support had problems with properly supporting this functionality.  
-As always - make sure that you use latest [tooling-force.com.jar](https://github.com/neowit/tooling-force.com/releases).
+You may need to update to a very recent version of your vim flavour because some initial versions (e.g. MacVim) with `job` support had problems with properly handling this functionality.  
+As always - make sure that you use latest [tooling-force.com.jar](https://github.com/neowit/tooling-force.com/releases).  
 
 Note 2:
 Minimum MacVim version which is known to (almost) work is `7.4, Included patches: 1-1831`.  
 Current versions of MacVim GUI (as well as GVim) suffer from [this issue](https://github.com/macvim-dev/macvim/issues/322).  
-The problem only manifests itelf if your `java` & `tooling-force.com.jar` confg is wrong. If in doubt - test your config with `:ApexValidateJavaConfig`
+The problem only manifests itelf if your `java` & `tooling-force.com.jar` config is wrong. If in doubt - test your config with `:ApexValidateJavaConfig`
 
 Note 3:  
 This version have not been fully tested on MS Windows yet.  
