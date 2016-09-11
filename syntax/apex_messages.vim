@@ -23,6 +23,7 @@ endif
 
 syn match ApexMessagesINFO '^INFO: .*$'
 syn match ApexMessagesERROR '^ERROR:.*$'
+syn match ApexMessagesERROR '^\s*\[ERROR\].*$'
 syn match ApexMessagesWARN '^WARN: .*$'
 syn match ApexMessagesDEBUG '^DEBUG:.*$'
 
