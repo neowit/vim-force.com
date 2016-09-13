@@ -11,11 +11,15 @@ if exists("g:loaded_apexToolingAsync") || &compatible
     finish
 endif
 if !has('job')
-    throw "Vim version with 'job' support is required"
+    throw "Vim version with '+job' feature is required"
     finish
 endif    
 if !has('channel')
-    throw "Vim version compiled with +channel feature is required"
+    throw "Vim version compiled with '+channel' feature is required"
+    finish
+endif    
+if !has('timers')
+    throw "Vim version with '+timers' feature is required"
     finish
 endif    
 let g:loaded_apexToolingAsync = 1
