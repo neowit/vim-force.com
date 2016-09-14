@@ -2,7 +2,7 @@
 
 salesforce.com / force.com plugin for Vim version 7.4 (with `job` & `channel` support) or later.  
 
-##### Update August 2016  
+##### Update September 2016  
 
 Note 1:  
 Majority of plugin functions have been migrated to async [jobs and
@@ -16,11 +16,8 @@ Current versions of MacVim GUI (as well as GVim) suffer from [this issue](https:
 The problem only manifests itelf if your `java` & `tooling-force.com.jar` config is wrong. If in doubt - test your config with `:ApexValidateJavaConfig`
 
 Note 3:  
-This version have not been fully tested on MS Windows yet.  
-If you want to try it out - make sure to use **latest** version of vim. Those
-available from [vim.org](http://www.vim.org/download.php#pc) are outdated and
-as of August 2016 do not include necessary level of `job` & `channel` support.   
-If you feel adventurous - try [a nightly build](https://github.com/vim/vim-win32-installer).
+This version has not been fully tested on MS Windows yet.  
+If you want to try it out - make sure to use [**latest** vim version](http://www.vim.org/download.php#pc).  
 
 Note 4:  
 If you have to use older vim version or want to continue using synchronous
