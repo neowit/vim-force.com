@@ -956,7 +956,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 
         let errCount = s:parseErrorLog(self.responseFilePath, self.projectPath, self.displayMessageTypes, self.isSilent, l:disableMorePrompt, self.extraParams)
         "echo "l:startTime=" . string(l:startTime)
-        """temporary disabled"" call s:onCommandComplete(reltime(self.startTime))
+        call s:onCommandComplete(reltime(self.startTime))
         
         let l:success = len(apexUtil#grepFile(self.responseFilePath, 'RESULT=SUCCESS')) > 0 && 0 == errCount ? "true": "false"
 
@@ -1061,7 +1061,7 @@ function! s:onCommandComplete(timeElapsed)
     if s:hasOnCommandComplete()
         let l:command = g:apex_OnCommandComplete['script']
         if len(l:command) > 0
-            let l:flags = {"silent": 1}
+            let l:flags = {"silent": 1, "background": 0}
             "echo "a:timeElapsed=" . string(a:timeElapsed)
             if has_key(g:apex_OnCommandComplete, 'timeoutSec')
                 if a:timeElapsed[0] > str2nr(g:apex_OnCommandComplete['timeoutSec'])
