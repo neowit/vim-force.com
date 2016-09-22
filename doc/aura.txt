@@ -9,8 +9,6 @@ salesforce.com aura/lightning support in force.com plugin for Vim
 |aura-start|         Quick start
 |aura-map-example|   Recommended keyboard mapping
 
-For Vim version 7.4, Included patches: 1-1831 or later.
-
 ==============================================================================
 DESCRIPTION                                                 *aura-description*
 
@@ -29,7 +27,7 @@ To create new aura files/bundles use any of the following methods:
 SYSTEM REQUIREMENTS                                  *aura-system-requirements*
 
 - installed vim-force.com + tooling-force.com.jar
-- Minimal Required VIM version 7.4, Included patches: 1-1831 or later.
+- Vim version 7.4 (with 'job', 'channel' & 'timers' support) or later.
 
 ==============================================================================
                                                                    *aura-start* 

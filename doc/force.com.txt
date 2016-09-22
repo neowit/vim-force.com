@@ -25,7 +25,7 @@ force.com plugin for Vim                         *vim-force.com* |  *force.com*
 |Recommended-Plugins|     other recommended Vim plugins
 |force.com-credits|       Credits 
 
-For Vim version 7.4 (with 'job' support) or later.
+For Vim version 7.4 (with 'job', 'channel' & 'timers' support) or later.
 Requires :set nocompatible
 
 ==============================================================================
@@ -953,6 +953,7 @@ Optional
                                     command
 
 |'g:apex_server_timeoutSec'|        automatic server shutdown timeout
+|'g:apex_server_port'|              change port used by local server 
 
                                                         *'g:apex_backup_folder'*
 
@@ -1141,6 +1142,7 @@ if command runs for more than 10 seconds then upon completion you will hear
 Optional.
 root folder to use when creating new project with :|ApexInitProject|
 
+                                        *apex-server*
                                         *g:apex_server_timeoutSec*
                                         *g:apex_server_port*
 
@@ -1251,6 +1253,7 @@ Build/Save to SFDC
 Load/update metadata from SFDC
 
 Create triggers/classes/pages
+- for details of working with "aura/lighnting" components see |aura.txt|
 
 Refresh current file from SFDC
 
