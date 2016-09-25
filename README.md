@@ -37,11 +37,6 @@ Note: you will lose some of newer functions.
 If you are getting `Internal Server Error` when trying to deploy/save list of files which contain both Aura bundle(s) and Apex Class/Page then you are most likely affected by what appears to be a bug in Spring'15. 
 Current workaround is to deploy Apex Classes/Pages first (:ApexDeployOne or :ApexDeployOpen or :ApexDeployStaged) and then call :ApexDeploy or :ApexSave as usual.
 
-##### Update Oct. 2014  
-Best way to take advantage of [Apex code completion](http://youtu.be/u-6JQNuWRdE) is to use "server" mode.  
-If you are using server mode on MS Windows then you must have python available to vim.
-Read `:help server-mode` in vim-force.com documentation carefully.
-
 ##### Update Feb. 2014  
 'master' branch of vim-force.com is no longer based on Ant and [force.com migration tool](http://www.salesforce.com/us/developer/docs/daas/). This version requires config changes, see `:help force.com-installation`, `:help g:apex_tooling_force_dot_com_path` and `:help force.com-config-example`.  
 If you want to continue using Ant + ant-salesforce.jar then switch to [ant-based](https://github.com/neowit/vim-force.com/tree/ant-based) branch.  
