@@ -485,6 +485,9 @@ function! apexToolingAsync#refreshProject(filePath, params)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	"let extraParams = a:0 > 0 && a:1 ? {"skipModifiedFilesCheck":"true"} : {}
     let extraParams = {}
+    " override response code in case if modified files detected
+    let extraParams["modifiedFilesResultCode"] = "SUCCESS"
+    
 	if has_key(a:params, "skipModifiedFilesCheck") 
         let extraParams["skipModifiedFilesCheck"] = a:params["skipModifiedFilesCheck"]
     endif    
