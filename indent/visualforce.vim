@@ -2,7 +2,7 @@
 " This file is part of vim-force.com plugin
 " https://github.com/neowit/vim-force.com
 " Author: Andrey Gavrikov 
-" Last Modified: 2016-09-11
+" Last Modified: 2016-10-11
 "
 " indent config for visualforce code files
 
