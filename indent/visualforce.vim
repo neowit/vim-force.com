@@ -6,30 +6,32 @@
 "
 " indent config for visualforce code files
 
-" Loading XML indent script, that works well with HTML and VF tags
 silent! unlet b:did_indent
 runtime indent/xml.vim
-let s:xmlIndentExpr = &l:indentexpr
+let s:xmlIndentRef=function("XmlIndentGet")
 
-" Loading HTML indent script, for indent between script/style tags
 silent! unlet b:did_indent
 runtime indent/html.vim
-let s:htmlIndentExpr = &l:indentexpr
+let s:htmlIndentRef=function("HtmlIndent")
 
-setlocal indentexpr=VisualforceIndentExpr(v:lnum)
+silent! unlet b:did_indent
+runtime indent/css.vim
+let s:cssIndentExpr=function("GetCSSIndent")
 
-function! VisualforceIndentExpr(curlinenum)
-  let scriptlnum = searchpair('<script.\{-}>', '',
-  \                           '</script>', 'bWn')
-  let stylelnum = searchpair('<style.\{-}>', '',
-  \                           '</style>', 'bWn')
-  let prevlnum = prevnonblank(a:curlinenum)
+setlocal indentexpr=VFIndent()
 
-  " If we are between script / style tags, use html indentation
-  if scriptlnum && scriptlnum+1 != prevlnum || stylelnum && stylelnum+1 != prevlnum
-	exec 'return ' s:htmlIndentExpr
+function! VFIndent()
+  let scriptlnum = searchpair('<script.\{-}>','','</script>','bWn')
+  let stylelnum = searchpair('<style.\{-}>','','</style>','bWn')
+  let prevlnum = prevnonblank(v:lnum)
+
+  if scriptlnum && scriptlnum!=prevlnum
+	return s:htmlIndentRef()
   endif
 
-  " Otherwise we use XML indentation
-  exec 'return ' s:xmlIndentExpr
+  if stylelnum && stylelnum!=prevlnum
+	return s:cssIndentExpr()
+  endif
+
+  return s:xmlIndentRef(v:lnum,0)
 endfunction
