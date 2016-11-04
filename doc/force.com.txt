@@ -931,7 +931,9 @@ Optional
                                     poll of Salesforce to retrieve the results
 |'g:apex_maxPollRequests'|          The number of times to poll Salesforce for
                                     the results of the task
-|'g:apex_test_debuggingHeader'|     The debug logging level for tests. 
+|'g:apex_test_debuggingHeader'|     The debug logging level for tests.
+|'g:apex_messages_split_type'|      control location of messages buffer
+|'g:apex_messages_split_size'|      control size of messages buffer
 |'g:apex_conflict_check'|           Control (on/off) conflict check with SFDC before deployment
 
 |'g:apex_java_cmd'|                 custom path to java executable
@@ -1048,6 +1050,22 @@ ex:  >
     let g:apex_test_debuggingHeader = {"All": "Error", "Visualforce": "Error",
     \ "Workflow": "Error", "Db": "Error", "System": "Error", "Callout": "Error",
     \ "Apex_profiling": "Error", "Apex_code": "Debug", "Validation": "Error"}
+
+<
+
+                                                      *'g:apex_messages_split_type'*
+Optional.
+Defaults to 'vsplit'. Controls whether the log message buffer is displayed in
+a vertical or horizontal split.
+ex: >
+    let g:apex_messages_split_type = 'split' " split window horizontally
+<
+
+                                                      *'g:apex_messages_split_size'*
+Optional.
+Controls the height of the log message window in lines.
+ex: >
+    let g:apex_messages_split_size = 20 " split and display 20 lines
 <
 
                                                 *'g:apex_conflict_check'*
