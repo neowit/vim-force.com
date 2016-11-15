@@ -17,7 +17,6 @@ let g:loaded_apexComplete = 1
 " :h complete-items - description of matches list
 function! apexComplete#Complete(findstart, base) abort
 	
-	"throw "called complete"
 	let l:column = col('.')
 	let l:line = line('.')
 	if a:findstart
@@ -55,6 +54,78 @@ function! apexComplete#checkSyntax(filePath) abort
 	" temp file is no longer needed
 	"call delete(tempFilePath)
 endfunction    
+
+" navigate to the definition of symbol under cursor
+function! apexComplete#goToSymbol()
+	let l:column = col('.') + 1 " +1 is not a mistake here
+	let l:line = line('.')
+    let l:filePath = expand("%:p")
+
+    let l:symbolDefinition = s:findSymbol(l:filePath, l:column, l:line)
+    if has_key(l:symbolDefinition, "filePath")
+        let targetFilePath = l:symbolDefinition["filePath"]
+        let targetLine = l:symbolDefinition["line"]
+        let targetColumn = l:symbolDefinition["column"]
+        let targetIdentity = l:symbolDefinition["identity"]
+
+        let bufnum = bufnr("%") " by default assume current buffer
+        if targetFilePath != l:filePath
+            silent execute "edit " . fnameescape(targetFilePath)
+            let bufnum = bufnr(targetFilePath)
+        endif    
+        if bufnum >= 0
+            " place cursor on the line with target idenity
+            call setpos(".", [bufnum, targetLine, targetColumn])
+            if len(targetIdentity) > 0
+                " move cursor at the start of identifier
+                call search(targetIdentity)
+            endif
+        endif    
+    else
+        call apexUtil#warning("Symbol definition not found")
+    endif
+
+endfunction    
+
+function! s:findSymbol(filePath, column, line)
+	let l:column = a:column
+	let l:line = a:line
+    let l:filePath = a:filePath
+
+	let attributeMap = {}
+	let attributeMap["line"] = l:line
+	let attributeMap["column"] = l:column
+	let attributeMap["currentFilePath"] = l:filePath
+    let tempBufferContentFile = s:getBufContentAsTempFile(l:filePath)
+	let attributeMap["currentFileContentPath"] = tempBufferContentFile
+
+	let responseFilePath = apexTooling#findSymbol(l:filePath, attributeMap)
+    if filereadable(responseFilePath)
+		for jsonLine in readfile(responseFilePath)
+			if jsonLine !~ "^{"
+				continue " skip not JSON line
+			endif
+			let l:symbolDefinition = eval(jsonLine)
+            if has_key(l:symbolDefinition, "filePath")
+                let targetFilePath = l:symbolDefinition["filePath"]
+                if targetFilePath == tempBufferContentFile
+                    " this is file pointing to current buffer
+                    let l:symbolDefinition["filePath"] = l:filePath
+                endif    
+                return l:symbolDefinition
+            endif
+        endfor    
+    endif    
+    "call apexUtil#warning("Symbol definition not found")
+    return {} " nothing found
+endfunction    
+
+function! s:getBufContentAsTempFile(filePath)
+	"save content of current buffer in a temporary file
+	let tempFilePath = tempname() . apexOs#splitPath(a:filePath).tail
+	silent exe ":w! " . tempFilePath
+    return tempFilePath
+endfunction
 
 function! s:listOptions(filePath, line, column)
 	let attributeMap = {}
