@@ -61,7 +61,23 @@ function! apexComplete#goToSymbol()
 	let l:line = line('.')
     let l:filePath = expand("%:p")
 
-    let l:symbolDefinition = s:findSymbol(l:filePath, l:column, l:line)
+    let l:locations = s:findSymbol(l:filePath, l:column, l:line)
+    if  empty(l:locations)
+        call apexUtil#warning("Symbol definition not found")
+
+    elseif 1 == len(l:locations)
+        " there is only 1 location, can go there directly
+        call s:navigateToLocation(l:filePath, l:locations[0])
+    else 
+        " there is more than 1 location    
+        call s:displayListOfLocations(l:locations)
+    endif    
+
+endfunction    
+
+function! s:navigateToLocation(currentBufferFilePath, location)
+    let l:symbolDefinition = a:location
+    let l:filePath = a:currentBufferFilePath
     if has_key(l:symbolDefinition, "filePath")
         let targetFilePath = l:symbolDefinition["filePath"]
         let targetLine = l:symbolDefinition["line"]
@@ -84,7 +100,9 @@ function! apexComplete#goToSymbol()
     else
         call apexUtil#warning("Symbol definition not found")
     endif
+endfunction    
 
+function! s:displayListOfLocations(locations)
 endfunction    
 
 function! s:findSymbol(filePath, column, line)
@@ -102,22 +120,37 @@ function! s:findSymbol(filePath, column, line)
 	let responseFilePath = apexTooling#findSymbol(l:filePath, attributeMap)
     if filereadable(responseFilePath)
 		for jsonLine in readfile(responseFilePath)
-			if jsonLine !~ "^{"
+			if jsonLine !~ "^["
 				continue " skip not JSON line
 			endif
-			let l:symbolDefinition = eval(jsonLine)
-            if has_key(l:symbolDefinition, "filePath")
-                let targetFilePath = l:symbolDefinition["filePath"]
-                if targetFilePath == tempBufferContentFile
-                    " this is file pointing to current buffer
-                    let l:symbolDefinition["filePath"] = l:filePath
-                endif    
-                return l:symbolDefinition
+            " json line is expected to look somethign like this (all in one
+            " line)
+            " ---
+            " [
+            " {"filePath":"/project/src/classes/SomeClass.cls","line":49,"column":4,"identity":"myMethod"},
+            " {"filePath":"/project/src/classes/SomeClass.cls","line":44,"column":4,"identity":"myMethod"}
+            " ]
+            " ---
+            "
+			let l:locationArray = json_decode(jsonLine)
+            let l:locations = []
+            if type([]) == type(l:locationArray)
+                for l:locationObj in l:locationArray
+                    if has_key(l:locationObj, "filePath")
+                        let targetFilePath = l:locationObj["filePath"]
+                        if targetFilePath == tempBufferContentFile
+                            " this is file pointing to current buffer
+                            let l:locationObj["filePath"] = l:filePath
+                        endif    
+                        call add(l:locations, l:locationObj)
+                    endif
+                endfor
+                return l:locations
             endif
         endfor    
     endif    
     "call apexUtil#warning("Symbol definition not found")
-    return {} " nothing found
+    return [] " nothing found
 endfunction    
 
 function! s:getBufContentAsTempFile(filePath)
