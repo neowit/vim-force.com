@@ -63,14 +63,14 @@ function! apexComplete#goToSymbol()
 
     let l:locations = s:findSymbol(l:filePath, l:column, l:line)
     if  empty(l:locations)
-        call apexUtil#warning("Symbol definition not found")
+        call apexUtil#warning("Symbol location not found")
 
     elseif 1 == len(l:locations)
         " there is only 1 location, can go there directly
         call s:navigateToLocation(l:filePath, l:locations[0])
     else 
         " there is more than 1 location    
-        call s:displayListOfLocations(l:locations)
+        call s:displayListOfLocations(l:filePath, l:locations)
     endif    
 
 endfunction    
@@ -98,11 +98,31 @@ function! s:navigateToLocation(currentBufferFilePath, location)
             endif
         endif    
     else
-        call apexUtil#warning("Symbol definition not found")
+        call apexUtil#warning("Symbol location not found")
     endif
 endfunction    
 
-function! s:displayListOfLocations(locations)
+function! s:displayListOfLocations(currentBufferFilePath, locations)
+    let l:filePath = a:currentBufferFilePath
+    "clear quickfix
+    call setqflist([])
+    let l:locationList = []
+    for l:location in a:locations
+        let line = {}
+
+        let line.filename = l:location["filePath"]
+        let line.text = l:location["identity"]
+        let line.lnum = l:location["line"]
+        let line.col = l:location["column"]
+        call add(l:locationList, line)
+    endfor
+    " sort by file name
+    "call sort(l:locationList, "s:fileNameComparator")
+
+    call setqflist(l:locationList)
+    if len(l:locationList) > 0
+        copen
+    endif
 endfunction    
 
 function! s:findSymbol(filePath, column, line)
