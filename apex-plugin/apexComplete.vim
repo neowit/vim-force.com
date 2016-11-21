@@ -85,6 +85,8 @@ function! s:navigateToLocation(currentBufferFilePath, location)
         let targetIdentity = l:symbolDefinition["identity"]
 
         let bufnum = bufnr("%") " by default assume current buffer
+        " add current position to jump list (setpos() does not do that)
+        exe "normal m'"
         if targetFilePath != l:filePath
             silent execute "edit " . fnameescape(targetFilePath)
             let bufnum = bufnr(targetFilePath)
