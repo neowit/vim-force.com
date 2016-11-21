@@ -843,7 +843,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         let l:command = l:command  . " --debuggingHeaderConfig=" . apexOs#shellescape(tempLogConfigFilePath)
     endif
 
-	let l:EXCLUDE_KEYS = ["isSilent", "useLocationList", "callbackFuncRef"]
+	let l:EXCLUDE_KEYS = ["isSilent", "useLocationList", "callbackFuncRef", "suppressSuccessMessage"]
     " also exclude keys which start with underscore '_'
 	if len(a:extraParams) > 0
 		for key in keys(a:extraParams)
@@ -1142,8 +1142,10 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 		" check if we have messages
         let messageCount = apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes)
 		if messageCount < 1 && !a:isSilent
-			call apexMessages#logInfo("No errors found")
-            sleep 500m " give message a chance to be noticed by user
+            if !get(a:extraParams, "suppressSuccessMessage", 0)
+                call apexMessages#logInfo("No errors found")
+                sleep 500m " give message a chance to be noticed by user
+            endif
         elseif !a:isSilent 
             " only open message buffer if there was more than 1 message
             if messageCount > 1
