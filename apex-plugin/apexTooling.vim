@@ -69,29 +69,6 @@ function apexTooling#listCompletions(filePath, attributeMap)
 	return responseFilePath
 endfunction
 
-function apexTooling#findSymbol(filePath, attributeMap)
-	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let projectPath = projectPair.path
-	let projectName = projectPair.name
-	let attributeMap = a:attributeMap
-
-	let l:extraParams = {}
-	let l:extraParams["isSilent"] = 1
-	let l:extraParams["line"] = attributeMap["line"]
-	let l:extraParams["column"] = attributeMap["column"]
-	let l:extraParams["currentFilePath"] = apexOs#shellescape(a:filePath)
-	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(attributeMap["currentFileContentPath"])
-
-    let resMap = apexToolingAsync#executeBlocking("findSymbol", projectName, projectPath, l:extraParams, [])
-    "if apexOs#isWindows()
-	"    let resMap = apexToolingAsync#executeBlocking("listCompletions", projectName, projectPath, l:extraParams, [])
-    "else     
-    "    let resMap = apexTooling#execute("listCompletions", projectName, projectPath, l:extraParams, [])
-    "endif    
-	let responseFilePath = resMap["responseFilePath"]
-	return responseFilePath
-endfunction
-
 " retrieve list of Test Suite names into specified file
 "Args:
 "Param1: path to file which belongs to apex project

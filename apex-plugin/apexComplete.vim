@@ -61,17 +61,24 @@ function! apexComplete#goToSymbol()
 	let l:line = line('.')
     let l:filePath = expand("%:p")
 
-    let l:locations = s:findSymbol(l:filePath, l:column, l:line)
-    if  empty(l:locations)
-        call apexUtil#warning("Symbol location not found")
+    let obj = {}
+    let obj["filePath"] = l:filePath
+    function! obj.callbackFuncRef(locations)
+        let l:locations = a:locations
+        if empty(l:locations)
+            call apexUtil#warning("Symbol location not found")
 
-    elseif 1 == len(l:locations)
-        " there is only 1 location, can go there directly
-        call s:navigateToLocation(l:filePath, l:locations[0])
-    else 
-        " there is more than 1 location    
-        call s:displayListOfLocations(l:filePath, l:locations)
-    endif    
+        elseif 1 == len(l:locations)
+            " there is only 1 location, can go there directly
+            call s:navigateToLocation(self.filePath, l:locations[0])
+        else 
+            " there is more than 1 location    
+            call s:displayListOfLocations(self.filePath, l:locations)
+        endif    
+
+    endfunction    
+
+    call s:findSymbol(l:filePath, l:column, l:line, obj)
 
 endfunction    
 
@@ -98,6 +105,7 @@ function! s:navigateToLocation(currentBufferFilePath, location)
                 " move cursor at the start of identifier
                 call search(targetIdentity)
             endif
+            redraw
         endif    
     else
         call apexUtil#warning("Symbol location not found")
@@ -127,7 +135,7 @@ function! s:displayListOfLocations(currentBufferFilePath, locations)
     endif
 endfunction    
 
-function! s:findSymbol(filePath, column, line)
+function! s:findSymbol(filePath, column, line, callbackObj)
 	let l:column = a:column
 	let l:line = a:line
     let l:filePath = a:filePath
@@ -139,40 +147,7 @@ function! s:findSymbol(filePath, column, line)
     let tempBufferContentFile = s:getBufContentAsTempFile(l:filePath)
 	let attributeMap["currentFileContentPath"] = tempBufferContentFile
 
-	let responseFilePath = apexTooling#findSymbol(l:filePath, attributeMap)
-    if filereadable(responseFilePath)
-		for jsonLine in readfile(responseFilePath)
-			if jsonLine !~ "^["
-				continue " skip not JSON line
-			endif
-            " json line is expected to look somethign like this (all in one
-            " line)
-            " ---
-            " [
-            " {"filePath":"/project/src/classes/SomeClass.cls","line":49,"column":4,"identity":"myMethod"},
-            " {"filePath":"/project/src/classes/SomeClass.cls","line":44,"column":4,"identity":"myMethod"}
-            " ]
-            " ---
-            "
-			let l:locationArray = json_decode(jsonLine)
-            let l:locations = []
-            if type([]) == type(l:locationArray)
-                for l:locationObj in l:locationArray
-                    if has_key(l:locationObj, "filePath")
-                        let targetFilePath = l:locationObj["filePath"]
-                        if targetFilePath == tempBufferContentFile
-                            " this is file pointing to current buffer
-                            let l:locationObj["filePath"] = l:filePath
-                        endif    
-                        call add(l:locations, l:locationObj)
-                    endif
-                endfor
-                return l:locations
-            endif
-        endfor    
-    endif    
-    "call apexUtil#warning("Symbol definition not found")
-    return [] " nothing found
+	call apexToolingAsync#findSymbol(l:filePath, attributeMap, a:callbackObj)
 endfunction    
 
 function! s:getBufContentAsTempFile(filePath)

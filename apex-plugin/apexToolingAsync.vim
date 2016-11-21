@@ -572,6 +572,76 @@ function apexToolingAsync#getVersion(filePath)
 endfunction
 
 
+function apexToolingAsync#findSymbol(filePath, attributeMap, callbackObj)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectPath = projectPair.path
+	let projectName = projectPair.name
+	let attributeMap = a:attributeMap
+
+	let l:extraParams = {}
+	let l:extraParams["_callbackObj"] = a:callbackObj
+	let l:extraParams["suppressSuccessMessage"] = 1 " disable 'No errors found' and 0.5 sec delay
+	let l:extraParams["line"] = attributeMap["line"]
+	let l:extraParams["column"] = attributeMap["column"]
+    " unescaped file paths
+	let l:extraParams["_currentFilePath"] = a:filePath
+	let l:extraParams["_currentFileContentPath"] = attributeMap["currentFileContentPath"]
+    " escaped file paths
+	let l:extraParams["currentFilePath"] = apexOs#shellescape(a:filePath)
+	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(attributeMap["currentFileContentPath"])
+    "
+    " ============ internal callback 1 ================
+    function! l:extraParams.callbackFuncRef(resMap)
+        let responseFilePath = a:resMap["responseFilePath"]
+        let tempBufferContentFile = self._currentFileContentPath
+        let l:filePath = self._currentFilePath
+
+        if filereadable(responseFilePath)
+            for jsonLine in readfile(responseFilePath)
+                if jsonLine !~ "^["
+                    continue " skip not JSON line
+                endif
+                " json line is expected to look somethign like this (all in one
+                " line)
+                " ---
+                " [
+                " {"filePath":"/project/src/classes/SomeClass.cls","line":49,"column":4,"identity":"myMethod"},
+                " {"filePath":"/project/src/classes/SomeClass.cls","line":44,"column":4,"identity":"myMethod"}
+                " ]
+                " ---
+                "
+                let l:locationArray = json_decode(jsonLine)
+                let l:locations = []
+                if type([]) == type(l:locationArray)
+                    for l:locationObj in l:locationArray
+                        if has_key(l:locationObj, "filePath")
+                            let targetFilePath = l:locationObj["filePath"]
+                            if targetFilePath == tempBufferContentFile
+                                " this is file pointing to current buffer
+                                let l:locationObj["filePath"] = l:filePath
+                            endif    
+                            call add(l:locations, l:locationObj)
+                        endif
+                    endfor
+                    "return l:locations
+                    call self._callbackObj.callbackFuncRef(l:locations)
+                    return
+                endif
+            endfor    
+        endif    
+        "Symbol definition not found
+        "return [] " nothing found
+        call self._callbackObj.callbackFuncRef([])
+        
+    endfunction    
+    " ============ END internal callback 1 ================
+
+    call apexToolingAsync#execute("findSymbol", projectName, projectPath, l:extraParams, [])
+    
+endfunction
+
+
+
 let s:last_coverage_report_file = ''
 function! apexToolingAsync#getLastCoverageReportFile()
 	return s:last_coverage_report_file
