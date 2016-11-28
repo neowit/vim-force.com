@@ -179,7 +179,15 @@ function apexTooling#openScratchFile(filePath)
 	endtry
 	let s:scratch_project_pair = projectPair
 	if !filereadable(scratchFilePath) 
-		call writefile(["/* This is a scratch file */"], scratchFilePath)
+        let fileContent = []
+        call add(fileContent, "/* This is a scratch file */")
+        call add(fileContent, "/* to take advantage of code completion write your code inside ScratchFileClass { ... } */")
+        call add(fileContent, "/* if you are not interested in code completion then feel free to delete ScratchFileClass {...} code*/")
+        call add(fileContent, "class ScratchFileClass {")
+        call add(fileContent, "")
+        call add(fileContent, "")
+        call add(fileContent, "}")
+		call writefile(fileContent, scratchFilePath)
 	endif
 	:execute "e " . fnameescape(scratchFilePath)
 
