@@ -61,6 +61,25 @@ function! s:genericCallback(resultMap)
     "redraw " refresh buffer, just in case if it is :ApexMessage buffer
 endfunction    
 
+" login to SFDC Org
+"Args:
+"Param1: filePath - path to apex file in current project
+"Param2: env - login domain (e.g: login.salesforce.com)
+function apexToolingAsync#login(filePath, env)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+    "let obj = {}
+    "let obj.callbackFuncRef = function('s:genericCallback')
+    let extraParams = {"env": a:env, "_ignore_missing_apex_properties_file": 1}
+    let authConfigPath = s:getAuthConfigPath(projectPair.name, projectPair.path)
+    if empty(authConfigPath)
+        call apexUtil#error("Missing required variable g:apex_properties_folder.")
+        return
+    else    
+        let extraParams["saveAuthPath"] = authConfigPath
+        call apexToolingAsync#execute("login", projectPair.name, projectPair.path, extraParams, [])
+    endif
+endfunction
+
 "Args:
 "Param: action:
 "			'deploy' - use metadata api
@@ -878,6 +897,28 @@ function! apexToolingAsync#executeBlocking(action, projectName, projectPath, ext
 endfunction    
 " ==================================================================================================
 
+" based on g:apex_properties_folder value see if we can find file
+" {g:apex_properties_folder}/oauth2/{project-name}
+" if yes then assume this file contains oauth2 credentials
+function! s:getAuthConfig(projectName, projectPath)
+    let authConfigPath = s:getAuthConfigPath(a:projectName, a:projectPath)
+    if filereadable(authConfigPath)
+        return authConfigPath
+    endif    
+    return ""
+endfunction    
+
+" this method does not check if config actually exists 
+" e.g. before first login
+function! s:getAuthConfigPath(projectName, projectPath)
+    if  exists("g:apex_properties_folder") && len(g:apex_properties_folder) > 0
+        let authConfigPath = apexOs#joinPath([g:apex_properties_folder, "oauth2", a:projectName])
+        return authConfigPath
+    endif
+    return ""
+endfunction    
+
+
 "Returns: dictionary: 
 "	{
 "	"success": "true" if RESULT=SUCCESS
@@ -887,7 +928,6 @@ endfunction
 "	}
 "
 function! apexToolingAsync#execute(action, projectName, projectPath, extraParams, displayMessageTypes) abort
-	let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
 
 	if has_key(a:extraParams, "ignoreConflicts")
 		call apexUtil#warning("skipping conflict check with remote")
@@ -897,7 +937,26 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 	if exists("g:apex_temp_folder")
 		let l:command = l:command  . " --tempFolderPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
 	endif
-	let l:command = l:command  . " --config=" . apexOs#shellescape(projectPropertiesPath)
+
+    let authConfigPath = s:getAuthConfig(a:projectName, a:projectPath)
+    if len(authConfigPath) > 0
+        let l:command = l:command  . " --authConfigPath=" . apexOs#shellescape(authConfigPath)
+    endif    
+
+    if exists("g:apex_properties_folder") && len(g:apex_properties_folder) > 0
+        let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
+        if filereadable(projectPropertiesPath)
+            let l:command = l:command  . " --config=" . apexOs#shellescape(projectPropertiesPath)
+        else
+            " if authConfigPath found then it is okay to ignore missing
+            " .properties file which may store login/pass
+            if !get(a:extraParams, "_ignore_missing_apex_properties_file", 0) && empty(authConfigPath)
+                call apexUtil#error("Configured g:apex_properties_folder variable does not point to existing .properties file. Tested path: " . projectPropertiesPath)
+                call apexUtil#info("If you plan to login manually please use :ApexLogin command")
+                return 1
+            endif
+        endif    
+    endif
 	let l:command = l:command  . " --projectPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(a:projectPath))
 
 	if exists('g:apex_tooling_force_dot_com_extra_params') && len(g:apex_tooling_force_dot_com_extra_params) > 0

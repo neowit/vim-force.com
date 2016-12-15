@@ -61,6 +61,26 @@ function apexProject#init() abort
 	
 endfunction
 
+" login to SFDC Org
+"Args:
+"Param1: filePath - path to apex file in current project
+function apexProject#login(filePath)
+    let choice = apexUtil#menu("Select target environment: ", ["Production", "Sandbox", "Enter manually"], "Production")
+    let env = "login.salesforce.com"
+    if "Enter manually" == choice
+		let env = input("Enter domain name only, e.g. prerelease.force.com: ")
+        if len(env) < 1
+            return 0
+        endif    
+    else
+        let envMap = {"Production": "login.salesforce.com", "Sandbox": "test.salesforce.com"}
+        let env = envMap[choice]
+    endif
+    echo ""
+    
+	call apexToolingAsync#login(a:filePath, env)
+endfunction
+
 function s:buildPropertiesFile(projectName) abort
 	let propertiesFilePath = apexOs#joinPath([g:apex_properties_folder, a:projectName . '.properties'])
 	if !filereadable(propertiesFilePath) || 'y' ==? apexUtil#input('File '.propertiesFilePath. ' already exists, would you like to overwrite it y/N? ', 'yYnN', 'n')

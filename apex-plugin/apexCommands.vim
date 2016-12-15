@@ -52,6 +52,7 @@ command! ApexGitInit :call apexUtil#gitInit()
 " tooling-force.com specific
 """"""""""""""""""""""""""""""""""""""""""""""""
 function! s:toolingJarSpecific()
+	command! -nargs=0 ApexLogin :call apexProject#login(expand("%:p"))
 	"
 	" Deployment
 	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apexTooling#deploy('deploy', 'Modified', <bang>0, <f-args>)
