@@ -40,11 +40,16 @@ let s:CACHE_FOLDER_NAME = ".vim-force.com"
 " pos: CursorPos - the cursor position in it (byte index)
 "
 function! apex#listProjectNames(arg, line, pos)
-	let fullPaths = apexOs#glob(g:apex_properties_folder . "**/*.properties")
+	let fullPathsProperties = apexOs#glob(g:apex_properties_folder . "**/*.properties")
+	let fullPathsOauth = apexOs#glob(g:apex_properties_folder . "**/oauth2/*")
+    let fullPaths = extend(fullPathsProperties, fullPathsOauth)
+
 	let res = []
 	for fullName in fullPaths
 		let fName = apexOs#splitPath(fullName).tail
-		let fName = fnamemodify(fName, ":r") " remove .properties
+        if fName =~? ".properties$"
+            let fName = fnamemodify(fName, ":r") " remove .properties
+        endif
 		"take into account file prefix which user have already entered
 		if 0 == len(a:arg) || match(fName, a:arg) >= 0 
 			call add(res, fnameescape(fName))
