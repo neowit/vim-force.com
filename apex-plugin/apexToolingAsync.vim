@@ -957,7 +957,9 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
             endif
         endif    
     endif
-	let l:command = l:command  . " --projectPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(a:projectPath))
+    if len(a:projectPath) > 0
+        let l:command = l:command  . " --projectPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(a:projectPath))
+    endif
 
 	if exists('g:apex_tooling_force_dot_com_extra_params') && len(g:apex_tooling_force_dot_com_extra_params) > 0
 		let l:command = l:command  . " " . g:apex_tooling_force_dot_com_extra_params
