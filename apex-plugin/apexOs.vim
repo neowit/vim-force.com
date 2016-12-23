@@ -125,9 +125,9 @@ function! apexOs#createTempDir(...)
 	if !isdirectory(apexOs#getTempFolder()) || reCreate
 		if has("unix")
 			" remove existing folder
-			silent exe "!rm -R ". shellescape(tempFolderPath)
+			silent exe "!rm -R " . shellescape(tempFolderPath)
 		elseif s:is_windows
-			silent exe "!rd ".GetWin32ShortName(tempFolderPath)." /s /q "
+			silent exe "!rd " . shellescape(tempFolderPath)." /s /q "
 		else
 			echoerr "Not implemented"
 			return ""
