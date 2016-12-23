@@ -65,6 +65,21 @@ endfunction
 "Args:
 "Param1: filePath - path to apex file in current project
 function apexProject#login(filePath)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectName = projectPair.name " default project name
+    let projectPath = projectPair.path
+
+    let projectNameOpt = apexUtil#menu("Which project/org to login to?  ", ["Current", "Another"], "Current")
+    if "Current" != projectNameOpt
+        let projectName = apexUtil#inputFreetext("Enter project name: ")
+        if len(projectName) < 1
+            return ''
+        endif    
+        let projectPath = '' " this call i snot linked to specific project location
+    endif    
+    if len(projectName) < 1
+        return
+    endif    
     let choice = apexUtil#menu("Select target environment: ", ["Production", "Sandbox", "Enter manually"], "Production")
     let env = "login.salesforce.com"
     if "Enter manually" == choice
@@ -78,7 +93,7 @@ function apexProject#login(filePath)
     endif
     echo ""
     
-	call apexToolingAsync#login(a:filePath, env)
+	call apexToolingAsync#login(a:filePath, projectName, projectPath, env)
 endfunction
 
 function s:buildPropertiesFile(projectName) abort

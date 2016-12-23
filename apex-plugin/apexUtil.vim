@@ -298,7 +298,9 @@ endfunction
 function! apexUtil#input(prompt, options, default)
 	while 1
 		echohl WarningMsg
+        call inputsave()
 		let res = input(a:prompt)
+        call inputrestore()
 		echohl None 
 		if len(res) < 1 && strlen(a:default) > 0
 			return a:default
@@ -306,6 +308,16 @@ function! apexUtil#input(prompt, options, default)
 			return res
 		endif
 	endwhile
+endfunction
+
+" Ask the user for an input
+" Param: message: A text to show to the user
+" Param1: secret: (optional) 0 for false, anything else for true
+function apexUtil#inputFreetext(prompt)
+	call inputsave()
+	let value = input(a:prompt)
+	call inputrestore()
+	return value
 endfunction
 
 " check if file contains given regular expression and return Line Numbers

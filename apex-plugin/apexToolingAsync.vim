@@ -65,18 +65,26 @@ endfunction
 "Args:
 "Param1: filePath - path to apex file in current project
 "Param2: env - login domain (e.g: login.salesforce.com)
-function apexToolingAsync#login(filePath, env)
-	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+function apexToolingAsync#login(filePath, projectName, projectPath, env)
+	"let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
     "let obj = {}
     "let obj.callbackFuncRef = function('s:genericCallback')
-    let extraParams = {"env": a:env, "_ignore_missing_apex_properties_file": 1}
-    let authConfigPath = s:getAuthConfigPath(projectPair.name, projectPair.path)
+    "
+    let extraParams = {"env": apexOs#shellescape(a:env), "_ignore_missing_apex_properties_file": 1}
+    let authConfigPath = s:getAuthConfigPath(a:projectName, a:projectPath)
     if empty(authConfigPath)
         call apexUtil#error("Missing required variable g:apex_properties_folder.")
         return
     else    
-        let extraParams["saveAuthPath"] = authConfigPath
-        call apexToolingAsync#execute("login", projectPair.name, projectPair.path, extraParams, [])
+        let extraParams["saveAuthPath"] = apexOs#shellescape(authConfigPath)
+        let authConfigPath = s:getAuthConfig(a:projectName, a:projectPath)
+        if len(authConfigPath) > 0
+            if filereadable(authConfigPath) && "y" !~? apexUtil#input("Auth config already exists, Overwrite ? [y/N] ", "YynN", "N")
+                return '' " user aborted
+            endif    
+
+        endif    
+        call apexToolingAsync#execute("login", a:projectName, a:projectPath, extraParams, [])
     endif
 endfunction
 
@@ -988,7 +996,13 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 		let responseFilePath = a:extraParams["responseFilePath"]
 	else
 		" default responseFilePath
-		let responseFilePath = apexOs#joinPath(a:projectPath, s:SESSION_FOLDER, "response_" . a:action)
+        if empty(a:projectPath)
+            let outputFileFolder = apexOs#getTempFolder()
+        else
+            let outputFileFolder = apexOs#joinPath(a:projectPath, s:SESSION_FOLDER)
+        endif    
+
+		let responseFilePath = apexOs#joinPath(outputFileFolder, "response_" . a:action)
 		let l:command = l:command  . " --responseFilePath=" . apexOs#shellescape(responseFilePath)
 	endif
 
