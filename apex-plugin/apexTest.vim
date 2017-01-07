@@ -73,6 +73,14 @@ function! apexTest#runTest(reportCoverage, bang, ...)
         "endif    
 
     endif
+    if testsToRun =~ "*" && modeName == 'tooling-sync'
+        call apexUtil#warning('"All tests" with Tooling API is only supported in "async" mode.')
+        if 'y' !~# apexUtil#input('Switch to "tooling-async" and continue? [Y/n]: ', 'YyNn', 'y')
+            return
+        endif
+
+        let attributes['tooling'] = 'async'
+    endif    
 
     call apexToolingAsync#deployAndTest(filePath, attributes, projectName, a:reportCoverage, a:bang)
 
