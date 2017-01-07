@@ -63,14 +63,14 @@ function! apexTest#runTest(reportCoverage, bang, ...)
 
             let attributes['checkOnly'] = 1
         endif    
-        if modeName == 'tooling-sync'
-            call apexUtil#warning('Specific method test with Tooling API is only supported in "async" mode.')
-            if 'y' !~# apexUtil#input('Switch to "tooling-async" and continue? [Y/n]: ', 'YyNn', 'y')
-                return
-            endif
+        "if modeName == 'tooling-sync'
+        "    call apexUtil#warning('Specific method test with Tooling API is only supported in "async" mode.')
+        "    if 'y' !~# apexUtil#input('Switch to "tooling-async" and continue? [Y/n]: ', 'YyNn', 'y')
+        "        return
+        "    endif
 
-            let attributes['tooling'] = 'async'
-        endif    
+        "    let attributes['tooling'] = 'async'
+        "endif    
 
     endif
 
