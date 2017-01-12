@@ -28,5 +28,9 @@
         <members>*</members>
         <name>StaticResource</name>
     </types>
-    <version>19.0</version>
+    <types>
+        <members>*</members>
+        <name>AuraDefinitionBundle</name>
+    </types>
+    <version>38.0</version>
 </Package>

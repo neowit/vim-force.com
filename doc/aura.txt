@@ -32,7 +32,16 @@ SYSTEM REQUIREMENTS                                  *aura-system-requirements*
 ==============================================================================
                                                                    *aura-start* 
 
-In order to start working with aura/lightning files call :|ApexRefreshProject|
+In order to start working with aura/lightning files 
+1. make sure that package.xml contains 
+>
+    <types>
+        <members>*</members>
+        <name>AuraDefinitionBundle</name>
+    </types>
+<
+
+2. call :|ApexRefreshProject|
 and navigate to ./src/aura/... to select appropriate aura file.
 
 ==============================================================================
