@@ -12,12 +12,13 @@ force.com plugin for Vim                         *vim-force.com* |  *force.com*
 |force.com-system-requirements|     Installation/System requirements
 |force.com-config-example|          Minimal config example
 
-|force.com-usage|          Usage
-    |apex-project-setup|   creating new force.com project
+|force.com-usage|           Usage
+    |apex-project-setup|    creating new force.com project
         |apex-with-eclipse|      using alongside Eclipse IDE
         |apex-plugin-standalone| using without Eclipse
-    |apex-commands|        supported commands
-	|apex-code-completion| apex code completion configuration
+    |apex-commands|         supported commands
+	|apex-code-completion|  apex code completion configuration
+	|apex-goto-symbol|      find where symbol under cursor is defined
 
 |force.com-settings|      Settings
 	|force.com-shortcuts-example| example of recommended keyboard shortcuts
@@ -861,9 +862,6 @@ Return version of tooling-force.com.jar .
                                                          *apex-code-completion*
 Current version includes basic auto completion support for Apex classes and
 some standard Apex library namespaces.
-
-Current limitations:
-- does not support completion of SObject fields inside SOQL statements
   
 Usage:
 - try following in .cls file (do not type single quote characters)
@@ -882,6 +880,17 @@ Recommended .vimrc config for apex completion:
 2. completion menu popup >
     set completeopt=menu,preview,longest
 <
+                                                            *apex-goto-symbol*
+                                                            *apex-find-symbol*
+To find where symbol under cursor is defined map 'apexComplete#goToSymbol()'
+to your preferred keyboard shortcut. 
+e.g. >
+    autocmd FileType apexcode nnoremap <buffer> <C-]> :call apexComplete#goToSymbol()<Enter>
+<
+Statement above will override standard vim Control-] "navigate to tag"
+shortcut in 'apexcode' file type.
+Works only in Apex class files.
+
   
                                         *resources_unpacked* *zipped-resources*
 Work with zipped content of "staticresources/*.resource" files is done as
