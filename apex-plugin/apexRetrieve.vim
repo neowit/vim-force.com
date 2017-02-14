@@ -48,7 +48,7 @@ function! apexRetrieve#open(filePath)
 	let projectName = projectPair.name
 	let projectPath = projectPair.path
 	"init header and length variables
-	call s:init(projectPath)
+	call s:init(projectName, projectPath)
 
 	" check if buffer with file types already exist
 	if exists("g:APEX_META_TYPES_BUF_NUM") && bufloaded(g:APEX_META_TYPES_BUF_NUM)
@@ -772,7 +772,7 @@ endfunction
 
 
 " call this method before any other as soon as Project Path becomes available
-function! s:init(projectPath)
+function! s:init(projectName, projectPath)
 	let s:instructionFooter = '='
 	let s:header = [
 				\ "|| vim-force.com plugin - metadata retrieval",
@@ -784,10 +784,16 @@ function! s:init(projectPath)
 				\ "|| :Retrieve = retrieve selected types into the project folder",
 				\ "|| :Reload = discard existing local cache of metadata types and reload them from remote Org",
 				\ "|| ",
-				\ "|| NOTE: cached list of CORE metadata types is stored in: ",
+				\ "|| Project Name: '" . a:projectName . "'",
+				\ "|| Project Path: '" . a:projectPath . "'",
+				\ "|| ",
+				\ "|| NOTE 1: cached list of CORE metadata types is stored in: ",
 				\ "||		 '".s:getMetadataResultFilePath(a:projectPath)."' file.",
-				\ "||		To clear cached types delete this file and run :ApexRetrieve to reload fresh version.",
-				\ "============================================================================="
+				\ "||        To clear cached types delete this file and run :ApexRetrieve to reload fresh version.",
+				\ "|| NOTE 2: this buffer is global to current vim instance",
+				\ "||        To call :ApexRetrieve for another project either open another vim instance",
+				\ "||        or wipe this buffer first with :bwipe",
+				\ "=============================================================================================="
 				\ ]
 	let s:headerLineCount = len(s:header)  
 endfunction
