@@ -490,6 +490,33 @@ Params:
 
 Execute a block of code.
 Block can be either whole current buffer or visual selection
+Params:
+- [optional] - name of remote project (e.g. another sandbox)
+- [optional] - while condition - string (in executed block of code debug log)
+  signalling that another execution is required. Use it if a block of
+  anonymous code needs to be repeated more than once, while certain condition
+  is true.
+
+Example: 
+Suppose user selected following lines of code: >
+
+    Database.delete([select Id from Lead where Company = 'Test 1' limit 1]);
+    if ([select count() from Lead where Company = 'Test 1'] > 0) {
+        System.debug('KEEP GOING');
+    }
+<
+User then runs command: >
+    :ApexExecuteAnonymous My\ Project KEEP\ GOING
+<
+where 
+- My\ Project - name of .properties (or OAUth2) file corresponding to target
+  project/org, e.g. "My Project.properties"
+- KEEP\ GOING - corresponds to the string ("KEEP GOING") that needs to be
+  present in "Execute Anonymous" output in order to confirm that snipped of
+  code needs to be run again.
+
+Note: project name or condition string value containing spaces must not be
+enclosed in quotes. Instead spaces are escaped with a Backslash.
 
                                                     *ApexExecuteAnonymousRepeat*
 

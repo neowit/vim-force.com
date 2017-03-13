@@ -96,7 +96,7 @@ function! s:toolingJarSpecific()
 
 	command! ApexRetrieve :call apexRetrieve#open(expand("%:p"))
 
-	command! -nargs=? -complete=customlist,apex#listProjectNames -range=% ApexExecuteAnonymous <line1>,<line2>call apexExecuteSnippet#run('executeAnonymous', expand("%:p"), <f-args>)
+	command! -nargs=* -complete=customlist,apex#listProjectNames -range=% ApexExecuteAnonymous <line1>,<line2>call apexExecuteSnippet#run('executeAnonymous', expand("%:p"), <f-args>)
 	command! -nargs=? -complete=customlist,apex#listProjectNames ApexExecuteAnonymousRepeat call apexExecuteSnippet#repeat('executeAnonymous', expand("%:p"), <f-args>)
 
 	command! -nargs=* -complete=customlist,apex#completeQueryParams -range=% ApexQuery <line1>,<line2>call apexExecuteSnippet#run('soqlQuery', expand("%:p"), <f-args>)

@@ -14,6 +14,7 @@ endif
 let g:loaded_apexExecuteSnippet = 1
 
 let s:lastExecuteAnonymousFilePath = ''
+let s:lastWhileString = ''
 "execute piece of code via executeAnonymous
 "This function can accept visual selection or whole buffer and
 "runs executeAnonymous on that code
@@ -22,8 +23,16 @@ let s:lastExecuteAnonymousFilePath = ''
 function apexExecuteSnippet#run(method, filePath, ...) range
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectName = projectPair.name
+    let whileString = ''
+
 	if a:0 > 0 && len(a:1) > 0
 		let projectName = apexUtil#unescapeFileName(a:1)
+	endif
+
+	if a:0 > 1 && len(a:2) > 1
+		let whileString = a:2
+    else
+        let s:lastWhileString = ''
 	endif
 	
 	let totalLines = line('$') " last line number in current buffer
@@ -48,12 +57,13 @@ function apexExecuteSnippet#run(method, filePath, ...) range
 		let codeFile = tempname()
 		if 'executeAnonymous' == a:method
 			let s:lastExecuteAnonymousFilePath = codeFile " record file path for future use in executeAnonymousRepeat
+			let s:lastWhileString = whileString " record 'while string' for future use in executeAnonymousRepeat
 		elseif 'soqlQuery' == a:method
 			let s:lastSoqlQueryFilePath = codeFile " record file path for future use in executeAnonymousRepeat
 		endif
 		call writefile(lines, codeFile)
 		if 'executeAnonymous' == a:method
-			call s:executeAnonymous(a:filePath, projectName, codeFile)
+			call s:executeAnonymous(a:filePath, projectName, codeFile, whileString)
 		elseif 'soqlQuery' == a:method
             let l:api = 'Partner'
             if a:0 > 0 && len(a:1) > 0
@@ -73,6 +83,8 @@ endfunction
 "Param1: (optional) - project name
 function apexExecuteSnippet#repeat(method, filePath, ...)
 	let codeFile = s:lastExecuteAnonymousFilePath
+    let whileString = s:lastWhileString
+
 	if 'soqlQuery' == a:method
 		let codeFile = s:lastSoqlQueryFilePath
 	endif
@@ -87,7 +99,7 @@ function apexExecuteSnippet#repeat(method, filePath, ...)
 	endif
 	
 	if 'executeAnonymous' == a:method
-		call s:executeAnonymous(a:filePath, projectName, codeFile)
+		call s:executeAnonymous(a:filePath, projectName, codeFile, whileString)
 	elseif 'soqlQuery' == a:method
         let l:api = 'Partner'
         if a:0 > 0 && len(a:1) > 0
@@ -102,12 +114,15 @@ function apexExecuteSnippet#repeat(method, filePath, ...)
 	endif
 endfunction
 
-function s:executeAnonymous(filePath, projectName, codeFile)
+function s:executeAnonymous(filePath, projectName, codeFile, whileString)
 	call apexLogActions#askLogLevel(a:filePath, 'meta')
 
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
 	let l:extraParams = {"codeFile": apexOs#shellescape(a:codeFile)}
+    if len(a:whileString) > 0
+        let l:extraParams['while'] = a:whileString
+    endif    
 	" another org?
 	if projectPair.name != a:projectName
 		let l:extraParams["callingAnotherOrg"] = "true"
