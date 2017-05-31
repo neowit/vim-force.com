@@ -4,7 +4,7 @@
 " This file is part of vim-force.com plugin
 " https://github.com/neowit/vim-force.com
 " Author: Andrey Gavrikov 
-" Last Modified: 2012-03-05
+" Last Modified: 2017-05-31
 " Visualforce specific tags
 
 " Language:	ApexCode		
@@ -20,7 +20,7 @@ syn match htmlTagName contained "\(c\|apex\|chatter\|flow\|ideas\|knowledge\|mes
 " fix syntax breakage when using '&{'in the code looking something like this
 " <apex:outputLink value="/path?param=1&{!mergeVar}">link</apex:outputLink>
 syn match htmlSpecialChar contained "&{"
-syn region htmlSpecialChar start=+{!+ end=+}+
+syn region htmlSpecialChar start=+{!+ skip=+'.*'+ end=+}+
 
 " fix syntax breakage when using CSS url("{!merge expression}")
 syn region cssURL contained matchgroup=cssFunctionName start="\<url\s*('{!" end="}')" oneline extend
