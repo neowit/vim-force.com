@@ -155,8 +155,15 @@ function! s:sendCommand(filePath, scope, tracedEntity, traceFlagJson)
 	let responsePath = resMap["responseFilePath"]
 endfunction
 
+"Args:
+"Param1: traceFlagJson - json string
 function! apexLogActions#saveTempTraceFlagConfig(traceFlagJson)
 	let tempFilePath = tempname() . "-apexTraceFlag.conf"
-    call writefile([a:traceFlagJson], tempFilePath)
+
+    let l:jsonStr = a:traceFlagJson
+    if type({}) == type(a:traceFlagJson)
+        let l:jsonStr = json_encode(a:traceFlagJson)
+    endif    
+    call writefile([l:jsonStr], tempFilePath)
     return tempFilePath
 endfunction
