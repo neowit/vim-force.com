@@ -502,7 +502,7 @@ Suppose user selected following lines of code: >
 
     Database.delete([select Id from Lead where Company = 'Test 1' limit 1]);
     if ([select count() from Lead where Company = 'Test 1'] > 0) {
-        System.debug('KEEP GOING');
+        System.debug(LoggingLevel.ERROR, 'KEEP GOING');
     }
 <
 User then runs command: >
@@ -512,11 +512,15 @@ where
 - My\ Project - name of .properties (or OAUth2) file corresponding to target
   project/org, e.g. "My Project.properties"
 - KEEP\ GOING - corresponds to the string ("KEEP GOING") that needs to be
-  present in "Execute Anonymous" output in order to confirm that snipped of
+  present in "Execute Anonymous" output in order to confirm that snippet of
   code needs to be run again.
 
-Note: project name or condition string value containing spaces must not be
+Notes: 
+1. project name or condition string value containing spaces must not be
 enclosed in quotes. Instead spaces are escaped with a Backslash.
+2. to reduce chances of hitting max SFDC logs size limit (enforced per 24
+hours) you may want to select ERROR as log level for all debug log types when
+running |ApexExecuteAnonymous|.
 
                                                     *ApexExecuteAnonymousRepeat*
 
