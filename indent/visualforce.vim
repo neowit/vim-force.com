@@ -8,14 +8,23 @@
 
 silent! unlet b:did_indent
 runtime indent/xml.vim
+if !exists("*XmlIndentGet")
+    finish " looks like another plugin does something custom with XmlIndentGet
+endif
 let s:xmlIndentRef=function("XmlIndentGet")
 
 silent! unlet b:did_indent
 runtime indent/html.vim
+if !exists("*HtmlIndent")
+    finish " looks like another plugin does something custom with HtmlIndent
+endif
 let s:htmlIndentRef=function("HtmlIndent")
 
 silent! unlet b:did_indent
 runtime indent/css.vim
+if !exists("*GetCSSIndent")
+    finish " looks like another plugin does something custom with GetCSSIndent
+endif
 let s:cssIndentExpr=function("GetCSSIndent")
 
 setlocal indentexpr=VFIndent()
