@@ -258,9 +258,7 @@ function! s:getJavaCommand()
 		" if defined then add extra JVM params
 		let l:java_command = l:java_command  . " " . g:apex_tooling_force_dot_com_java_params
 	else
-		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showlogname=false "
-		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.showShortLogname=false "
-		let l:java_command = l:java_command  . " -Dorg.apache.commons.logging.simplelog.defaultlog=info "
+		let l:java_command = l:java_command  . " -Dlog.level.root=error "
 	endif
     if l:java_command !~ "-Dfile.encoding"
         " force UTF-8 encoding if user did not set an alternative explicitly
