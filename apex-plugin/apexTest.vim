@@ -214,7 +214,7 @@ function! s:listMethodNames(arg, line, pos)
 endfunction	
 
 function! s:listModeNames(arg, line, pos)
-	let candidates = ['meta-testAndDeploy', 'meta-checkOnly', 'tooling-sync', 'tooling-async', 'testSuites']
+	let candidates = ['tooling-sync', 'meta-testAndDeploy', 'meta-checkOnly', 'tooling-async', 'testSuites']
 	return apexUtil#commandLineComplete(a:arg, a:line, a:pos, candidates)
 endfunction	
 "
