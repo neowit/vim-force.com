@@ -178,6 +178,7 @@ function! s:listOptions(filePath, line, column)
 	let subtractLen = s:getSymbolLength(a:column) " this many characters user already entered
 	
 	let l:completionList = []
+    let l:isPreviewOpen = 0
 	if filereadable(responseFilePath)
 		for jsonLine in readfile(responseFilePath)
 			if jsonLine !~ "^{"
@@ -192,8 +193,21 @@ function! s:listOptions(filePath, line, column)
 				let item["word"] = strpart(l:option["identity"], subtractLen-1, len(l:option["identity"]) - subtractLen + 1)
 			endif
 			let item["menu"] = l:option["signature"]
-			let item["info"] = s:insertLineBreaks(l:option["doc"], wrapDocAfterLen)
-			"let item["info"] = l:option["doc"]
+            let l:info = s:insertLineBreaks(l:option["doc"], wrapDocAfterLen)
+
+            " blank out item["info"] if doc is empty
+            if (!empty(l:info))
+                let item["info"] = l:info
+                let l:isPreviewOpen = 1 " signal that this item will cause preview window to open
+            else    
+                " :h complete-items
+                " Use a single space for "info" to remove existing text in the preview window.
+                if l:isPreviewOpen
+                    " assign ' ' to info *only* if we know that preview window
+                    " will be open for other (preceding) items which have documentation
+                    let item["info"] = ' '
+                endif    
+            endif    
 			" let item["kind"] = l:option[""] " TODO
 			let item["icase"] = 1 " ignore case
 			let item["dup"] = 1 " allow methods with different signatures but same name
