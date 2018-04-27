@@ -209,6 +209,7 @@ function! s:listOptions(filePath, line, column)
                 endif    
             endif    
 			" let item["kind"] = l:option[""] " TODO
+			let item["kind"] = has_key(l:option, "kind") ? l:option["kind"] : ""
 			let item["icase"] = 1 " ignore case
 			let item["dup"] = 1 " allow methods with different signatures but same name
 			call add(l:completionList, item)
