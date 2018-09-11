@@ -51,7 +51,7 @@ syn keyword apexcodeConditional		if then else
 syn keyword apexcodeRepeat			for while do
 
                                     " use \< .. \> to match the whole word
-syn match 	apexcodePreProc			"\<\(with sharing\|without sharing\)\>"
+syn match 	apexcodePreProc			"\<\(with\|without\|inherited\) sharing\>"
 syn keyword apexcodePreProc			testMethod
 " apexcode annotations
 syn match	apexcodePreProc			"@\(isTest\|future\|RemoteAction\|TestVisible\|RestResource\|Deprecated\|ReadOnly\|TestSetup\)"
