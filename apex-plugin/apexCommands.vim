@@ -104,6 +104,7 @@ function! s:toolingJarSpecific()
 
 	" display last log
 	command! ApexLog :call apexToolingCommon#openLastLog()
+	command! ApexLogsDelete :call apexLogActions#deleteLogs(expand("%:p"))
 
     " display message buffer
 	command! ApexMessages :call apexMessages#open()

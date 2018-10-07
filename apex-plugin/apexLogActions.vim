@@ -64,6 +64,13 @@ function! apexLogActions#askLogLevel(filePath, api)
     call feedkeys("\<CR>") 
 endfunction
 
+function! apexLogActions#deleteLogs(filePath)
+    let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+    let l:extraParams = {}
+	let resMap = apexToolingAsync#executeBlocking("deleteLogs", projectPair.name, projectPair.path, l:extraParams, [])
+	let responsePath = resMap["responseFilePath"]
+endfunction    
+
 " function! s:askMetaLogLevels()
 "     if exists('g:apex_test_logType')
 "         let s:META_LOG_LEVEL = g:apex_test_logType
