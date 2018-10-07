@@ -187,10 +187,11 @@ function! s:listOptions(filePath, line, column)
 			let l:option = eval(jsonLine)
 			
 			let item = {}
-			let item["word"] = l:option["identity"]
+            let symbolInsertText =  empty(l:option["symbolInsertText"])? l:option["identity"] : l:option["symbolInsertText"]
+			let item["word"] = symbolInsertText " text to insert
 			if subtractLen > 0
 				let item["abbr"] = l:option["identity"]
-				let item["word"] = strpart(l:option["identity"], subtractLen-1, len(l:option["identity"]) - subtractLen + 1)
+				let item["word"] = strpart(symbolInsertText, subtractLen-1, len(symbolInsertText) - subtractLen + 1)
 			endif
 			let item["menu"] = l:option["signature"]
             let l:info = s:insertLineBreaks(l:option["doc"], wrapDocAfterLen)
