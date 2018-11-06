@@ -669,13 +669,33 @@ endfunction
 
 
 
+" this file contains total numbers of covered and not-covered lines
 let s:last_coverage_report_file = ''
 function! apexToolingAsync#getLastCoverageReportFile()
 	return s:last_coverage_report_file
 endfunction
-"DEBUG ONLY
-function! apexToolingAsync#setLastCoverageReportFile(filePath)
-	let s:last_coverage_report_file = a:filePath
+
+function! apexToolingAsync#loadCoverageReportFile(filePath, classOrTriggerName)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectPath = projectPair.path
+	let projectName = projectPair.name
+
+	let l:extraParams = {}
+	"let l:extraParams["isSilent"] = 1
+	let l:extraParams["classOrTriggerName"] = a:classOrTriggerName
+
+	let resMap = apexToolingAsync#executeBlocking("loadApexCodeCoverageAggregate", projectName, projectPath, l:extraParams, [])
+
+    if has_key(resMap, "responseFilePath")
+        let responsePath = resMap["responseFilePath"]
+        let coverageFiles = apexToolingCommon#grepValues(responsePath, "COVERAGE_FILE=")
+
+        if len(coverageFiles) > 0
+            return coverageFiles[0]
+        endif
+    endif
+    return ''
+	
 endfunction
 
 function apexToolingAsync#checkSyntax(filePath, attributeMap)

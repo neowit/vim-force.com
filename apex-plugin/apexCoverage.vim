@@ -107,6 +107,7 @@ function! apexCoverage#show(buffer)
 	" switch to this buffer
 	exe "buffer ".l:buffer  
 endfunction
+
 "Param1: (optional) file path where signs must be cleared
 "					if not provided then clear signs in all files
 function! apexCoverage#hide(...)
@@ -142,9 +143,9 @@ function! s:clearSigns(...) abort
 endfunction
 
 function! s:defineHighlight()
-    hi SignColumn guifg=#004400 guibg=green ctermfg=40 ctermbg=40
-    hi uncovered guifg=#ff2222 guibg=red ctermfg=1 ctermbg=1
-    sign define uncovered text=00 texthl=uncovered
+    hi SignColumn guifg=green guibg=green ctermfg=2 ctermbg=2
+    hi uncovered guifg=red guibg=red ctermfg=1 ctermbg=1
+    sign define uncovered text=- texthl=uncovered
 endfunction
 
 "Returns: dictionary which looks like so:
@@ -155,9 +156,14 @@ endfunction
 function! s:loadCoverageData(filePath)
 	let resultMap = {}
 	let fileName = apexOs#splitPath(a:filePath).tail
-	let coverageReportFile = apexToolingAsync#getLastCoverageReportFile()
-	"TODO remove line below and uncomment one above
+	" let coverageReportFile = apexToolingAsync#getLastCoverageReportFile()
+    let coverageReportFile = ''
 	"let coverageReportFile = '/private/var/folders/j7/j2yjllg10wz5__x5f8h2w10c0000gn/T/coverage7187158401431933096.txt'
+    if empty(coverageReportFile)
+        " try to load from remote
+        "echo "trying to load coverage for: " . fileName
+        let coverageReportFile = apexToolingAsync#loadCoverageReportFile(a:filePath, fileName)
+    endif
 	if filereadable(coverageReportFile) 
 		let jsonLines = apexUtil#grepFile(coverageReportFile, fileName)
 		if len(jsonLines) > 0
@@ -184,10 +190,15 @@ function! s:showSigns(filePath) abort
 		else
 			let index = 1
 			for lineNum in linesNotCovered
-				execute ":sign place ". index ." line=". lineNum ." name=uncovered file=".filePath
-				let index += 1
+                if lineNum > 0
+                    execute ":sign place ". index ." line=". lineNum ." name=uncovered file=".filePath
+                    let index += 1
+                endif
 			endfor
 			let s:display_state_by_file[filePath] = 1
+            " have to call s:defineHighlight() again, otherwise signs are not
+            " rendered properly
+            call s:defineHighlight()
 		endif
 	else
 		echo "\n"
