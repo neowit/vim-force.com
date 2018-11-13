@@ -15,7 +15,7 @@ endif
 " Aura bundle file switcher
 " Allows to switch between controller/helper/css/component files within aura
 " bundle
-let s:aura_files = ['controller.js', 'helper.js', '.cmp', '.css']
+let s:aura_files = ['controller.js', 'helper.js', 'renderer.js', '.cmp', '.css', '.design']
 function! aura#alternateFile(switchToType)
     let currentFileName = tolower(expand("%:t"))
     let targetFileName = ''
@@ -25,10 +25,18 @@ function! aura#alternateFile(switchToType)
         let targetSuffix = 'Controller.js'
     elseif 'helper' == a:switchToType
         let targetSuffix = 'Helper.js'
+    elseif 'renderer' == a:switchToType
+        let targetSuffix = 'Renderer.js'
     elseif 'component' == a:switchToType
         let targetSuffix = '.cmp'
     elseif 'css' == a:switchToType
         let targetSuffix = '.css'
+    elseif 'design' == a:switchToType
+        let targetSuffix = '.design'
+    elseif 'meta-xml' == a:switchToType
+        let targetFileName = currentFileName . '-meta.xml'
+        call s:switchToOrOpen(targetFileName, currentFileName)
+        return
     endif    
     
     for ext in s:aura_files
@@ -37,15 +45,19 @@ function! aura#alternateFile(switchToType)
             break
         endif   
     endfor  
+    call s:switchToOrOpen(targetFileName, currentFileName)
+endfunction    
+
+function! s:switchToOrOpen(targetFileName, currentFileName)
     "echomsg "targetFileName=".targetFileName
-    if '' != targetFileName && targetFileName != currentFileName
-        let l:bufNr = bufnr(targetFileName)
+    if '' != a:targetFileName && a:targetFileName != a:currentFileName
+        let l:bufNr = bufnr(a:targetFileName)
         if l:bufNr >= 0
             execute "b ". l:bufNr
         else    
-            execute 'edit ' . targetFileName
+            execute 'edit ' . a:targetFileName
         endif
     endif    
-endfunction    
+endfunction
 
 let g:loaded_aura_autoload_customisations = 1
