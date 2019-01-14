@@ -88,6 +88,19 @@ function apexToolingAsync#login(filePath, projectName, projectPath, env)
     endif
 endfunction
 
+function! apexToolingAsync#openInBrowser(...)
+    let filePath = expand("%:p")
+	let projectPair = apex#getSFDCProjectPathAndName(filePath)
+	if a:0 >0
+		let filePath = a:1
+	endif	
+    let fileName = apexOs#splitPath(filePath).tail
+    let extraParams = {'name': fileName, 'openInBrowser': 'true'}
+	call apexToolingAsync#execute("guessSetupUrl", projectPair.name, projectPair.path, extraParams, [])
+endfunction    
+
+
+
 "Args:
 "Param: action:
 "			'deploy' - use metadata api

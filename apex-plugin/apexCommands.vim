@@ -17,11 +17,6 @@ let g:loaded_apexCommands = 1
 """"""""""""""""""""""""""""""""""""""""""""""""
 " Apex commands 
 """"""""""""""""""""""""""""""""""""""""""""""""
-" version of tooling-force.com
-command! ApexValidateJavaConfig :call apexServer#validateJavaConfig()
-" version of tooling-force.com
-command! ApexToolingVersion :call apexToolingAsync#getVersion(expand("%:p"))
-
 " staging
 command! ApexStage :call apexStage#open(expand("%:p"))
 command! ApexStageAdd :call apexStage#add(expand("%:p"))
@@ -53,6 +48,12 @@ command! ApexGitInit :call apexUtil#gitInit()
 """"""""""""""""""""""""""""""""""""""""""""""""
 function! s:toolingJarSpecific()
 	command! -nargs=0 ApexLogin :call apexProject#login(expand("%:p"))
+
+    " validation of tooling-force.com config
+    command! ApexValidateJavaConfig :call apexServer#validateJavaConfig()
+    " version of tooling-force.com
+    command! ApexToolingVersion :call apexToolingAsync#getVersion(expand("%:p"))
+
 	"
 	" Deployment
 	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apexTooling#deploy('deploy', 'Modified', <bang>0, <f-args>)
@@ -63,7 +64,6 @@ function! s:toolingJarSpecific()
 	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployStaged :call apexTooling#deploy('deploy', 'Staged', <bang>0, <f-args>)
 	"command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployOne :call apexTooling#deploy('deploy', 'One', <bang>0, <f-args>)
 
-	" TODO
 	"command! -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployConfirm :call apexTooling#deploy('Confirm', <f-args>)
 	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeploy :call apexToolingAsync#deploy('deploy', 'Modified', <bang>0, <f-args>)
 	command! -bang -nargs=* -complete=customlist,apex#completeDeployParams ApexDeployDestructive :call apexToolingAsync#deploy('deploy', 'ModifiedDestructive', <bang>0, <f-args>)
@@ -119,6 +119,11 @@ function! s:toolingJarSpecific()
 
     " Apex Parser 
 	command! ApexCheckSyntax :call apexComplete#checkSyntax(expand("%:p"))
+
+    " try to retrieve URL of current file in SFDC setup and open in web
+    " browser
+	command! -nargs=? ApexOpenInBrowser :call apexToolingAsync#openInBrowser(<f-args>)
+
 	
 endfunction
 
