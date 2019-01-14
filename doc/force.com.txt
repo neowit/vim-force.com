@@ -283,6 +283,8 @@ Plugin exposes following commands:                              *apex-commands*
                                     current file
 |ApexTestWithCoverage|              run Unit Tests and generate per-line coverage
 |ApexToolingVersion|                show version of tooling-force.com.jar
+|ApexOpenInBrowser|                 attempt to open specified resource in SFDC 
+                                    Setup Web UI
 
 ------------------------------------------------------------------------------
 
@@ -883,13 +885,52 @@ ex: >
 Note_2: piping is a bit tempremental, so if it does not work then use the
 generic (two commands, each on its own line) version shown above.
 
-
-
                                                             *ApexToolingVersion*
 
-Return version of tooling-force.com.jar .
+Return version of tooling-force.com.jar.
 
+                                                            *ApexOpenInBrowser*
 
+Using provided resource name try to guess what type of resource this is and
+its possible URL in SFDC Setup UI.
+Requires tooling-force.com.jar v0.4.4.1 or above
+
+The list of supported SFDC resources is currently limited to
+following:
+- ApexClass, ApexTrigger, ApexPage, StaticResource, ApexComponent
+- SObject - custom object
+- Custom Field
+- Custom Label
+
+Types of invocation
+- no parameters :ApexOpenInBrowser
+- single parameter :ApexOpenInBrowser MyObject__c.object
+- single parameter :ApexOpenInBrowser MyClass.cls
+- two parameters :ApexOpenInBrowser MyClass ApexClass
+- two parameters :ApexOpenInBrowser MyClass class
+- two parameters :ApexOpenInBrowser MyObject__c SObject
+- two parameters :ApexOpenInBrowser MyObject__c object
+
+Examples
+
+1: >
+    :ApexOpenInBrowser
+<
+will try to identify the type of the resource in the current active buffer
+and open web page of this reource in SFDC Setup. For instance - if current 
+buffer contains Apex Class then this command will try to open SFDC setup page
+of this apex class
+
+2: >
+    :ApexOpenInBrowser MyObject__c.MyField__c
+<
+this will open setup page of field MyField__c on object MyObject__c.
+Standard fields and standard objects are not supported.
+
+3: >
+    :ApexOpenInBrowser MyLabel__c.label
+<
+this will open setup page of custom label MyLabel.
 
 ==============================================================================
                                                                 *auto-complete*
