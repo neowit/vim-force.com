@@ -282,8 +282,6 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexTestCoverageToggle|            toggle per-line coverage highligh in
                                     current file
 |ApexTestWithCoverage|              run Unit Tests and generate per-line coverage
-|ApexTListToggle|                   toggle taglist (works if 'taglist' plugin 
-                                    is installed)
 |ApexToolingVersion|                show version of tooling-force.com.jar
 
 ------------------------------------------------------------------------------
@@ -885,14 +883,7 @@ ex: >
 Note_2: piping is a bit tempremental, so if it does not work then use the
 generic (two commands, each on its own line) version shown above.
 
-                                                               *ApexTListToggle*
 
-Helper for 'TagList' plugin (http://vim-taglist.sourceforge.net)
-Taglist plugin does not support mixed filetypes like: apexcode.java 
-so we have to trick it like if &filetype was = 'apexcode'
-i.e. every time when Taglist is called set filetype=apexcode temporarely
-and then revert back to what it was 
-See apexcode.vim s:Apex_TList_Toggle() method for more details.
 
                                                             *ApexToolingVersion*
 
