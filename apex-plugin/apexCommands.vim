@@ -122,7 +122,7 @@ function! s:toolingJarSpecific()
 
     " try to retrieve URL of current file in SFDC setup and open in web
     " browser
-	command! -nargs=? ApexOpenInBrowser :call apexToolingAsync#openInBrowser(<f-args>)
+	command! -nargs=* ApexOpenInBrowser :call apexToolingAsync#openInBrowser(<f-args>)
 
 	
 endfunction

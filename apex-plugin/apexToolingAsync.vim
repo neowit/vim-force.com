@@ -88,6 +88,20 @@ function apexToolingAsync#login(filePath, projectName, projectPath, env)
     endif
 endfunction
 
+"Args:
+"Param: resource name
+"   e.g. MyObject__c
+"Param: resource type (optional)
+"   e.g. CustomObject or object
+"
+"Examples: 
+"   - apexToolingAsync#openInBrowser('MyLabel.label')
+"       - specify type via file extension
+"   - apexToolingAsync#openInBrowser('MyLabel', 'label')
+"       - specify type directly, via second parameter
+"   - apexToolingAsync#openInBrowser("MyObject__c.MyField__c")
+"       - no type specified, server will have to guess what user has provided
+"       
 function! apexToolingAsync#openInBrowser(...)
     let filePath = expand("%:p")
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
@@ -96,6 +110,10 @@ function! apexToolingAsync#openInBrowser(...)
 	endif	
     let fileName = apexOs#splitPath(filePath).tail
     let extraParams = {'name': fileName, 'openInBrowser': 'true'}
+    if a:0 > 1
+        " looks like type parameter is also provided
+        let extraParams["type"] = a:2
+    endif
 	call apexToolingAsync#execute("guessSetupUrl", projectPair.name, projectPair.path, extraParams, [])
 endfunction    
 
