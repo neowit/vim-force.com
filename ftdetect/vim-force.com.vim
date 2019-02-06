@@ -40,6 +40,7 @@ augroup aura
 	au BufRead,BufNewFile */src/aura/*.app set filetype=aura-xml | set syntax=aura-xml
 	au BufRead,BufNewFile */src/aura/*.cmp set filetype=aura-xml | set syntax=aura-xml
 	au BufRead,BufNewFile */src/aura/*.evt set filetype=aura-xml | set syntax=aura-xml
+	au BufRead,BufNewFile */src/aura/*.design set filetype=aura-xml | set syntax=aura-xml
 	au BufRead,BufNewFile */src/aura/*.intf set filetype=apexcode.aura.html | set syntax=html
 	au BufRead,BufNewFile */src/aura/*.js set filetype=aura-javascript | set syntax=javascript
 	au BufRead,BufNewFile */src/aura/*.css set filetype=aura-css | set syntax=css
