@@ -21,7 +21,7 @@ for varName in s:requiredVariables
 	endif
 endfor	
 
-let s:is_windows = has("win32") || has("win64")
+let s:is_windows = has("win32") || has("win64") || has("windows")
 
 "Function: apexOs#isWindows() function {{{1
 " check if current machine is running MS Windows
