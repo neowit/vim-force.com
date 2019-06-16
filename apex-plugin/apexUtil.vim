@@ -366,20 +366,25 @@ function! apexUtil#grepFile(filePath, expr, ...)
 	let lines = []
 	
 	try
-		let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
-		silent exe exprStr
-		"expression found
-		"get line numbers from quickfix
-		for qfLine in getqflist()
-			"call add(lineNums, qfLine.lnum)
-			call add(lines, qfLine.text)
-		endfor	
-		if len(getqflist()) < 1
-			"if we are here and getqflist() == []
-			"then we hit a bug and vimgrep failed to populate getqflist
-			"use alternative (slow) 'grep'
+        if apexOs#isWindows()
 			let lines = s:grepFileSlow(a:filePath, a:expr)
-		endif
+        else
+            let exprStr =  "noautocmd vimgrep /\\c".a:expr."/j ".fnameescape(a:filePath)
+            silent exe exprStr
+            "expression found
+            "get line numbers from quickfix
+            for qfLine in getqflist()
+                "call add(lineNums, qfLine.lnum)
+                call add(lines, qfLine.text)
+            endfor	
+            echomsg "lines=" . string(lines)
+            if len(getqflist()) < 1
+                "if we are here and getqflist() == []
+                "then we hit a bug and vimgrep failed to populate getqflist
+                "use alternative (slow) 'grep'
+                let lines = s:grepFileSlow(a:filePath, a:expr)
+            endif
+        endif
 		
 	"catch  /^Vim\%((\a\+)\)\=:E480/
 	catch  /.*/
