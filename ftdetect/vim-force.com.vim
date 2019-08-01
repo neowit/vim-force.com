@@ -47,6 +47,17 @@ augroup aura
 	au BufRead,BufNewFile */src/aura/*.auradoc set filetype=apexcode.aura.html | set syntax=html
 augroup END
 
+" lwc files
+augroup lwc
+	au!
+	au BufRead,BufNewFile */src/lwc/*.css set filetype=lwc-css | set syntax=css
+	au BufRead,BufNewFile */src/lwc/*.html set filetype=lwc-html | set syntax=html
+	au BufRead,BufNewFile */src/lwc/*.js set filetype=lwc-javascript | set syntax=javascript
+	au BufRead,BufNewFile */src/lwc/*.json set filetype=lwc-json | set syntax=json
+	au BufRead,BufNewFile */src/lwc/*.svg set filetype=lwc-svg | set syntax=svg
+	au BufRead,BufNewFile */src/lwc/*.xml set filetype=lwc-xml | set syntax=xml
+augroup END
+
 " check if we shall let tern_for_vim to become javascript 'omnifunc'
 if &runtimepath !~ 'tern_for_vim'
 	au BufRead,BufNewFile *JS.resource setlocal omnifunc=javascriptcomplete#CompleteJS
