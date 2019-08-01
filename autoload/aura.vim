@@ -15,9 +15,9 @@ endif
 " Aura bundle file switcher
 " Allows to switch between controller/helper/css/component files within aura
 " bundle
-let s:aura_files = ['controller.js', 'helper.js', 'renderer.js', '.cmp', '.css', '.design']
+let s:aura_files = ['Controller.js', 'Helper.js', 'Renderer.js', '.cmp', '.css', '.design']
 function! aura#alternateFile(switchToType)
-    let currentFileName = tolower(expand("%:t"))
+    let currentFileName = expand("%:t")
     let targetFileName = ''
 
     let targetSuffix = ''
@@ -40,8 +40,8 @@ function! aura#alternateFile(switchToType)
     endif    
     
     for ext in s:aura_files
-        if match(currentFileName, ext.'$') > 0
-            let targetFileName = strpart(currentFileName, 0, match(currentFileName, ext."$")) . targetSuffix
+        if match(currentFileName, '\c'.ext.'$') > 0
+            let targetFileName = strpart(currentFileName, 0, match(currentFileName, '\c'.ext."$")) . targetSuffix
             break
         endif   
     endfor  
