@@ -42,5 +42,5 @@ function! VFIndent()
 	return s:cssIndentExpr()
   endif
 
-  return s:xmlIndentRef(v:lnum,0)
+  return s:xmlIndentRef(v:lnum, 1)
 endfunction
