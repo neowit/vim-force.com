@@ -13,6 +13,7 @@
 if exists("b:current_syntax")
 	unlet b:current_syntax
 endif
+runtime! syntax/javascript.vim
 
 " exta highlighting for LWC specific keywords
 syn match PreProc "@\(api\|track\)\>"
