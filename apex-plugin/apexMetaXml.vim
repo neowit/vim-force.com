@@ -18,13 +18,57 @@ let g:loaded_apex_metaXml = 1
 "proper path
 let s:PLUGIN_FOLDER = expand("<sfile>:h")
 
-let s:SUPPORTED_FILE_TYPES = ["ApexClass", "ApexPage", "ApexTrigger", "ApexComponent"]
+let s:SUPPORTED_FILE_TYPES = ["ApexClass", "ApexPage", "ApexTrigger", "ApexComponent", "LightningComponentBundle"]
 
 " request file type/name, check that file does not exist, create file and switch
 " buffer to the new file
 " param: filePath - full path of current apex file - needed to determine
 " project location
 function apexMetaXml#createFileAndSwitch(filePath)
+	let projectPath = apex#getSFDCProjectPathAndName(a:filePath).path
+	let typeAndName = s:fileTypeMenu(a:filePath)
+	if len(typeAndName) < 1
+		echo "\n"
+		echomsg "Selection aborted"
+        " user aborted
+		return 
+	endif
+	let fileObjects = s:getFiles{typeAndName.fileType}(typeAndName.fileName)
+    " fileObjects = {files :[name: 'helloWorld.html', content: '...', path: ['lwc', 'helloWorld']]}
+    
+    let filePathToEdit = ""
+
+    for fileObject in fileObjects.files
+        let l:folders = fileObject.path
+        let folderPath = apexOs#joinPath([projectPath, "src"] + l:folders)
+        if !isdirectory(folderPath)
+            call apexOs#createDir(folderPath)
+        endif
+
+        let newFilePath = apexOs#joinPath([folderPath, fileObject.name])
+        if filereadable(newFilePath)
+            echo "\n"
+            call apexUtil#warning("File already exists: " . newFilePath)
+            continue
+        endif
+
+        let writeRes = writefile(fileObject.content, newFilePath )
+        if 0 == writeRes 
+            if has_key(fileObject, "openForEditing") && 1 == fileObject.openForEditing
+                let filePathToEdit = newFilePath
+            endif	
+        endif
+
+    endfor
+
+    if !empty(filePathToEdit)
+        "switch to the buffer with newly created file
+        silent exe "edit ".fnameescape(filePathToEdit)
+    endif
+    
+endfun
+
+function apexMetaXml#createFileAndSwitch_old(filePath)
 	let projectPath = apex#getSFDCProjectPathAndName(a:filePath).path
 	let typeAndName = s:fileTypeMenu(a:filePath)
 	if len(typeAndName) < 1
@@ -343,11 +387,16 @@ endfun
 " generate 2 files
 " <classname>.cls
 " <classname>.cls-meta.xml
-" @return: {mainFileContent: [lines to be inserted in main file], 
-"			metaContent: [lines to be inserted into meta file],
-"			fileExtension: "cls",
-"			folderName: "classes"}
-function s:getFilesContentApexClass(fName)
+" @return: {
+"       files :[ 
+"           { name: 'HelloWorld.cls', content: '...', path: ['pages']} 
+"           { name: 'HelloWorld.cls-meta.xml', content: '...', path: ['classes']} 
+"       ]
+"   }
+"
+function s:getFilesApexClass(fName)
+    let fName = a:fName . ".cls"
+
 	let fileContent = ["public with sharing class ". a:fName . " {", "}"]
 
 	let metaContent = []
@@ -357,18 +406,26 @@ function s:getFilesContentApexClass(fName)
 	let metaContent = metaContent + ["    <status>Active</status>"]
 	let metaContent = metaContent + ["</ApexClass>"]
 
-	return {"mainFileContent": fileContent, "metaContent": metaContent, "fileExtension": "cls", "folderName": "classes"}
+    let l:files = []
+    let l:files = l:files + [ {"name": fName, "content": fileContent, "path": ["classes"], "openForEditing": 1} ]
+    let l:files = l:files + [ {"name": fName . "-meta.xml", "content": metaContent, "path": ["classes"] } ]
 
+    return {"files": l:files}
 endfun	
 
 " generate 2 files
 " <pagename>.page
 " <pagename>.page-meta.xml
-" @return: {mainFileContent: [lines to be inserted in main file], 
-"			metaContent: [lines to be inserted into meta file],
-"			fileExtension: "page",
-"			folderName: "pages"}
-function s:getFilesContentApexPage(fName)
+" @return: {
+"       files :[ 
+"           { name: 'HelloWorld.page', content: '...', path: ['pages']} 
+"           { name: 'HelloWorld.page-meta.xml', content: '...', path: ['pages']} 
+"       ]
+"   }
+"
+function s:getFilesApexPage(fName)
+    let fName = a:fName . ".page"
+
 	let fileContent = ["<apex:page>", "</apex:page>"]
 
 	let metaContent = []
@@ -378,18 +435,26 @@ function s:getFilesContentApexPage(fName)
 	let metaContent = metaContent + ["    <label>".a:fName."</label>"]
 	let metaContent = metaContent + ["</ApexPage>"]
 
-	return {"mainFileContent": fileContent, "metaContent": metaContent, "fileExtension": "page", "folderName": "pages"}
+    let l:files = []
+    let l:files = l:files + [ {"name": fName, "content": fileContent, "path": ["pages"], "openForEditing": 1} ]
+    let l:files = l:files + [ {"name": fName . "-meta.xml", "content": metaContent, "path": ["pages"] } ]
+
+    return {"files": l:files}
 
 endfun	
 
 " generate 2 files
 " <triggername>.trigger
 " <triggername>.trigger-meta.xml
-" @return: {mainFileContent: [lines to be inserted in main file], 
-"			metaContent: [lines to be inserted into meta file],
-"			fileExtension: "trigger",
-"			folderName: "triggers"}
-function s:getFilesContentApexTrigger(fName)
+" @return: {
+"       files :[ 
+"           { name: 'HelloWorld.trigger', content: '...', path: ['pages']} 
+"           { name: 'HelloWorld.trigger-meta.xml', content: '...', path: ['triggers']} 
+"       ]
+"   }
+function s:getFilesApexTrigger(fName)
+    let fName = a:fName . ".trigger"
+
 	let fileContent = ["trigger " . a:fName . " on <Object> (<events>) {", "}"]
 
 	let metaContent = []
@@ -399,18 +464,25 @@ function s:getFilesContentApexTrigger(fName)
 	let metaContent = metaContent + ["    <status>Active</status>"]
 	let metaContent = metaContent + ["</ApexTrigger>"]
 
-	return {"mainFileContent": fileContent, "metaContent": metaContent, "fileExtension": "trigger", "folderName": "triggers"}
+    let l:files = []
+    let l:files = l:files + [ {"name": fName, "content": fileContent, "path": ["triggers"], "openForEditing": 1} ]
+    let l:files = l:files + [ {"name": fName . "-meta.xml", "content": metaContent, "path": ["triggers"] } ]
+
+    return {"files": l:files}
 
 endfun	
 
 " generate 2 files
 " <componentname>.component
 " <componentname>.component-meta.xml
-" @return: {mainFileContent: [lines to be inserted in main file], 
-"			metaContent: [lines to be inserted into meta file],
-"			fileExtension: "component",
-"			folderName: "components"}
-function s:getFilesContentApexComponent(fName)
+" @return: {
+"       files :[ 
+"           { name: 'HelloWorld.trigger', content: '...', path: ['pages']} 
+"           { name: 'HelloWorld.trigger-meta.xml', content: '...', path: ['triggers']} 
+"       ]
+"   }
+function s:getFilesApexComponent(fName)
+    let fName = a:fName . ".component"
 	let fileContent = ["<apex:component>", "</apex:component>"]
 
 	let metaContent = []
@@ -420,7 +492,55 @@ function s:getFilesContentApexComponent(fName)
 	let metaContent = metaContent + ["    <label>".a:fName."</label>"]
 	let metaContent = metaContent + ["</ApexComponent>"]
 
-	return {"mainFileContent": fileContent, "metaContent": metaContent, "fileExtension": "component", "folderName": "components"}
+    let l:files = []
+    let l:files = l:files + [ {"name": fName, "content": fileContent, "path": ["components"], "openForEditing": 1} ]
+    let l:files = l:files + [ {"name": fName . "-meta.xml", "content": metaContent, "path": ["components"] } ]
+
+    return {"files": l:files}
+
+endfun	
+"
+" generate 3 files
+" <componentname>.html
+" <componentname>.js
+" <componentname>.js-meta.xml
+" @return: {files :[name: '', content: '', path: ['lwc', '']]}
+
+function s:getFilesLightningComponentBundle(fName)
+    let bundleName = tolower(a:fName[0]) . a:fName[1:]
+    let fName = bundleName
+    let className = toupper(a:fName[0]) . a:fName[1:]
+
+	let htmlContent = ["<template>", "</template>"]
+    let htmlFileName = fName . ".html"
+
+	let metaContent = []
+	let metaContent = metaContent + ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>"]
+	let metaContent = metaContent + ['<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata" fqn="' .fName. '">']
+	let metaContent = metaContent + ["  <apiVersion>". s:stringify(g:apex_API_version) . "</apiVersion>"]
+	let metaContent = metaContent + ["  <isExposed>true</isExposed>"]
+    let metaContent = metaContent + ["  <targets>"]
+    let metaContent = metaContent + ["    <target>lightning__AppPage</target>"]
+    let metaContent = metaContent + ["    <target>lightning__RecordPage</target>"]
+    let metaContent = metaContent + ["    <target>lightning__HomePage</target>"]
+    let metaContent = metaContent + ["  </targets>"]
+	let metaContent = metaContent + ["</LightningComponentBundle>"]
+    let metaFileName = fName . ".js-meta.xml"
+
+    let jsContent = []
+    let jsContent = jsContent + ["import { LightningElement, track, api } from 'lwc';"]
+    let jsContent = jsContent + ["export default class ". className ." extends LightningElement {"]
+    let jsContent = jsContent + [""]
+    let jsContent = jsContent + ["}"]
+    let jsFileName = fName . ".js"
+
+    let l:files = []
+    let l:files = l:files + [ {"name": htmlFileName, "content": htmlContent, "path": ["lwc", bundleName], "openForEditing": 1} ]
+    let l:files = l:files + [ {"name": metaFileName, "content": metaContent, "path": ["lwc", bundleName]} ]
+    let l:files = l:files + [ {"name": jsFileName, "content": jsContent, "path": ["lwc", bundleName]} ]
+    
+
+	return {"files": l:files}
 
 endfun	
 
