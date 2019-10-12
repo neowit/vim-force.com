@@ -15,5 +15,6 @@ if exists("b:current_syntax")
 endif
 
 " exta highlighting for LWC specific keywords
-syn match PreProc "@\(api\|track\)"
+syn match PreProc "@\(api\|track\)\>"
+syn match javaScriptStatement "\<\(get\|set\)\>"
 
