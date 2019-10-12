@@ -523,6 +523,13 @@ function s:getFilesLightningComponentBundle(fName)
     let metaContent = metaContent + ["    <target>lightning__AppPage</target>"]
     let metaContent = metaContent + ["    <target>lightning__RecordPage</target>"]
     let metaContent = metaContent + ["    <target>lightning__HomePage</target>"]
+    let metaContent = metaContent + ["    <target>lightning__Tab</target>"]
+    let metaContent = metaContent + ["    <!-- <target>lightning__FlowScreen</target> -->"]
+    let metaContent = metaContent + ["    <!-- <target>lightning__UtilityBar</target> -->"]
+    let metaContent = metaContent + ["    <!-- <target>lightning__Inbox</target> -->"]
+    let metaContent = metaContent + ["    <!-- <target>lightningCommunity__Page</target> -->"]
+    let metaContent = metaContent + ["    <!-- <target>lightningCommunity__Default</target> -->"]
+    let metaContent = metaContent + ["    <!-- <target>lightningSnapin__ChatMessage</target> -->"]
     let metaContent = metaContent + ["  </targets>"]
 	let metaContent = metaContent + ["</LightningComponentBundle>"]
     let metaFileName = fName . ".js-meta.xml"
