@@ -44,7 +44,7 @@ function! apexUtil#compareFiles(...)
 		return ""
 	endif
 	
-	if executable(g:apex_diff_cmd)
+	if exists("g:apex_diff_cmd") && executable(g:apex_diff_cmd)
 		let scriptPath = shellescape(g:apex_diff_cmd)
 		"let command = scriptPath.' '.shellescape(leftFilePath).' '.shellescape(rightFilePath)
 		let command = scriptPath.' '.apexOs#shellescape(leftFilePath).' '.apexOs#shellescape(rightFilePath)
