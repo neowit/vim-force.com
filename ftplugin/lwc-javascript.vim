@@ -8,3 +8,11 @@
 "supported apex filetypes is detected
 runtime! ftplugin/apexcode.vim
 
+" when using gf motion - vim changes path "./modulename" to "/modulename"
+" so we have to change it back to "./modulename"
+function! LwcModulePath(fName)
+    let res = substitute(a:fName, "^/", "./" ,'' )
+    return res
+endfunction
+
+set includeexpr=LwcModulePath(v:fname)
