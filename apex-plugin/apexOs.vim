@@ -67,7 +67,7 @@ else
 endif
 
 "set desired API version
-call s:let('g:apex_API_version', '37.0')
+call s:let('g:apex_API_version', '47.0')
 
 " set pollWaitMillis for ant tasks. See ant-salesforce.jar
 " documentation for 'pollWaitMillis' parameter
