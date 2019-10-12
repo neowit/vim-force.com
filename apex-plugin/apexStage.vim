@@ -147,6 +147,39 @@ function! apexStage#list(projectPath)
 	return lines
 
 endfunction
+
+" check if this file path is one of the bundled (aura, lwc)
+" and if it is then return as follows
+" if source file path is .../src/lwc/helloWorld/helloWorld.html
+" {bundleType: 'lwc', bundleName: 'helloWorld', fileName: 'helloWorld.html'}
+"
+" if filePath is not pointing to bundled resource then return empty dictionary {}
+"
+function! s:splitBundledPath(filePath)
+    let filePair = apexOs#splitPath(a:filePath)
+    let path = filePair.head " .../src/lwc/helloWorld
+    let fileName = filePair.tail " helloWorld.html
+    if len(path) > 0
+        let pathPair = apexOs#splitPath(path) 
+        let path = pathPair.head " .../src/lwc/ 
+        let bundleName = pathPair.tail " helloWorld
+        if len(path) > 0 
+            let pathPair = apexOs#splitPath(path) " .../src/lwc/
+            let path = pathPair.head " .../src/
+            let bundleType = pathPair.tail " lwc
+
+            if "lwc" == bundleType || "aura" == bundleType
+                return  {
+                            \   'bundleType' : bundleType,
+                            \   'bundleName' : bundleName,
+                            \   'fileName' : fileName
+                            \ }
+            endif    
+        endif
+    endif
+    return {}
+
+endfunction
 " stage file for further operation like Deploy or Delete
 "Args:
 "param 1: [optional] path to file which will be staged
@@ -159,31 +192,39 @@ function! apexStage#add(...)
 	let projectPath = apex#getSFDCProjectPathAndName(filePath).path
 	if  len(projectPath) > 0
 		let stageFilePath = apexStage#getStageFilePath(projectPath)
-		let filePair = apexOs#splitPath(filePath)
-		let fName = filePair.tail
-		let folder = apexOs#splitPath(filePair.head).tail
-		"file path in stage always uses / as path separator
-		"let relPath = apexOs#joinPath([folder, fName])
-		let relPath = apexOs#removeTrailingPathSeparator(folder) . "/" . fName
+        let bundle = s:splitBundledPath(filePath)
+        let relPath = ''
+        if empty(bundle)
+            let filePair = apexOs#splitPath(filePath)
+            let fName = filePair.tail
+            let folder = apexOs#splitPath(filePair.head).tail
+            "file path in stage always uses / as path separator
+            "let relPath = apexOs#joinPath([folder, fName])
+            let relPath = apexOs#removeTrailingPathSeparator(folder) . "/" . fName
+        else
+            let relPath = bundle.bundleType . "/" . bundle.bundleName . "/" . bundle.fileName
+        endif
 		"check that file is not already staged
 		let lines = []
 		let alreadyAdded = 0
 
-		if filereadable(stageFilePath)
-			for line in readfile(stageFilePath, '', 10000) " assuming stage file will never contain more than 10K lines
-				call add(lines, line)
-				if line =~? "^".relPath."$"
-					let alreadyAdded = 1
-				endif	
-			endfor
-		endif
-		if alreadyAdded > 0
-			call apexUtil#warning('File "'.relPath.'" already staged. SKIP ')
-			return
-		endif
-		call add(lines, relPath)
-		call writefile(lines, stageFilePath)
-		echo "staged ".relPath
+        if !empty(relPath)
+            if filereadable(stageFilePath)
+                for line in readfile(stageFilePath, '', 10000) " assuming stage file will never contain more than 10K lines
+                    call add(lines, line)
+                    if line =~? "^".relPath."$"
+                        let alreadyAdded = 1
+                    endif	
+                endfor
+            endif
+            if alreadyAdded > 0
+                call apexUtil#warning('File "'.relPath.'" already staged. SKIP ')
+                return
+            endif
+            call add(lines, relPath)
+            call writefile(lines, stageFilePath)
+            echo "staged ".relPath
+        endif
 	endif
 
 endfunction	
