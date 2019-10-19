@@ -114,7 +114,7 @@ endfunction
 
 
 function! apexStage#getStageFilePath(projectPath)
-	return apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:STAGE_FILE])
+	return apexOs#joinPath([apex#getCacheFolderPath({'path': a:projectPath}), s:STAGE_FILE])
 endfunction
 
 " local getStageFilePath, when project path is already known
