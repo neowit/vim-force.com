@@ -218,7 +218,11 @@ function! apex#getSFDCProjectPathAndName(filePath)
 
         " find package.xml and assume that it is in the root of current package
         while len(path) > 0
-            let l:files = readdir(path,  {n -> n =~ "^" . s:PACKAGE_XML_NAME . "$"} )
+            "let l:files = readdir(path,  {n -> n =~ "^" . s:PACKAGE_XML_NAME . "$"} )
+            " can not use readdir() because it is not currently available in
+            " standard ubuntu 18.04 repo
+            let l:files = filter(glob(apexOs#joinPath(path, '*'), 0, 1), {i,p-> (p =~ s:PACKAGE_XML_NAME . "$") && !isdirectory(p)})
+
             if 1 == len(l:files) 
                 " found package.xml in the current path
                 let packageXmlPath = apexOs#joinPath(path, s:PACKAGE_XML_NAME)
