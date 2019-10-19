@@ -57,6 +57,7 @@ syn keyword apexcodePreProc			testMethod
 syn match	apexcodePreProc			"@\(isTest\|future\|RemoteAction\|TestVisible\|RestResource\|Deprecated\|ReadOnly\|TestSetup\)"
 syn match	apexcodePreProc			"@Http\(Delete\|Get\|Post\|Patch\|Put\)"
 syn match	apexcodePreProc			"@\(AuraEnabled\|InvocableMethod\|InvocableVariable\)"
+syn match	apexcodePreProc			"@\(SuppressWarnings\)"
 
 syn keyword	apexcodeException		try catch finally throw Exception
 syn keyword	apexcodeOperator		new instanceof
