@@ -25,17 +25,13 @@ let s:HIERARCHY_SHIFT = "--"
 let s:CHILD_LINE_REGEX = '^\v(\s*)\V\('.s:HIERARCHY_SHIFT.'\)\v(\s*\w*.*)$'
 
 
-let b:PROJECT_NAME = ""
-let b:PROJECT_PATH = ""
+let b:PROJECT_REC = {}
 let b:SRC_PATH = ""
 " loaded s:CACHED_META_TYPES looks like this:
 "	{CustomObject: {XMLName:'CustomObject', DirName:'Objects', Suffix:'object', HasMetaFile:'false', InFolder:'false', ChildObjects:[CustomField, BusinessProcess,...]}}
 let s:CACHED_META_TYPES = {} 
 
 let s:BUFFER_NAME = 'vim-force.com Metadata Retrieve'
-
-let s:SRC_DIR_NAME='src' " TODO name of src folder is also defined in apex.vim, consider merging
-
 
 " open existing or load new file with metadata types
 " retrieved list of supported metadata types is stored
@@ -48,13 +44,13 @@ function! apexRetrieve#open(filePath)
 	let projectName = projectPair.name
 	let projectPath = projectPair.path
 	"init header and length variables
-	call s:init(projectName, projectPath)
+	call s:init(projectPair)
 
 	" check if buffer with file types already exist
 	if exists("g:APEX_META_TYPES_BUF_NUM") && bufloaded(g:APEX_META_TYPES_BUF_NUM)
 		execute 'b '.g:APEX_META_TYPES_BUF_NUM
 	else "load types list and create new buffer
-		let metaTypes = s:getMetaTypesList(projectName, projectPath, 0)
+		let metaTypes = s:getMetaTypesList(projectPair, 0)
 		if len(metaTypes) < 1
 			"file does not exist, and load was abandoned
 			return ""
@@ -69,9 +65,9 @@ function! apexRetrieve#open(filePath)
 		setlocal nobuflisted
 
 		"initialise variables
-		let b:PROJECT_NAME = projectName
-		let b:PROJECT_PATH = projectPath
-		let b:SRC_PATH = apexOs#joinPath([projectPath, "src"])
+		let b:PROJECT_REC = {'name': projectName, 'path': projectPath, 'packageName': projectPair.packageName}
+        let srcDirName = apexUtil#getNotEmpty(projectPair.packageName, 'src')
+		let b:SRC_PATH = apexOs#joinPath([projectPath, srcDirName])
 		let g:APEX_META_TYPES_BUF_NUM = bufnr("%")
 
 		" load header and types list
@@ -268,7 +264,7 @@ endfunction
 
 " remove current cache and reload from remote
 function! <SID>ReloadFromRemote()
-    let fPath = s:getMetadataResultFilePath(b:PROJECT_PATH)
+    let fPath = s:getMetadataResultFilePath(b:PROJECT_REC)
     if filereadable(fPath)
         call delete(fPath)
         :bdelete
@@ -315,7 +311,7 @@ function! s:getCachedChildrenOfSelectedTypes(xmlTypeName)
 			let reEnableMore = &more
 			set nomore "disable --More-- prompt
 
-			let resMap = apexTooling#listMetadata(b:PROJECT_NAME, b:PROJECT_PATH, specificTypesFilePath)
+			let resMap = apexTooling#listMetadata(b:PROJECT_REC.name, b:PROJECT_REC.path, specificTypesFilePath)
 			if 'true' != resMap["success"]
 				" stop from further attempts to repeat calls to jar in the
 				" current request
@@ -450,7 +446,7 @@ function! s:retrieveSelectedToolingJar(selectedTypes)
 			let reEnableMore = &more
 			set nomore "disable --More-- prompt
 
-			let resMap = apexTooling#bulkRetrieve(b:PROJECT_NAME, b:PROJECT_PATH, specificTypesFilePath, "json", "")
+			let resMap = apexTooling#bulkRetrieve(b:PROJECT_REC, specificTypesFilePath, "json", "")
 			if 'true' != resMap["success"]
 				return {}
 			endif
@@ -582,8 +578,8 @@ endfunction
 
 " load Dictionary of available meta-types
 " Args:
-" projectName: name of .properties file name
-" projectPath: full path to project folder to load/save cache
+" projectRec.name: name of .properties file name
+" projectRec.path: full path to project folder to load/save cache
 " forceLoad: if true then cached file will be ignored and metadata reloaded
 "			from server
 " Return:
@@ -596,8 +592,8 @@ endfunction
 " …}
 "
 "
-function! s:getMetaTypesMap(projectName, projectPath, forceLoad)
-	return s:getMetaTypesMapToolingJar(a:projectName, a:projectPath, a:forceLoad)
+function! s:getMetaTypesMap(projectRec, forceLoad)
+	return s:getMetaTypesMapToolingJar(a:projectRec, a:forceLoad)
 endfunction
 
 "depending on the current command set metadata description can be in two
@@ -606,8 +602,8 @@ function! s:getMetadataResultFile()
 	return "describeMetadata-result.js"
 endfunction
 
-function! s:getMetadataResultFilePath(projectPath)
-	return apexOs#joinPath([apex#getCacheFolderPath(a:projectPath), s:getMetadataResultFile()])
+function! s:getMetadataResultFilePath(projectRec)
+	return apexOs#joinPath([apex#getCacheFolderPath(a:projectRec), s:getMetadataResultFile()])
 endfunction
 
 "load metadata description using toolingJar
@@ -619,11 +615,11 @@ endfunction
 "		'HasMetaFile': 'false', 'Suffix': 'sharingRules'}, 
 "'CustomLabels': {'InFolder': 'false', 'DirName': 'labels', 'ChildObjects':['CustomLabel'], 'HasMetaFile': 'false', 'Suffix': 'labels'}, 
 "…}
-function! s:getMetaTypesMapToolingJar(projectName, projectPath, forceLoad)
-	let allMetaTypesFilePath = s:getMetadataResultFilePath(a:projectPath)
+function! s:getMetaTypesMapToolingJar(projectRec, forceLoad)
+	let allMetaTypesFilePath = s:getMetadataResultFilePath(a:projectRec)
 
 	if !filereadable(allMetaTypesFilePath) || a:forceLoad
-		let res = apexTooling#loadMetadataList(a:projectName, a:projectPath, allMetaTypesFilePath)
+		let res = apexTooling#loadMetadataList(a:projectRec, allMetaTypesFilePath)
 		if 'true' != res["success"]
 			return {}
 		endif
@@ -658,8 +654,8 @@ endfunction
 "XML names as values
 " Return:
 " {'weblinks': 'CustomPageWebLink', 'labels' : 'CustomLabels'}
-function! apexRetrieve#getTypeXmlByFolder(projectName, projectPath, forceLoad)
-	let typesMap = s:getMetaTypesMap(a:projectName, a:projectPath, a:forceLoad)
+function! apexRetrieve#getTypeXmlByFolder(projectRec, forceLoad)
+	let typesMap = s:getMetaTypesMap(a:projectRec, a:forceLoad)
 	let xmlNameByDirName = {}
 	for xmlName in keys(typesMap)
 		let dirName = typesMap[xmlName]['DirName']
@@ -756,9 +752,9 @@ let s:sid = s:SID()
 " of supported metadata types from SFDC
 "
 " return: list of all supported metadata types
-function! s:getMetaTypesList(projectName, projectPath, forceLoad)
+function! s:getMetaTypesList(projectRec, forceLoad)
 
-	let typesMap = s:getMetaTypesMap(a:projectName, a:projectPath, a:forceLoad)
+	let typesMap = s:getMetaTypesMap(a:projectRec, a:forceLoad)
 	" dump types in user friendly format
 	if len(typesMap) < 1
 		echoerr "Failed to load list of supported metadata types"
@@ -772,7 +768,7 @@ endfunction
 
 
 " call this method before any other as soon as Project Path becomes available
-function! s:init(projectName, projectPath)
+function! s:init(projectRec)
 	let s:instructionFooter = '='
 	let s:header = [
 				\ "|| vim-force.com plugin - metadata retrieval",
@@ -784,11 +780,12 @@ function! s:init(projectName, projectPath)
 				\ "|| :Retrieve = retrieve selected types into the project folder",
 				\ "|| :Reload = discard existing local cache of metadata types and reload them from remote Org",
 				\ "|| ",
-				\ "|| Project Name: '" . a:projectName . "'",
-				\ "|| Project Path: '" . a:projectPath . "'",
+				\ "|| Project Name: '" . a:projectRec.name . "'",
+				\ "|| Project Path: '" . a:projectRec.path . "'",
+				\ "|| Package Name: '" . apexUtil#getNotEmpty(a:projectRec.packageName, 'unpackaged') . "'",
 				\ "|| ",
 				\ "|| NOTE 1: cached list of CORE metadata types is stored in: ",
-				\ "||		 '".s:getMetadataResultFilePath(a:projectPath)."' file.",
+				\ "||		 '".s:getMetadataResultFilePath(a:projectRec)."' file.",
 				\ "||        To clear cached types delete this file and run :ApexRetrieve to reload fresh version.",
 				\ "|| NOTE 2: this buffer is global to current vim instance",
 				\ "||        To call :ApexRetrieve for another project either open another vim instance",

@@ -30,6 +30,7 @@ let s:APEX_EXTENSIONS = s:APEX_EXTENSIONS_WITH_META_XML + ['labels', 'object']
 "this folder is safe to delete, it will be recreated
 "as needed
 let s:CACHE_FOLDER_NAME = ".vim-force.com"
+let s:PACKAGE_XML_NAME = "package.xml"
 
 " project name completion
 " list .properties file names without extension
@@ -142,14 +143,48 @@ endfunction
 
 " return existing or create new and return path to
 " plugin cache directory
-function! apex#getCacheFolderPath(projectPath)
-	let cacheFolderPath = apexOs#joinPath([a:projectPath, s:CACHE_FOLDER_NAME])
+function! apex#getCacheFolderPath(projectRec)
+	let cacheFolderPath = apexOs#joinPath([a:projectRec.path, s:CACHE_FOLDER_NAME])
 
 	if !isdirectory(cacheFolderPath)
 		"cache directory does not exist, need to create it first
 		call apexOs#createDir(cacheFolderPath)
 	endif
 	return cacheFolderPath
+endfunction
+
+" using /full/path/some-name/package.xml guess what package name may be 
+function! s:getPackageName(packageXmlPath)
+    let pathPair = apexOs#splitPath(a:packageXmlPath)
+
+    let packageName = ''
+    if len(pathPair.head) > 0 " head = /full/path/some-name/
+        let pathPair = apexOs#splitPath(pathPair.head)
+        let packageName = s:extractPackageNameFromXml(a:packageXmlPath)
+        " pathPair.tail = 'some-name'
+        if len(packageName) < 1 && 'src' != pathPair.tail 
+            let packageName = pathPair.tail " assume current source parent ('some-name') folder represents package name
+        endif
+    endif
+
+    if len(packageName) > 0 
+        return packageName
+    else
+        return '' " do NOT return 'unpackaged', it causes unwanted consequences in the code which is not aware of it
+    endif
+endfunction
+
+function! s:extractPackageNameFromXml(packageXmlPath)
+    let filePath = a:packageXmlPath
+    if filereadable(expand(filePath))
+        " try to extract fullName node in case this is a packaged source (as
+        " opposed to unpackaged)
+        let lines = apexUtil#grepFile(filePath, "<fullName>.*</fullName>")
+        if 1 == len(lines)
+            return matchstr(lines[0], '<fullName>\(\zs.*\ze\)</fullName>')
+        endif    
+    endif
+    return ''
 endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""
 " Get SFDC project path and name assuming we have a standard folder structure and
@@ -166,11 +201,68 @@ endfunction
 " @return: {path:"/path/to/project/", name:"project name"}
 """"""""""""""""""""""""""""""""""""""""""""""""
 function! apex#getSFDCProjectPathAndName(filePath) 
-	" go up until we find ./src/ folder
+	let path = a:filePath
+    
+    let pathPair = apexOs#splitPath(path)
+	let srcDirPath = ""
+    let l:packageName = ''
+
+    let packageXmlPath = ''
+    if s:PACKAGE_XML_NAME == pathPair.tail
+        let packageXmlPath = path
+    else
+        if !isdirectory(path)
+            let pathPair = apexOs#splitPath(path)
+            let path = pathPair.head
+        endif    
+
+        " find package.xml and assume that it is in the root of current package
+        while len(path) > 0
+            let l:files = readdir(path,  {n -> n =~ "^" . s:PACKAGE_XML_NAME . "$"} )
+            if 1 == len(l:files) 
+                " found package.xml in the current path
+                let packageXmlPath = apexOs#joinPath(path, s:PACKAGE_XML_NAME)
+                break
+            endif
+            let pathPair = apexOs#splitPath(path)
+            let path = pathPair.head
+        endwhile	
+    endif
+
+    if len(packageXmlPath) > 0            
+        let l:packageName = s:getPackageName(packageXmlPath)
+        let pathPair = apexOs#splitPath(packageXmlPath)
+        let srcDirPath = pathPair.head
+    endif
+
+	if len(srcDirPath) < 1
+		" perhaps we are inside unpacked resource bundle
+		let srcDir = apexResource#getApexProjectSrcPath(a:filePath)
+		if len(srcDir) > 0
+			let srcDirParent = apexOs#splitPath(srcDir).head
+		endif
+	endif
+
+	if srcDirPath == ""
+		call apexUtil#throw("project root not found")
+		return {'path': "", 'name': ""}
+	endif
+	let projectFolder = apexOs#splitPath( srcDirPath ).head
+	let projectName = apexOs#splitPath( projectFolder).tail
+	let projectObj = {'path': projectFolder, 'name': projectName, 'packageName': l:packageName}
+    "echomsg "projectObj=".string(projectObj)
+    return projectObj
+endfunction    
+
+" @deprecated
+function! apex#getSFDCProjectPathAndName2(filePath) 
+	" go up until we find ./src/ folder or .vim-force.com folder
 	" finddir does not work on win32, vim does not understand drive letter	
 	" "let srcDir = finddir(s:SRC_DIR_NAME, fnameescape(a:filePath). ';')
 	let path = a:filePath
 	let srcDirParent = ""
+    let l:packageName = ''
+
 	while len(path) > 0
 		let pathPair = apexOs#splitPath(path)
 		if pathPair.tail == s:SRC_DIR_NAME
@@ -181,6 +273,27 @@ function! apex#getSFDCProjectPathAndName(filePath)
 	endwhile	
 
 	if len(srcDirParent) < 1
+		" perhaps we are inside a named package
+        " find project root by checking the location of folder .vim-force.com
+        let path = a:filePath
+        while len(path) > 0
+            let pathPair = apexOs#splitPath(path)
+            if pathPair.tail == s:CACHE_FOLDER_NAME
+                let srcDirParent = pathPair.head
+                let l:packageName = pathPair.tail
+                break
+            else
+                if len(readdir(pathPair.head,  {n -> n =~ "^".s:CACHE_FOLDER_NAME."$"} )) > 0
+                    let l:packageName = pathPair.tail
+                    let srcDirParent = pathPair.head
+                    break
+                endif
+            endif
+            let path = pathPair.head
+        endwhile	
+	endif
+
+	if len(srcDirParent) < 1
 		" perhaps we are inside unpacked resource bundle
 		let srcDir = apexResource#getApexProjectSrcPath(a:filePath)
 		if len(srcDir) > 0
@@ -189,15 +302,16 @@ function! apex#getSFDCProjectPathAndName(filePath)
 	endif
 
 	if srcDirParent == ""
-		throw "src folder not found"
+		throw "project root not found"
 		return {'path': "", 'name': ""}
 	endif
 	let projectFolder = srcDirParent 
 	let projectName = apexOs#splitPath( projectFolder).tail
-	return {'path': projectFolder, 'name': projectName}
+	let projectObj = {'path': projectFolder, 'name': projectName, 'packageName': l:packageName}
+    return projectObj
 endfun
 
-" return full path to SRC folder
+" return full path to SRC (or package) folder
 " ex: "/path/to/project-name/src"
 " Args:
 " filePath - [optional] if provided then this file is used to determine src
@@ -208,7 +322,33 @@ function! apex#getApexProjectSrcPath(...)
 		let filePath = a:1
 	endif	
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
-	return apexOs#joinPath([projectPair.path, s:SRC_DIR_NAME])
+    let srcDirName = apexUtil#getNotEmpty(projectPair.packageName, s:SRC_DIR_NAME)
+    
+	let srcPath = apexOs#joinPath([projectPair.path, srcDirName])
+    if !isdirectory(srcPath) && 'unpackaged' == srcDirName
+        " try ./scr foledr instead of ./unpackaged
+        let srcPath = apexOs#joinPath([projectPair.path, s:SRC_DIR_NAME])
+    endif
+    if !isdirectory(srcPath)
+        " try ./scr foledr instead of ./unpackaged
+        throw "failed to indentify src folder for file: ". filePath
+    endif
+	return srcPath
+endfunction
+"
+" if file is inside package folder then return package name, 
+" otherwise "unpackaged" 
+" ex: "myPackage"
+" Args:
+" filePath - [optional] if provided then this file is used to determine src
+" path, otherwise expand("%:p") is used
+function! apex#getCurrentPackageName(...)
+	let filePath = expand("%:p")
+	if a:0 >0
+		let filePath = a:1
+	endif	
+	let projectPair = apex#getSFDCProjectPathAndName(filePath)
+    return apexUtil#getNotEmpty(projectPair.packageName, "unpackaged")
 endfunction
 
 function! apex#getFilePathRelativeProjectFolder(filePath)

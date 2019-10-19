@@ -73,10 +73,11 @@ function! apexUtil#compareProjects(leftFilePath)
 	endif
 
 	if executable(g:apex_diff_cmd)
-		let leftSrcPath = apexOs#joinPath(leftProjectPath, "src")
+        let srcDirName = apexUtil#getNotEmpty(projectPair.packageName, 'src')
+		let leftSrcPath = apexOs#joinPath(leftProjectPath, srcDirName)
 		let rightSrcPath = rightProjectPath
-		if "src" != apexOs#splitPath(rightSrcPath).tail
-			let rightSrcPath = apexOs#joinPath(rightProjectPath, "src")
+		if srcDirName != apexOs#splitPath(rightSrcPath).tail
+			let rightSrcPath = apexOs#joinPath(rightProjectPath, srcDirName)
 		endif
 		let scriptPath = shellescape(g:apex_diff_cmd)
 
@@ -221,11 +222,6 @@ endfunction
 "	@deprecated, use apexOs#hasTrailingPathSeparator instead
 function! apexUtil#hasTrailingPathSeparator(filePath)
 	return apexOs#hasTrailingPathSeparator(a:filePath)
-endfunction	
-
-"	@deprecated, use apexOs#joinPath instead
-function! apexUtil#joinPath(filePathList)
-	return  apexOs#joinPath(a:filePathList)
 endfunction	
 
 function! apexUtil#trim(str)
@@ -445,9 +441,20 @@ function! apexUtil#getOrElse(var, defaultValue)
 	return a:defaultValue
 endfunction
 
+"Arg: if first argument contains empty value then return second argument
+"e.g. apexUtil#getNotEmpty("", 'other') - returns 'other'
+"e.g. apexUtil#getNotEmpty("some", 'other') - returns 'some'
+"e.g. apexUtil#getNotEmpty({}, {other: 'value'}) - returns {other: 'value'}
+function! apexUtil#getNotEmpty(value, defaultValue)
+    if len(a:value) > 0
+        return a:value
+    endif
+	return a:defaultValue
+endfunction
+
 function! apexUtil#log(msg)
-    let l:dir = '/Users/andrey/temp/vim/_job-test/'
+    let l:dir = expand("$HOME") . '/temp/vim/'
     if filewritable(l:dir) > 0
-        call writefile([a:msg], l:dir . "/log.txt", "a")
+        call writefile([a:msg], l:dir . "apex-plugin-log.txt", "a")
     endif
 endfunction    

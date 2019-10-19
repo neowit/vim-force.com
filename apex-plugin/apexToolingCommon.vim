@@ -34,14 +34,14 @@ endfunction
 " Backup files using provided relative paths
 " all file paths are relative to projectPath
 "Returns: backupDir path
-function! apexToolingCommon#backupFiles(projectName, projectPath, filePaths)
+function! apexToolingCommon#backupFiles(projectRec, filePaths)
 	let timeStr = strftime(g:apex_backup_folder_time_format)	
-	let backupDir = apexOs#joinPath([apexOs#getBackupFolder(), a:projectName, timeStr])
+	let backupDir = apexOs#joinPath([apexOs#getBackupFolder(), a:projectRec.name, a:projectRec.packageName, timeStr])
 	if !isdirectory(backupDir)
 		call mkdir(backupDir, "p")
 	endif	
 	for relativePath in a:filePaths
-		let fullPath = apexOs#joinPath(a:projectPath, relativePath)
+		let fullPath = apexOs#joinPath(a:projectRec.path, relativePath)
 		let destinationPath = apexOs#joinPath([backupDir, relativePath])
 
 		let destinationDirPath = apexOs#splitPath(destinationPath).head

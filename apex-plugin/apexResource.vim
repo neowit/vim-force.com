@@ -190,8 +190,9 @@ function! s:getUnpackedResourcesRootFolderFromSrc(fileUnderSrc)
 	let projectPair = apex#getSFDCProjectPathAndName(a:fileUnderSrc)
 	let projectName = projectPair.name
 	let projectPath = projectPair.path
+    let srcDirName = apexUtil#getNotEmpty(projectPair.packageName, 'src')
 
-	let resourcesDir = apexOs#joinPath(projectPath, s:RESOURCES_DIR)
+	let resourcesDir = apexOs#joinPath(projectPath, srcDirName, s:RESOURCES_DIR)
 	if !isdirectory(resourcesDir)
 		call apexOs#createDir(resourcesDir)
 	endif

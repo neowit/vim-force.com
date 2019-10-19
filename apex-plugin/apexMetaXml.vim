@@ -25,7 +25,8 @@ let s:SUPPORTED_FILE_TYPES = ["ApexClass", "ApexPage", "ApexTrigger", "ApexCompo
 " param: filePath - full path of current apex file - needed to determine
 " project location
 function apexMetaXml#createFileAndSwitch(filePath)
-	let projectPath = apex#getSFDCProjectPathAndName(a:filePath).path
+	let projectSrcPath = apex#getApexProjectSrcPath(a:filePath)
+
 	let typeAndName = s:fileTypeMenu(a:filePath)
 	if len(typeAndName) < 1
 		echo "\n"
@@ -40,7 +41,7 @@ function apexMetaXml#createFileAndSwitch(filePath)
 
     for fileObject in fileObjects.files
         let l:folders = fileObject.path
-        let folderPath = apexOs#joinPath([projectPath, "src"] + l:folders)
+        let folderPath = apexOs#joinPath([projectSrcPath] + l:folders)
         if !isdirectory(folderPath)
             call apexOs#createDir(folderPath)
         endif
@@ -66,43 +67,6 @@ function apexMetaXml#createFileAndSwitch(filePath)
         silent exe "edit ".fnameescape(filePathToEdit)
     endif
     
-endfun
-
-function apexMetaXml#createFileAndSwitch_old(filePath)
-	let projectPath = apex#getSFDCProjectPathAndName(a:filePath).path
-	let typeAndName = s:fileTypeMenu(a:filePath)
-	if len(typeAndName) < 1
-		echo "\n"
-		echomsg "Selection aborted"
-        " user aborted
-		return 
-	endif
-	let fileContent = s:getFilesContent{typeAndName.fileType}(typeAndName.fileName)
-	"check that required file does not exist
-	let fileNameWithExtension = typeAndName.fileName.".".fileContent.fileExtension
-	let folderPath = apexOs#joinPath([projectPath, "src",  fileContent.folderName])
-	let newFilePath = apexOs#joinPath([folderPath, fileNameWithExtension])
-	if filereadable(newFilePath)
-		echo "\n"
-		call apexUtil#warning("File already exists: " . newFilePath)
-		return
-	endif
-	"echo "About to create file: ".newFilePath
-	"check if target folder exist
-	if !isdirectory(folderPath)
-		call apexOs#createDir(folderPath)
-	endif
-	"generate -meta.xml
-	let metaFilePath =  newFilePath . "-meta.xml"
-
-	let metaRes = writefile(fileContent.metaContent, metaFilePath )
-	if 0 == metaRes 
-		let fileRes = writefile(fileContent.mainFileContent, newFilePath)
-		if 0 == fileRes
-			"switch to the buffer with newly created file
-			silent exe "edit ".fnameescape(newFilePath)
-		endif	
-	endif
 endfun
 
 " package.xml is a map which looks like this
@@ -280,7 +244,7 @@ endfunction
 "
 "Return:
 " return: /full/path/to/package.xml or "" if no changes made
-function! apexMetaXml#packageXmlGenerate(projectName, projectPath, packageXmlPath, options)
+function! apexMetaXml#packageXmlGenerate(projectRec, packageXmlPath, options)
 	let package = apexMetaXml#packageXmlRead(a:packageXmlPath)
 	let srcFolderPath = apex#getApexProjectSrcPath(a:packageXmlPath)
 
@@ -290,7 +254,7 @@ function! apexMetaXml#packageXmlGenerate(projectName, projectPath, packageXmlPat
 	" visit each folder and check if it is part of package.xml
 	let hasChanged = 0
 	let showPrompt = (a:options =~# 'p')
-	let metaTypes = apexRetrieve#getTypeXmlByFolder(a:projectName, a:projectPath, 0)
+	let metaTypes = apexRetrieve#getTypeXmlByFolder(a:projectRec, 0)
 	for path in files
 		if isdirectory(path)
 			let folderName = apexOs#splitPath(path).tail
@@ -313,7 +277,7 @@ function! apexMetaXml#packageXmlGenerate(projectName, projectPath, packageXmlPat
 					endif	
 				endif	
 				if 1 == addMissing
-					let metaTypes = apexRetrieve#getTypeXmlByFolder(a:projectName, a:projectPath, 0)
+					let metaTypes = apexRetrieve#getTypeXmlByFolder(a:projectRec, 0)
 					if has_key(metaTypes, folderName)
 						let typeName = metaTypes[folderName]
 						if apexMetaXml#packageXmlAdd(package, typeName, ['*'])

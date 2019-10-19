@@ -41,8 +41,6 @@ function! apexDelete#run(...) abort
 	endif
 	
 	let specificComponentsFilePath = tempname() . 'delete-list.txt'
-	"let xmlNameByDirName = apexRetrieve#getTypeXmlByFolder(projectName, projectPath, 0)
-	" {'weblinks': 'CustomPageWebLink', 'labels' : 'CustomLabels'}
 	let componentsList = apexStage#list(projectPath)
 	call writefile(componentsList, specificComponentsFilePath)
 	let fileCount = len(componentsList)
@@ -59,7 +57,8 @@ function! apexDelete#run(...) abort
 				call apexOs#createDir(backupDir)
 			endif	
 
-			let resMap = apexTooling#bulkRetrieve(providedProjectName, projectPath, specificComponentsFilePath, "file-paths", backupDir)
+            let projectRec = {'name': providedProjectName, 'path': projectPath, 'packageName': projectPair.packageName}
+			let resMap = apexTooling#bulkRetrieve(projectRec, specificComponentsFilePath, "file-paths", backupDir)
 			if 'true' != resMap["success"]
 				return
 			endif

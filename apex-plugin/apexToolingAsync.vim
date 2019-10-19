@@ -55,6 +55,7 @@ function! s:genericCallback(resultMap)
     if "true" == a:resultMap["success"]
         let l:responseFilePath = a:resultMap["responseFilePath"]
         let l:projectPath = a:resultMap["projectPath"]
+        let l:packageName = a:resultMap["packageName"]
         " check if we have messages
         "let l:msgCount = apexMessages#process(l:responseFilePath, l:projectPath, [], "N")
     endif
@@ -65,26 +66,26 @@ endfunction
 "Args:
 "Param1: filePath - path to apex file in current project
 "Param2: env - login domain (e.g: login.salesforce.com)
-function apexToolingAsync#login(filePath, projectName, projectPath, env)
+function apexToolingAsync#login(filePath, projectObj, env)
 	"let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
     "let obj = {}
     "let obj.callbackFuncRef = function('s:genericCallback')
     "
     let extraParams = {"env": apexOs#shellescape(a:env), "_ignore_missing_apex_properties_file": 1}
-    let authConfigPath = s:getAuthConfigPath(a:projectName, a:projectPath)
+    let authConfigPath = s:getAuthConfigPath(a:projectObj)
     if empty(authConfigPath)
         call apexUtil#error("Missing required variable g:apex_properties_folder.")
         return
     else    
         let extraParams["saveAuthPath"] = apexOs#shellescape(authConfigPath)
-        let authConfigPath = s:getAuthConfig(a:projectName, a:projectPath)
+        let authConfigPath = s:getAuthConfig(a:projectObj)
         if len(authConfigPath) > 0
             if filereadable(authConfigPath) && "y" !~? apexUtil#input("Auth config already exists, Overwrite ? [y/N] ", "YynN", "N")
                 return '' " user aborted
             endif    
 
         endif    
-        call apexToolingAsync#execute("login", a:projectName, a:projectPath, extraParams, [])
+        call apexToolingAsync#execute("login", a:projectObj, extraParams, [])
     endif
 endfunction
 
@@ -114,7 +115,7 @@ function! apexToolingAsync#openInBrowser(...)
         " looks like type parameter is also provided
         let extraParams["type"] = a:2
     endif
-	call apexToolingAsync#execute("guessSetupUrl", projectPair.name, projectPair.path, extraParams, [])
+	call apexToolingAsync#execute("guessSetupUrl", projectPair, extraParams, [])
 endfunction    
 
 
@@ -171,6 +172,8 @@ function apexToolingAsync#deploy(action, mode, bang, ...)
 	let projectPair = apex#getSFDCProjectPathAndName(filePath)
 	let projectPath = projectPair.path
 	let projectName = projectPair.name
+	let packageName = projectPair.packageName
+
 	if a:0 >1 && len(a:2) > 0
 		" if project name is provided via tab completion then spaces in it
 		" will be escaped, so have to unescape otherwise funcions like
@@ -212,7 +215,7 @@ function apexToolingAsync#deploy(action, mode, bang, ...)
 		let l:extraParams["ignoreConflicts"] = "true"
 	endif
 
-	call apexToolingAsync#execute(l:action, projectName, projectPath, l:extraParams, [])
+	call apexToolingAsync#execute(l:action, {'name': projectName, 'path':projectPath, 'packageName': packageName}, l:extraParams, [])
 
 endfunction
 " 
@@ -384,7 +387,7 @@ function apexToolingAsync#retrieveSpecific(filePath, mode, callbackFuncRef, ...)
         let relPath = strpart(leftFile, len(srcPath) + 1) " +1 to remove / at the end of src/
         " if current file is in aura bundle then we only need bundle name, not
         " file name
-        if relPath =~ "^aura/"
+        if relPath =~ "^\\(aura\\|lwc\\)/"
             let relPath = apexOs#removeTrailingPathSeparator(apexOs#splitPath(relPath).head)
         endif
         
@@ -431,7 +434,7 @@ function apexToolingAsync#retrieveSpecific(filePath, mode, callbackFuncRef, ...)
     " ================= END internal callback ============================
     
     " 'diffWithRemote' here is not a mistake, it is more suitable than 'bilkRetrieve' for current purpose
-    call apexToolingAsync#execute("diffWithRemote", projectName, projectPair.path, l:extraParams, [])
+    call apexToolingAsync#execute("diffWithRemote", {'name': projectName, 'path': projectPair.path, 'packageName': projectPair.packageName}, l:extraParams, [])
 endfunction
 
 
@@ -480,7 +483,7 @@ function! s:refreshProjectMainCallback(callbackObj, resMap)
 				if !isdirectory(path)
 					let relativePath = strpart(path, resultFolderPathLen)
 					let relativePath = substitute(relativePath, "^[/|\\\\]unpackaged[/|\\\\]", "src/", "")
-					"check if local file exists adn sizes are different
+					"check if local file exists and sizes are different
 					let localFilePath = apexOs#joinPath([a:resMap["projectPath"], relativePath])
 					if filereadable(localFilePath)
 						let currentSize = getfsize(localFilePath)
@@ -496,7 +499,8 @@ function! s:refreshProjectMainCallback(callbackObj, resMap)
 
 			endfor
 			if len(relativePathsOfFilesToBeOverwritten) > 0
-				let backupDir = apexToolingCommon#backupFiles(a:resMap["projectName"], a:resMap["projectPath"], relativePathsOfFilesToBeOverwritten)
+                let projectRec = {'name': a:resMap["projectName"], 'path': a:resMap["projectPath"], 'packageName': apexUtil#getNotEmpty(a:resMap["packageName"], "unpackaged") }
+				let backupDir = apexToolingCommon#backupFiles(projectRec, relativePathsOfFilesToBeOverwritten)
                 let l:msg = "Project files with size different to remote ones have been preserved in: " . backupDir
                 call apexMessages#log(l:msg)
 				echo l:msg
@@ -573,7 +577,9 @@ function! apexToolingAsync#refreshProject(filePath, params)
             let refreshProjectCallbackObj = has_key(self, "_callbackObj") ? self._callbackObj : {}
             let extraParams = {"skipModifiedFilesCheck":"true"}
             let extraParams.callbackFuncRef = function('s:refreshProjectMainCallback', [refreshProjectCallbackObj]) 
-            call apexToolingAsync#execute("refresh", a:resMap["projectName"], a:resMap["projectPath"], extraParams, ["ERROR", "INFO"])
+            let projectRec = {'name': a:resMap["projectName"], 'path': a:resMap["projectPath"], 'packageName': apexUtil#getNotEmpty(a:resMap["packageName"], "unpackaged") }
+
+            call apexToolingAsync#execute("refresh", projectRec, extraParams, ["ERROR", "INFO"])
         else
             " no modified files detected, can proceed with Main callback
             if (has_key(self, "_callbackObj"))
@@ -587,7 +593,7 @@ function! apexToolingAsync#refreshProject(filePath, params)
     " ============ END internal callback 1 ================
 
     " STEP 1:
-	call apexToolingAsync#execute("refresh", projectPair.name, projectPair.path, extraParams, ["ERROR", "INFO"])
+	call apexToolingAsync#execute("refresh", projectPair, extraParams, ["ERROR", "INFO"])
     
 
 endfunction	
@@ -615,7 +621,7 @@ function! apexToolingAsync#printConflicts(filePath)
     " ============ END internal callback ================
 
     let extraParams = obj
-	call apexToolingAsync#execute("listConflicts", projectPair.name, projectPair.path, extraParams, [])
+	call apexToolingAsync#execute("listConflicts", projectPair, extraParams, [])
 endfunction	
 
 " get version of currently installed tooling-force.com
@@ -626,14 +632,13 @@ function apexToolingAsync#getVersion(filePath)
     "let obj = {}
     "let obj.callbackFuncRef = function('s:genericCallback')
     let extraParams = {}
-	call apexToolingAsync#execute("version", projectPair.name, projectPair.path, extraParams, [])
+	call apexToolingAsync#execute("version", projectPair, extraParams, [])
 endfunction
 
 
 function apexToolingAsync#findSymbol(filePath, attributeMap, callbackObj)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let projectPath = projectPair.path
-	let projectName = projectPair.name
+
 	let attributeMap = a:attributeMap
 
 	let l:extraParams = {}
@@ -694,7 +699,7 @@ function apexToolingAsync#findSymbol(filePath, attributeMap, callbackObj)
     endfunction    
     " ============ END internal callback 1 ================
 
-    call apexToolingAsync#execute("findSymbol", projectName, projectPath, l:extraParams, [])
+    call apexToolingAsync#execute("findSymbol", projectPair, l:extraParams, [])
     
 endfunction
 
@@ -708,14 +713,12 @@ endfunction
 
 function! apexToolingAsync#loadCoverageReportFile(filePath, classOrTriggerName)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let projectPath = projectPair.path
-	let projectName = projectPair.name
 
 	let l:extraParams = {}
 	"let l:extraParams["isSilent"] = 1
 	let l:extraParams["classOrTriggerName"] = a:classOrTriggerName
 
-	let resMap = apexToolingAsync#executeBlocking("loadApexCodeCoverageAggregate", projectName, projectPath, l:extraParams, [])
+	let resMap = apexToolingAsync#executeBlocking("loadApexCodeCoverageAggregate", projectPair, l:extraParams, [])
 
     if has_key(resMap, "responseFilePath")
         let responsePath = resMap["responseFilePath"]
@@ -731,8 +734,6 @@ endfunction
 
 function apexToolingAsync#checkSyntax(filePath, attributeMap)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let projectPath = projectPair.path
-	let projectName = projectPair.name
 	let attributeMap = a:attributeMap
 
 	let l:extraParams = {}
@@ -743,7 +744,7 @@ function apexToolingAsync#checkSyntax(filePath, attributeMap)
 	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(a:filePath)
 	let l:extraParams["useLocationList"] = 1 " if there are errors then fill current window 'Location List', instead of Quick Fix
 
-	call apexToolingAsync#execute("checkSyntax", projectName, projectPath, l:extraParams, [])
+	call apexToolingAsync#execute("checkSyntax", projectPair, l:extraParams, [])
 endfunction
 
 "run unit tests
@@ -774,6 +775,8 @@ function apexToolingAsync#deployAndTest(filePath, attributeMap, orgName, reportC
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectPath = projectPair.path
 	let projectName = len(a:orgName) > 0 ? a:orgName : projectPair.name
+    let projectRec = {'name': projectPair.name, 'path': projectPair.path, 'packageName': projectPair.packageName}
+
 	let attributeMap = a:attributeMap
 	" if any coverage shown - remove highlight, to avoid confusion
 	call apexCoverage#hide(a:filePath)
@@ -863,7 +866,7 @@ function apexToolingAsync#deployAndTest(filePath, attributeMap, orgName, reportC
     "let l:extraParams["callbackFuncParams"] = {"filePath": a:filePath}
     " ================= END internal callback ===========================
 
-	call apexToolingAsync#execute(l:command, projectName, projectPath, l:extraParams, [])
+	call apexToolingAsync#execute(l:command, projectRec, l:extraParams, [])
 
 endfunction
 
@@ -871,7 +874,7 @@ endfunction
 "Param1: path to file which belongs to apex project
 function apexToolingAsync#printChangedFiles(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	call apexToolingAsync#execute("listModified", projectPair.name, projectPair.path, {}, [])
+	call apexToolingAsync#execute("listModified", projectPair, {}, [])
 endfunction	
 
 "Args:
@@ -930,7 +933,7 @@ endfunction
 " this is intended for MS Windows only do not use unless really necessary
 " because this methods adds about 1 second delay to response time (not sure
 " where this delay comes from)
-function! apexToolingAsync#executeBlocking(action, projectName, projectPath, extraParams, displayMessageTypes) abort
+function! apexToolingAsync#executeBlocking(action, projectObj, extraParams, displayMessageTypes) abort
     " ================= internal callback ===========================
     let l:extraParams = a:extraParams
     function! l:extraParams.callbackFuncRef(resMap)
@@ -939,7 +942,7 @@ function! apexToolingAsync#executeBlocking(action, projectName, projectPath, ext
     " ================= END internal callback ===========================
 
     "unlet responseByAction[a:action]
-	call apexToolingAsync#execute(a:action, a:projectName, a:projectPath, l:extraParams, a:displayMessageTypes)
+	call apexToolingAsync#execute(a:action, a:projectObj, l:extraParams, a:displayMessageTypes)
     " wait for response to become available
     "let dots = '.'
     let mills = 100
@@ -959,8 +962,8 @@ endfunction
 " based on g:apex_properties_folder value see if we can find file
 " {g:apex_properties_folder}/oauth2/{project-name}
 " if yes then assume this file contains oauth2 credentials
-function! s:getAuthConfig(projectName, projectPath)
-    let authConfigPath = s:getAuthConfigPath(a:projectName, a:projectPath)
+function! s:getAuthConfig(projectObj)
+    let authConfigPath = s:getAuthConfigPath(a:projectObj)
     if filereadable(authConfigPath)
         return authConfigPath
     endif    
@@ -969,9 +972,9 @@ endfunction
 
 " this method does not check if config actually exists 
 " e.g. before first login
-function! s:getAuthConfigPath(projectName, projectPath)
+function! s:getAuthConfigPath(projectObj)
     if  exists("g:apex_properties_folder") && len(g:apex_properties_folder) > 0
-        let authConfigPath = apexOs#joinPath([g:apex_properties_folder, "oauth2", a:projectName])
+        let authConfigPath = apexOs#joinPath([g:apex_properties_folder, "oauth2", a:projectObj.name])
         return authConfigPath
     endif
     return ""
@@ -984,10 +987,11 @@ endfunction
 "	"responseFilePath" : "path to current response/log file"
 "	"projectPath": "project path"
 "	"projectName": "project name"
+"	"packageName": "package name"
 "	}
 "
-function! apexToolingAsync#execute(action, projectName, projectPath, extraParams, displayMessageTypes) abort
-
+function! apexToolingAsync#execute(action, projectObj, extraParams, displayMessageTypes) abort
+    
 	if has_key(a:extraParams, "ignoreConflicts")
 		call apexUtil#warning("skipping conflict check with remote")
 	endif
@@ -997,13 +1001,17 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 		let l:command = l:command  . " --tempFolderPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
 	endif
 
-    let authConfigPath = s:getAuthConfig(a:projectName, a:projectPath)
+    let authConfigPath = s:getAuthConfig(a:projectObj)
     if len(authConfigPath) > 0
         let l:command = l:command  . " --authConfigPath=" . apexOs#shellescape(authConfigPath)
     endif    
 
+    if len(a:projectObj.packageName) > 0 && 'unpackaged' != a:projectObj.packageName
+        let l:command = l:command  . " --packageName=" . apexOs#shellescape(a:projectObj.packageName)
+    endif    
+
     if exists("g:apex_properties_folder") && len(g:apex_properties_folder) > 0
-        let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectName]) . ".properties"
+        let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectObj.name]) . ".properties"
         if filereadable(projectPropertiesPath)
             let l:command = l:command  . " --config=" . apexOs#shellescape(projectPropertiesPath)
         else
@@ -1016,8 +1024,8 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
             endif
         endif    
     endif
-    if len(a:projectPath) > 0
-        let l:command = l:command  . " --projectPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(a:projectPath))
+    if len(a:projectObj.path) > 0
+        let l:command = l:command  . " --projectPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(a:projectObj.path))
     endif
 
 	if exists('g:apex_tooling_force_dot_com_extra_params') && len(g:apex_tooling_force_dot_com_extra_params) > 0
@@ -1047,10 +1055,10 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
 		let responseFilePath = a:extraParams["responseFilePath"]
 	else
 		" default responseFilePath
-        if empty(a:projectPath)
+        if empty(a:projectObj.path)
             let outputFileFolder = apexOs#getTempFolder()
         else
-            let outputFileFolder = apexOs#joinPath(a:projectPath, s:SESSION_FOLDER)
+            let outputFileFolder = apexOs#joinPath(a:projectObj.path, s:SESSION_FOLDER)
         endif    
 
 		let responseFilePath = apexOs#joinPath(outputFileFolder, "response_" . a:action)
@@ -1084,8 +1092,9 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
     let l:startTime = reltime()
     " ================= internal callback =========================
     let obj = {"responseFilePath": responseFilePath}
-    let obj.projectPath = a:projectPath
-    let obj.projectName = a:projectName
+    let obj.projectPath = a:projectObj.path
+    let obj.projectName = a:projectObj.name
+    let obj.packageName = a:projectObj.packageName
     let obj.displayMessageTypes = a:displayMessageTypes
     let obj.extraParams = a:extraParams
     let obj.isSilent = isSilent
@@ -1162,6 +1171,7 @@ function! apexToolingAsync#execute(action, projectName, projectPath, extraParams
         let l:result = {"success": l:success,
                     \ "responseFilePath": self.responseFilePath,
                     \ "projectPath": self.projectPath,
+                    \ "packageName": self.packageName,
                     \ "projectName": self.projectName}
         
         if has_key(self, "filePath")

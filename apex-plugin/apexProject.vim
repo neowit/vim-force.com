@@ -92,8 +92,9 @@ function apexProject#login(filePath)
         let env = envMap[choice]
     endif
     echo ""
-    
-	call apexToolingAsync#login(a:filePath, projectName, projectPath, env)
+
+    let projectRec = {'name': projectName, 'path': projectPath, 'packageName': ''}
+	call apexToolingAsync#login(a:filePath, projectRec, env)
 endfunction
 
 function s:buildPropertiesFile(projectName) abort

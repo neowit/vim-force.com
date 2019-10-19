@@ -48,8 +48,6 @@ endfor
 "
 function apexTooling#listCompletions(filePath, attributeMap)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let projectPath = projectPair.path
-	let projectName = projectPair.name
 	let attributeMap = a:attributeMap
 
 	let l:extraParams = {}
@@ -59,7 +57,7 @@ function apexTooling#listCompletions(filePath, attributeMap)
 	let l:extraParams["currentFilePath"] = apexOs#shellescape(a:filePath)
 	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(attributeMap["currentFileContentPath"])
 
-    let resMap = apexToolingAsync#executeBlocking("listCompletions", projectName, projectPath, l:extraParams, [])
+    let resMap = apexToolingAsync#executeBlocking("listCompletions", projectPair, l:extraParams, [])
     "if apexOs#isWindows()
 	"    let resMap = apexToolingAsync#executeBlocking("listCompletions", projectName, projectPath, l:extraParams, [])
     "else     
@@ -76,7 +74,8 @@ function apexTooling#loadTestSuiteNamesList(projectName, projectPath, outputFile
     let l:extraParams = {}
     let l:extraParams["testSuiteAction"] = "dumpNames"
     let l:extraParams["dumpToFile"] = apexOs#shellescape(a:outputFilePath)
-	call apexToolingAsync#executeBlocking("testSuiteManage", a:projectName, a:projectPath, l:extraParams, [])
+    let projectRec =  {'name': a:projectName, 'path': a:projectPath, 'packageName': ''}
+	call apexToolingAsync#executeBlocking("testSuiteManage", projectRec, l:extraParams, [])
 endfunction	
 
 function s:reportModifiedFiles(modifiedFiles)
@@ -113,8 +112,8 @@ endfunction
 
 
 "load metadata description into a local file
-function apexTooling#loadMetadataList(projectName, projectPath, allMetaTypesFilePath)
-	return apexToolingAsync#executeBlocking("describeMetadata", a:projectName, a:projectPath, {"allMetaTypesFilePath": apexOs#shellescape(a:allMetaTypesFilePath)}, [])
+function apexTooling#loadMetadataList(projectRec, allMetaTypesFilePath)
+	return apexToolingAsync#executeBlocking("describeMetadata", a:projectRec, {"allMetaTypesFilePath": apexOs#shellescape(a:allMetaTypesFilePath)}, [])
 endfunction	
 
 " retrieve members of specified metadata types
@@ -130,14 +129,14 @@ endfunction
 "Param4: typesFileFormat - file list format: file-paths|json
 "Param5: targetFolder - if not blank then use this as retrieve destination
 "
-function apexTooling#bulkRetrieve(projectName, projectPath, specificTypesFilePath, typesFileFormat, targetFolder) abort
+function apexTooling#bulkRetrieve(projectRec, specificTypesFilePath, typesFileFormat, targetFolder) abort
 	let extraParams = {"specificTypes": apexOs#shellescape(a:specificTypesFilePath), "typesFileFormat" : a:typesFileFormat}
 	if len(a:targetFolder) > 0
 		let extraParams["targetFolder"] = apexOs#shellescape(a:targetFolder)
 	endif
 	let extraParams["updateSessionDataOnSuccess"] = "true"
 	
-	let resMap = apexToolingAsync#executeBlocking("bulkRetrieve", a:projectName, a:projectPath, extraParams, [])
+	let resMap = apexToolingAsync#executeBlocking("bulkRetrieve", a:projectRec, extraParams, [])
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
 		let resultFolder = s:grepValues(logFilePath, "RESULT_FOLDER=")
@@ -149,7 +148,8 @@ endfunction
 
 "load list of components of specified metadata types into a local file
 function apexTooling#listMetadata(projectName, projectPath, specificTypesFilePath)
-	let resMap = apexToolingAsync#executeBlocking("listMetadata", a:projectName, a:projectPath, {"specificTypes": apexOs#shellescape(a:specificTypesFilePath)}, [])
+    let projectRec =  {'name': a:projectName, 'path': a:projectPath, 'packageName': ''}
+	let resMap = apexToolingAsync#executeBlocking("listMetadata", projectRec, {"specificTypes": apexOs#shellescape(a:specificTypesFilePath)}, [])
 	if "true" == resMap["success"]
 		let logFilePath = resMap["responseFilePath"]
 		let resultFile = s:grepValues(logFilePath, "RESULT_FILE=")
@@ -213,7 +213,8 @@ function apexTooling#deleteMetadata(filePath, projectName, specificComponentsFil
 		let l:extraParams["updateSessionDataOnSuccess"] = 'true'
 	endif
 
-	let resMap = apexToolingAsync#executeBlocking("deleteMetadata", a:projectName, projectPair.path, l:extraParams, [])
+    let projectRec =  {'name': a:projectName, 'path': projectPair.path, 'packageName': projectPair.packageName}
+	let resMap = apexToolingAsync#executeBlocking("deleteMetadata", projectRec, l:extraParams, [])
 	return resMap
 endfunction	
 
