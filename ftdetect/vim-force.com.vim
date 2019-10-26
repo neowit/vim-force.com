@@ -52,8 +52,8 @@ augroup lwc
 	au!
 	au BufRead,BufNewFile */src/lwc/*.css set filetype=lwc-css | set syntax=css
 	au BufRead,BufNewFile */src/lwc/*.html set filetype=lwc-html | set syntax=lwc-html
-    " for javascript syntax - apply lwc-javascript.vim on top of normal javascript syntax
-	au BufRead,BufNewFile */src/lwc/*.js set filetype=lwc-javascript | set syntax=javascript.lwc-javascript
+    " for javascript syntax - apply lwc-javascript.vim on top of normal javascript syntax & load javascript related plugin(s), e.g. tagbar with jsctags
+	au BufRead,BufNewFile */src/lwc/*.js set filetype=javascript.lwc-javascript | set syntax=javascript.lwc-javascript
 	au BufRead,BufNewFile */src/lwc/*.json set filetype=lwc-json | set syntax=json
 	au BufRead,BufNewFile */src/lwc/*.svg set filetype=lwc-svg | set syntax=svg
 	au BufRead,BufNewFile */src/lwc/*.xml set filetype=lwc-xml | set syntax=xml
