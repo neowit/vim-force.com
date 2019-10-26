@@ -298,7 +298,7 @@ endfunction
 "Args:
 "Param1: path to file which belongs to current apex project
 "Param2: [optional] name of remote <project>.properties file
-function apexToolingAsync#refreshFile(filePath, ...)
+function apexToolingAsync#refreshFile(filePath, ...) abort
     let filePath = a:filePath
     " check if current file is part of unpacked static resource
     let resourcePath = apexResource#getResourcePath(a:filePath)
@@ -456,7 +456,7 @@ function s:reportModifiedFiles(modifiedFiles)
 	endfor
 endfunction
 
-function! s:refreshProjectMainCallback(callbackObj, resMap)
+function! s:refreshProjectMainCallback(callbackObj, resMap) abort
 	if "true" == a:resMap["success"]
 		" TODO add a setting so user could chose whether they want
 		" backup of all files received in Refresh or only modified ones
@@ -543,7 +543,7 @@ endfunction
 "   'skipModifiedFilesCheck': (optional) 'false'|'true'
 "   'callbackObj': (optional) - if provided then expect an dictionary which
 "   looks like so {'callbackFuncRef': function-reference-here [, other-params]}
-function! apexToolingAsync#refreshProject(filePath, params)
+function! apexToolingAsync#refreshProject(filePath, params) abort
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	"let extraParams = a:0 > 0 && a:1 ? {"skipModifiedFilesCheck":"true"} : {}
     let extraParams = {}
@@ -1196,7 +1196,11 @@ function! apexToolingAsync#execute(action, projectObj, extraParams, displayMessa
         call s:showProgress('')
     endif
 	"call s:runCommand(l:command, isSilent, function(obj.callbackInternal))
-    call apexServer#send(l:command, function(obj.callbackInternal), {"silent": isSilent})
+    try 
+        call apexServer#send(l:command, function(obj.callbackInternal), {"silent": isSilent})
+    catch /.*/
+        call s:stopProgressTimer()
+    endtry
 
 endfunction
 
@@ -1371,14 +1375,6 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
     
 	return 1
 
-endfunction
-
-
-"================= server mode commands ==========================
-function! s:runCommand(commandLine, isSilent, callbackFuncRef)
-
-    "call s:execAsync(a:commandLine, a:callbackFuncRef)
-    call apexServer#send(a:commandLine, a:callbackFuncRef, {"silent": a:isSilent})
 endfunction
 
 

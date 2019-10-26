@@ -134,7 +134,7 @@ function! s:execAsync(command, callbackFuncRef) abort
         endif
     catch /.*/
         call apexMessages#logError("Failed to execute command. " . v:exception)
-        break
+        throw "Process aborted due to exception"
     endtry    
     
 endfunction    
