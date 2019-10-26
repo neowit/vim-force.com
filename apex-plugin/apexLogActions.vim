@@ -67,7 +67,8 @@ endfunction
 function! apexLogActions#deleteLogs(filePath)
     let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
     let l:extraParams = {}
-	let resMap = apexToolingAsync#executeBlocking("deleteLogs", projectPair.name, projectPair.path, l:extraParams, [])
+    let l:projectObj = {"path": projectPair.path, "name": projectPair.name, "packageName": "unpackaged"}
+	let resMap = apexToolingAsync#executeBlocking("deleteLogs", l:projectObj, l:extraParams, [])
 	let responsePath = resMap["responseFilePath"]
 endfunction    
 
@@ -160,7 +161,8 @@ function! s:sendCommand(filePath, scope, tracedEntity, traceFlagJson)
     endif
     
     let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-	let resMap = apexToolingAsync#executeBlocking("changeLogLevels", projectPair.name, projectPair.path, l:extraParams, [])
+    let l:projectObj = {"path": projectPair.path, "name": projectPair.name, "packageName": "unpackaged"}
+	let resMap = apexToolingAsync#executeBlocking("changeLogLevels", l:projectObj, l:extraParams, [])
 	let responsePath = resMap["responseFilePath"]
 endfunction
 
