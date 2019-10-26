@@ -160,6 +160,30 @@ function apexTooling#listMetadata(projectName, projectPath, specificTypesFilePat
 	return resMap
 endfunction	
 
+" call metadataRename method with specified type|old-name|new-name
+" NOTE: Metadta Rename does NOT work for metadata referenced from Apex Code
+" examples
+" - apexTooling#metadataRename(filePath, 'CustomObject', 'My_Object_old__c', 'My_Object_New__c')
+" - apexTooling#metadataRename(filePath, 'CustomField', 'My_Object__c.My_Field1__c', 'My_Object__c.My_Field2__c')
+"
+" Metadata Rename is Synchronous command, so running it in async mode does not
+" make any difference and vim has to wait (blocking) for the command to
+" complete
+"
+function apexTooling#renameMetadata(filePath, metadataType, oldFullName, newFullName)
+	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+    let projectRec =  {'name': projectPair.name, 'path': projectPair.path, 'packageName': ''}
+	let resMap = apexToolingAsync#execute("renameMetadata", projectRec, {"metadataType": a:metadataType, "oldFullName": a:oldFullName, "newFullName": a:newFullName}, [])
+	if "true" == resMap["success"]
+		let logFilePath = resMap["responseFilePath"]
+		let resultFile = s:grepValues(logFilePath, "RESULT_FILE=")
+		if len(resultFile) > 0
+			let resMap["resultFile"] = resultFile[0]
+		endif
+	endif
+	return resMap
+endfunction	
+
 "open scratch file 
 "This file can be used for things line ExecuteAnonymous
 let s:scratch_project_pair = {}

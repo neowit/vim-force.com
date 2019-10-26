@@ -124,6 +124,8 @@ function! s:toolingJarSpecific()
     " browser
 	command! -nargs=* ApexOpenInBrowser :call apexToolingAsync#openInBrowser(<f-args>)
 
+    " Metadata Rename
+    command! -nargs=+ ApexRenameMetadata :call apexTooling#renameMetadata(expand("%:p"), <f-args>)
 	
 endfunction
 

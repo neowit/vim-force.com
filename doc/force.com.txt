@@ -264,6 +264,7 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexRefreshFile|                   refresh current file from SFDC
 |ApexRefreshProject|                refresh project from SFDC
 |ApexRemoveStaged|                  remove Staged files from target SFDC ORG
+|ApexRenameMetadata|                rename metadata component 
 |ApexRetrieve|                      retrieve specified metadata types from server
 |ApexSave|                          save modified files to SFDC (Tooling API)
 |ApexSaveOne|                       save file opened in current buffer
@@ -625,8 +626,8 @@ Refresh current (single) file and replace it with its version from SFDC.
 
 Note: :|ApexRefreshFile| uses "diffWithRemote" in the background and only 
 updates selected local file but does not touch local timestamp cache, hence 
-during saving / deploying file to SFDC file still will be considered as 
-outdated.
+during saving / deploying "refreshed" file to SFDC this file may be reported
+as outdated.
 
                                                              *ApexRefreshProject* 
 
@@ -644,6 +645,23 @@ Example 2: >
 < will remove staged files from "My Other Org"
 
 See also :|ApexDeployDestructive|
+
+                                                            *ApexRenameMetadata*
+A basic helper to call Metadata API method: renameMetadata().
+Here is how it is defined in the documentation (API v48)
+>
+    SaveResult = metadataConnection.renameMetadata(String metadataType, String
+    oldFullname, String newFullname);
+<
+This Metadata API call is quite limited and can not rename metadata components
+(e.g. Object, Field) if they are referenced in Apex Code.
+
+Usage example >
+    :ApexRenameMetadata CustomField My_Object__c.Field_Name1__c
+    My_Object__c.Field_Name2__c
+<
+On order to call this command current buffer in vim must contain one of apex
+files.
 
                                                                   *ApexRetrieve*
 
