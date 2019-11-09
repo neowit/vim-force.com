@@ -48,6 +48,7 @@ syn keyword apexcodeStructure		enum
 syn keyword apexcodeBoolean			true false
 syn keyword apexcodeTypePrimitive	Blob Boolean Date Datetime DateTime Decimal Double Integer Long String Time
 syn keyword apexcodeConditional		if then else
+syn keyword apexcodeConditional     switch on when
 syn keyword apexcodeRepeat			for while do
 
                                     " use \< .. \> to match the whole word
