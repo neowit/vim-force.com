@@ -138,7 +138,9 @@ function s:executeAnonymous(filePath, projectName, codeFile, whileString)
     endfunction    
     " =============== END internal callback ====================
 
-	call apexToolingAsync#execute("executeAnonymous", a:projectName, projectPath, l:extraParams, [])
+    let l:projectObj = {"path": projectPath, "name": a:projectName, "packageName": "unpackaged"}
+
+	call apexToolingAsync#execute("executeAnonymous", l:projectObj, l:extraParams, [])
 endfunction	
 
 let s:lastSoqlQueryFilePath = ""
@@ -167,8 +169,9 @@ function s:executeSoqlQuery(filePath, api, projectName, codeFile)
     endfunction    
     " =============== END internal callback ====================
 
+    let l:projectObj = {"path": projectPath, "name": a:projectName, "packageName": "unpackaged"}
 
-	call apexToolingAsync#execute("soqlQuery", a:projectName, projectPath, l:extraParams, [])
+	call apexToolingAsync#execute("soqlQuery", l:projectObj, l:extraParams, [])
 endfunction	
 
 " http://stackoverflow.com/a/6271254
