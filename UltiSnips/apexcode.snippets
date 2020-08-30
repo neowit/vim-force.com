@@ -90,7 +90,24 @@ ${1:`!v strftime("%Y-%m-%d")`} - ${2:feature-id} - ${3:initials}
 endsnippet
 
 snippet for "Apex For cycle"
-for(${1:ObjectType} ${2:varName} : ${3:Trigger.new}) {
+for(${1:ObjectType} ${2:varName} : ${3:collection}) {
     ${4}
+}
+endsnippet
+
+snippet switch "Apex Switch statement - multiple variables"
+switch on ${0:expression} {
+   when ${1:value1}, ${2:value2}, ${3:value3} {
+       System.debug('when block 2 and 3 and 4');
+   }
+   when ${4:value5}, ${5:value6} {
+       System.debug('when block 5 and 6');
+   }
+   when ${6:value7} {
+       System.debug('when block 7');
+   }
+   when else {
+       System.debug('default');
+   }
 }
 endsnippet
