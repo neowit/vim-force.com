@@ -826,11 +826,7 @@ Param: 2 - class name - use this parameter to run only unit tests in a specific
     Note 3: 'meta-checkOnly' does not always return coverage data. This is a
             limitation on SFDC Metadata API side.     
              
-Param: 3 - method name - if test class contains several 'testMethod'-s then
-           this parameter allows to specify single method to run. Body of all other
-           methods will be skipped. This is particularly useful when you want to see log
-           file from specific test and do not want other tests to pollute the log.
-Param: 4 - target Org/project name. See :|ApexDeploy| for more details
+Param: 3 - target Org/project name. See :|ApexDeploy| for more details
 
 Differences to :|ApexDeploy| 
 - if you run :|ApexTest| and get unit tests failure(s) or insufficient overall
