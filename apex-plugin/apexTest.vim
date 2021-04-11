@@ -26,6 +26,22 @@ function! apexTest#runTest(reportCoverage, bang, ...)
 
 	let modeName = a:0 > 0? a:1 : 'meta-testAndDeploy'
 	let testsToRun = a:0 > 1? a:2 : ''
+
+    " if command contains '%' instead of file name - resolve it to the name of
+    " current file
+    if '%' == testsToRun
+        let testsToRun = apexOs#splitPath(expand("%:r")).tail
+        let lastCmd = histget("cmd", -1)
+        " replace % with actual file name and save into command line history
+        " for easy re-use
+        " i.e. 
+        "   ApexTest tooling-sync %
+        " becomes 
+        "   ApexTest tooling-sync MyTest
+        let lastCmd = substitute(lastCmd, '%', testsToRun, '')
+        call histadd("cmd", lastCmd)
+    endif
+
 	let projectName = a:0 > 2? a:3 : ''
 
     let attributes = {}
