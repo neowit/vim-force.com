@@ -123,7 +123,7 @@ syn match 	apexcodeSystemKeywords	"Test\.\<\(isRunningTest\|setCurrentPage\|setC
 syn match   apexcodeTriggerDecl		"^trigger\>"
 syn match 	apexcodeTriggerType		"\(after\|before\) \(insert\|update\|delete\|undelete\)"
 syn match 	apexcodeTriggerKeywords	"Trigger\.\(newMap\|oldMap\|new\|old\)"
-syn match 	apexcodeTriggerKeywords	"Trigger\.is\(Before\|After\|Insert\|Update\|Delete\|UnDelete\|Undelete\)"
+syn match 	apexcodeTriggerKeywords	"Trigger\.is\(Before\|After\|Insert\|Update\|Delete\|UnDelete\|Undelete\|Executing\)"
 syn match 	apexcodeDatabaseClasses	"Database\.\<\(DeletedRecord\|DeleteResult\|DMLOptions\|DmlOptions\.AssignmentRuleHeader\|DmlOptions\.EmailHeader\)\>"
 syn match 	apexcodeDatabaseClasses	"Database\.\<\(EmptyRecycleBinResult\|Error\|GetDeletedResult\|GetUpdatedResult\|LeadConvert\|LeadConvertResult\|MergeResult\)\>"
 syn match 	apexcodeDatabaseClasses	"Database\.\<\(QueryLocator\|QueryLocatorIterator\|SaveResult\|UndeleteResult\|UpsertResult\)\>"
