@@ -1280,6 +1280,7 @@ function! s:onCommandComplete(secsElapsed)
             
             if has_key(g:apex_OnCommandComplete, 'timeoutSec')
                 if a:secsElapsed > str2nr(g:apex_OnCommandComplete['timeoutSec'])
+                    echomsg "secsElapsed=" . a:secsElapsed
                     call apexOs#exe(l:command, l:flags)
                 endif
             else
