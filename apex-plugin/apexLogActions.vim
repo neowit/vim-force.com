@@ -64,10 +64,17 @@ function! apexLogActions#askLogLevel(filePath, api)
     call feedkeys("\<CR>") 
 endfunction
 
-function! apexLogActions#deleteLogs(filePath)
+"Param2: project file path - which resides inside a project. Used to determine
+"project name
+"Param2: (optional) destination project name, must match one of .properties file
+function! apexLogActions#deleteLogs(filePath, ...)
     let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
+	let projectName = projectPair.name
+	if a:0 > 0 && len(a:1) > 0
+		let projectName = apexUtil#unescapeFileName(a:1)
+	endif
     let l:extraParams = {}
-    let l:projectObj = {"path": projectPair.path, "name": projectPair.name, "packageName": "unpackaged"}
+    let l:projectObj = {"name": projectName}
 	let resMap = apexToolingAsync#executeBlocking("deleteLogs", l:projectObj, l:extraParams, [])
 	let responsePath = resMap["responseFilePath"]
 endfunction    

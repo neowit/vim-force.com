@@ -996,6 +996,15 @@ function! apexToolingAsync#execute(action, projectObj, extraParams, displayMessa
 		call apexUtil#warning("skipping conflict check with remote")
 	endif
 
+    " init parameters referenced (checked for empty) below, but not
+    " present in projectObj
+	if !has_key(a:projectObj, "path")
+		let a:projectObj.path = ''
+	endif
+	if !has_key(a:projectObj, "packageName")
+		let a:projectObj.packageName = ''
+	endif
+
 	let l:command = " --action=" . a:action
 	if exists("g:apex_temp_folder")
 		let l:command = l:command  . " --tempFolderPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
