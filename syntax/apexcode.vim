@@ -78,6 +78,7 @@ syn keyword apexcodeSelectKeywords	contained select from where with having limit
 syn match	apexcodeSelectKeywords	contained "\<\(order by\|group by\|group by rollup\|group by cube\)\>"
 syn match	apexcodeSelectKeywords	contained "\c\<\(NULLS FIRST\|NULLS LAST\|asc\|desc\)\>"
 syn match	apexcodeSelectOperator	contained "\<\(in\|not in\)\>"
+syn match	apexcodeSelectOperator	contained "\<\(WITH USER_MODE\|WITH SYSTEM_MODE\|WITH SECURITY_ENFORCED\)\>"
 syn keyword	apexcodeSelectOperator	contained or and true false
 syn keyword	apexcodeSelectOperator	contained toLabel includes excludes convertTimezone convertCurrency
 syn keyword	apexcodeSelectOperator	contained avg count count_distinct min max sum
@@ -101,8 +102,9 @@ syn match   apexcodeNumber	       "-\=\<\d\+L\=\>\|0[xX][0-9a-fA-F]\+\>"
 
 
 syn match apexcodeDebug				"System\.debug\s*(.*);" fold contains=apexcodeString,apexcodeNumber,apexcodeOperator
-syn match apexcodeAssert			"System\.assert"
+syn match apexcodeAssert			"\(System\.assert\|Assert\)"
 syn match apexcodeAssert			"System\.assert\(Equals\|NotEquals\)"
+syn match apexcodeAssert			"Assert\.\(areEqual\|areNotEqual\|fail\|isFalse\|isInstanceOfType\|isNotInstanceOfType\|isNull\|isNotNull\|isTrue\)"
 
 syn match apexcodeSFDCCollection	"\(Map\|Set\|List\)\(\s*<\)\@="
 
