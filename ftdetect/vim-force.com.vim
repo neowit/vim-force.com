@@ -10,7 +10,10 @@
 "force.com related file types
 au BufRead,BufNewFile *.cls,*.trigger,*.resource set filetype=apexcode
 " set two file types for apex page: html (for syntax) and apexcode (for compilation and tags)
-au BufRead,BufNewFile *.page,*.component,*.scf	set filetype=visualforce | setlocal omnifunc=htmlcomplete#CompleteTags | setlocal completefunc=visualforcecomplete#Complete
+augroup apexVisualforce
+	au!
+    au BufRead,BufNewFile *.page,*.component,*.scf	set filetype=visualforce | setlocal omnifunc=htmlcomplete#CompleteTags | setlocal completefunc=visualforcecomplete#Complete
+augroup END
 " scratch buffer needs 'apexcode' highlighting
 au BufRead,BufNewFile vim-force.com-scratch.txt set filetype=apexcode
 
