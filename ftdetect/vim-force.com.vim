@@ -15,7 +15,7 @@ augroup apexVisualforce
     au BufRead,BufNewFile *.page,*.component,*.scf	set filetype=visualforce | setlocal omnifunc=htmlcomplete#CompleteTags | setlocal completefunc=visualforcecomplete#Complete
 augroup END
 " scratch buffer needs 'apexcode' highlighting
-au BufRead,BufNewFile vim-force.com-scratch.txt set filetype=apexcode
+au BufRead,BufNewFile vim-force.com-scratch*.txt set filetype=apexcode
 
 " resources with name like *JS.resource are treated as plain javascript files, (i.e. non zip files)
 au BufRead,BufNewFile *JS.resource set filetype=apexcode.javascript | set syntax=javascript
