@@ -83,7 +83,7 @@ function apexProject#login(filePath)
     let choice = apexUtil#menu("Select target environment: ", ["Production", "Sandbox", "Enter manually"], "Production")
     let env = "login.salesforce.com"
     if "Enter manually" == choice
-		let env = input("Enter domain name only, e.g. prerelease.force.com or someorg--dev1.my.salesforce.com: ")
+		let env = input("\nEnter domain name only, e.g. prerelease.force.com or someorg--dev1.my.salesforce.com or di0000000abcqeaw-dev-ed.my.salesforce.com:\n")
         if len(env) < 1
             return 0
         endif    
