@@ -264,7 +264,7 @@ function! s:getJavaCommand()
         " force UTF-8 encoding if user did not set an alternative explicitly
 		let l:java_command = l:java_command  . " -Dfile.encoding=UTF-8 "
     endif    
-	let l:java_command = l:java_command  . " -jar " . fnameescape(g:apex_tooling_force_dot_com_path)
+	let l:java_command = l:java_command  . " -jar " . shellescape(g:apex_tooling_force_dot_com_path)
 
     return l:java_command
 
