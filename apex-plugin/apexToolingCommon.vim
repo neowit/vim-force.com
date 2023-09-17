@@ -70,7 +70,7 @@ function! apexToolingCommon#parseErrorLog(logFilePath, projectPath, displayMessa
     if l:useLocationList
         "clear location list
         call setloclist(0, []) " set location list of current window, hence 0
-        lclose
+        call apexUtil#ignoreError('lclose')
     else
         "clear quickfix
         call setqflist([])
@@ -238,7 +238,7 @@ function! apexToolingCommon#fillQuickfix(logFilePath, projectPath, useLocationLi
     let l:errorCount = len(l:errorList)
 	if l:errorCount > 0
 		if a:useLocationList
-            lopen 
+            call apexUtil#ignoreError('lopen') 
         else    
             copen
         endif    
@@ -386,7 +386,7 @@ function! apexToolingCommon#openLastLog()
                 :execute "e " . fnameescape(l:logList[0].filename)
             else    
                 call setloclist(0, l:logList)
-                :lopen
+                call apexUtil#ignoreError('lopen')
             endif    
         endif
 	else

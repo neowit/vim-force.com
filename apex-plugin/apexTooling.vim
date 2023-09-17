@@ -281,7 +281,7 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
     if l:useLocationList
         "clear location list
         call setloclist(0, []) " set location list of current window, hence 0
-        lclose
+        call apexUtil#ignoreError('lclose')
     else
         "clear quickfix
         call setqflist([])
@@ -449,7 +449,7 @@ function! s:fillQuickfix(logFilePath, projectPath, useLocationList)
 
 	if len(l:errorList) > 0
 		if a:useLocationList
-            lopen 
+            call apexUtil#ignoreError('lopen') 
         else    
             copen
         endif    

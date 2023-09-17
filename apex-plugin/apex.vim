@@ -419,7 +419,7 @@ function! CloseEmptyQuickfixes()
 		if buflisted(n)
 			if "quickfix" == getbufvar(n, '&buftype')
 				if empty(getqflist())
-					silent exe 'bdel ' . n
+					call apexUtil#ignoreError("silent exe 'bdel '" . n)
 				endif	
 			endif
 		endif

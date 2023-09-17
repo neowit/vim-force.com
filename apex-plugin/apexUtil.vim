@@ -458,3 +458,13 @@ function! apexUtil#log(msg)
         call writefile([a:msg], l:dir . "apex-plugin-log.txt", "a")
     endif
 endfunction    
+
+" call vim command, ingoring all errors
+" this is a workaround for vim errors like 
+" E565: Not allowed to change text or change window: lclose
+" which may occur when we call several apex command in one go due to local
+" user vim config e.g. omni completion can sometimes attempt to call BufWrite first so we can get
+" apexComplete#checkSyntax with immediate apexComplete#Complete
+function! apexUtil#ignoreError(action)
+    try | exe a:action | catch /.*/ | return | endtry
+endfunction    
