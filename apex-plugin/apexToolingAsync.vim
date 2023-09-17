@@ -1344,7 +1344,7 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
     let messageCount = 0
 
 	if len(apexUtil#grepFile(fileName, 'RESULT=FAILURE')) > 0
-        call apexMessages#logError("Operation failed")
+        call apexMessages#logError("2. Operation failed")
         " check if we have failure messages
         let messageCount = apexMessages#process(a:logFilePath, a:projectPath, a:displayMessageTypes) > 0 
 

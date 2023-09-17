@@ -108,7 +108,7 @@ function! s:execBlocking(command) abort
 endfunction    
 
 function! s:execAsync(command, callbackFuncRef) abort
-    "call ch_logfile('/Users/andrey/temp/vim/_job-test/channel.log', 'w')
+    "call ch_logfile("$HOME/temp/vim/_job-test/channel.log", 'w')
 
     let l:reEnableMore = &more
     set nomore

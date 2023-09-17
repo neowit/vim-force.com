@@ -309,7 +309,7 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 	endif	
 
 	if len(apexUtil#grepFile(fileName, 'RESULT=FAILURE')) > 0
-        call apexUtil#error("Operation failed")
+        call apexUtil#error("1. Operation failed")
         " check if we have messages
         call s:displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes)
 

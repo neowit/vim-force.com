@@ -108,7 +108,7 @@ function! apexToolingCommon#parseErrorLog(logFilePath, projectPath, displayMessa
 		return 0
 	endif
 
-	call apexUtil#error("Operation failed")
+	call apexUtil#error("3. Operation failed")
 	" check if we have messages
 	call apexToolingCommon#displayMessages(a:logFilePath, a:projectPath, a:displayMessageTypes)
 	
