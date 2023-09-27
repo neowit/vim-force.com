@@ -1287,13 +1287,20 @@ function! s:onCommandComplete(secsElapsed)
         if len(l:command) > 0
             let l:flags = {"silent": 1, "background": 0}
             
+            let l:isNeedToRunCommand = 1
             if has_key(g:apex_OnCommandComplete, 'timeoutSec')
                 if a:secsElapsed > str2nr(g:apex_OnCommandComplete['timeoutSec'])
                     echomsg "secsElapsed=" . a:secsElapsed
-                    call apexOs#exe(l:command, l:flags)
+                else 
+                    let  l:isNeedToRunCommand = 0 " last operation was not long enough
                 endif
-            else
-                call apexOs#exe(l:command, l:flags)
+            endif
+            if l:isNeedToRunCommand
+                let l:result = apexOs#exe(l:command, l:flags)
+                if v:shell_error
+                    echoerr "failed to execute g:apex_OnCommandComplete: ". l:command
+                    echoerr l:result
+                endif
             endif
         endif
             
