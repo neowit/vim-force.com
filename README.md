@@ -2,6 +2,12 @@
 
 salesforce.com / force.com plugin for Vim version 7.4 (with `job` & `channel` support) or later.  
 
+##### Update September 2023  
+
+Note 1:
+Vim 9 release contains a bug [11534](https://github.com/vim/vim/issues/11534) which breaks vim-force.com plugin.
+Use Vim 8.2 release or nightly build of Vim 9, e.g. [v9.0.1950](https://github.com/vim/vim-win32-installer/releases/tag/v9.0.1950).  
+
 ##### Update September 2016  
 
 Note 1:  
