@@ -66,23 +66,23 @@ snippet testMethod
 # Variables
 #-----------------------------------------
 snippet list
-	List<${1:}> ${2} = new List<$1>();
+	final List<${1:}> ${2} = new List<$1>();
 snippet qlist
-	List<${1:ObjectType}> ${2:varName} = [
+	final List<${1:ObjectType}> ${2:varName} = [
 		SELECT ${3:Id} 
 		FROM $1
 		WHERE ${4}
 	];
 snippet map 
-	Map<${1:}, ${2:}> ${3} = new Map<$1, $2>();
+	final Map<${1:}, ${2:}> ${3} = new Map<$1, $2>();
 snippet qmap
-	Map<Id, ${1:ObjectType}> ${2} = new Map<Id, $1>([
+	final Map<Id, ${1:ObjectType}> ${2} = new Map<Id, $1>([
 		SELECT Id${3}
 		FROM $1
 		WHERE ${4}
 	]);
 snippet set
-	Set<${1:}> ${2} = new Set<$1>();
+	final Set<${1:}> ${2} = new Set<$1>();
 #-----------------------------------------
 
 
