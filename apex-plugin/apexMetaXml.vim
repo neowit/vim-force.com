@@ -504,6 +504,11 @@ function s:getFilesLightningComponentBundle(fName)
     let metaContent = metaContent + ["    <!-- <target>lightning_VoiceExtension</target> -->"]
     let metaContent = metaContent + ["    <!-- <target>lightning__RecordAction</target> -->"]
     let metaContent = metaContent + ["  </targets>"]
+    let metaContent = metaContent + ["  <!-- <capabilities> -->"]
+    let metaContent = metaContent + ["    <!-- <capability>lightning__dynamicComponent</capability> -->"]
+    let metaContent = metaContent + ["    <!-- <capability>lightningCommunity__RelaxedCSP</capability> -->"]
+    let metaContent = metaContent + ["    <!-- <capability>lightning__ServiceCloudVoiceToolkitApi</capability> -->"]
+    let metaContent = metaContent + ["  <!-- </capabilities> -->"]
 	let metaContent = metaContent + ["</LightningComponentBundle>"]
     let metaFileName = fName . ".js-meta.xml"
 
