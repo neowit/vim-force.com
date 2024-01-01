@@ -66,6 +66,7 @@ syn match 	apexcodeOperator		"\(+\|-\|=\)"
 syn match 	apexcodeOperator		"!="
 syn match 	apexcodeOperator		"&&"
 syn match 	apexcodeOperator		"||"
+syn match 	apexcodeOperator		"??"
 "syn match 	apexcodeOperator		"*"
 "syn match 	apexcodeOperator		"/"
 
