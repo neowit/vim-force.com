@@ -41,10 +41,6 @@ function! apexComplete#checkSyntax(filePath) abort
     try | call apex#getSFDCProjectPathAndName(l:filePath) | catch /.*/ | return | endtry    
 
 	let attributeMap = {}
-	"save content of current buffer in a temporary file
-	"let tempFilePath = tempname() . apexOs#splitPath(a:filePath).tail
-	"silent exe ":w! " . tempFilePath
-	
 	let attributeMap["currentFilePath"] = a:filePath
 	" let attributeMap["currentFileContentPath"] = tempFilePath
 	let attributeMap["currentFileContentPath"] = a:filePath
@@ -153,8 +149,38 @@ endfunction
 function! s:getBufContentAsTempFile(filePath)
 	"save content of current buffer in a temporary file
 	let tempFilePath = tempname() . apexOs#splitPath(a:filePath).tail
-	silent exe ":w! " . tempFilePath
+	" silent exe ":w! " . tempFilePath
+    call s:saveBufferWithoutAutocmd(tempFilePath)
     return tempFilePath
+endfunction
+
+function! s:saveBufferWithoutAutocmd(file_path) abort
+    " Validate that a file path was provided
+    if a:file_path ==# ''
+        echohl ErrorMsg
+        echom "Error: No file path provided for saving."
+        echohl None
+        return
+    endif
+
+    " Get all lines from the current buffer.
+    " bufnr() gets the number of the current buffer.
+    " 1 and '$' specify to get lines from the first to the last.
+    let l:lines = getbufline(bufnr(), 1, '$')
+
+    " Use writefile() to write the lines to the specified file.
+    " writefile() is a low-level function that directly writes to a file
+    " and does NOT trigger BufWrite autocommands (BufWritePre, BufWritePost).
+    " The 'b' argument ensures binary mode, which is generally safer,
+    " preventing unexpected character conversions.
+    try
+        call writefile(l:lines, a:file_path, 'b')
+        " echom "Buffer successfully saved to: " . a:file_path . " (BufWrite autocommands bypassed)"
+    catch /.*/
+        echohl ErrorMsg
+        echom "Error saving buffer to " . a:file_path . ": " . v:exception
+        echohl None
+    endtry
 endfunction
 
 function! s:listOptions(filePath, line, column)
@@ -166,7 +192,8 @@ function! s:listOptions(filePath, line, column)
 
 	"save content of current buffer in a temporary file
 	let tempFilePath = tempname() . apexOs#splitPath(a:filePath).tail
-	silent exe ":w! " . tempFilePath
+	"silent exe ":w! " . tempFilePath
+    call s:saveBufferWithoutAutocmd(tempFilePath)
 	
 	let attributeMap["currentFileContentPath"] = tempFilePath
 
