@@ -6,22 +6,24 @@
 "
 " main actions calling tooling-force.com command line executable using vim
 " async job
-"
+
 if exists("g:loaded_apexToolingAsync") || &compatible
     finish
 endif
-if !has('job')
-    throw "Vim version with '+job' feature is required"
-    finish
-endif    
-if !has('channel')
-    throw "Vim version compiled with '+channel' feature is required"
-    finish
-endif    
-if !has('timers')
-    throw "Vim version with '+timers' feature is required"
-    finish
-endif    
+if !has('nvim')
+    if !has('job')
+        throw "Vim version with '+job' feature is required"
+        finish
+    endif    
+    if !has('channel')
+        throw "Vim version compiled with '+channel' feature is required"
+        finish
+    endif    
+    if !has('timers')
+        throw "Vim version with '+timers' feature is required"
+        finish
+    endif    
+endif
 let g:loaded_apexToolingAsync = 1
 
 let s:SESSION_FOLDER = ".vim-force.com"
@@ -1124,11 +1126,14 @@ function! apexToolingAsync#execute(action, projectObj, extraParams, displayMessa
     "call s:copyUnderscoredParams(a:extraParams, obj)
     
     function obj.callbackInternal(channel, ...)
-        "echomsg "a:0=" . a:0
+        " echomsg "============== obj.callbackInternal " . a:channel
+        " echomsg "a:0=" . a:0
+        " echomsg "responseFilePath=" . get(self, 'responseFilePath')
+        " echomsg "self: " . string(self)
         if a:0 > 0
             " channel and msg
             " display message = a:2
-            "echo a:1
+            " echomsg "a:1 = " . a:1
             let l:msg = a:1 
             if !self.isSilent
                 call apexMessages#log(l:msg)
