@@ -960,7 +960,7 @@ function! apexToolingAsync#executeBlocking(action, projectObj, extraParams, disp
         " status line/window
         redraw
     endwhile    
-    return l:extraParams["resMap"]
+    return has_key(l:extraParams, "resMap")? l:extraParams["resMap"] : ''
 endfunction    
 " ==================================================================================================
 
