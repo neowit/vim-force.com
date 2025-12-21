@@ -19,6 +19,8 @@ let g:loaded_apex_metaXml = 1
 let s:PLUGIN_FOLDER = expand("<sfile>:h")
 
 let s:SUPPORTED_FILE_TYPES = ["ApexClass", "ApexPage", "ApexTrigger", "ApexComponent", "LightningComponentBundle"]
+" https://www.asagarwal.com/salesforce-api-name-character-limits-for-different-metadata-types/?
+let s:MAX_NAME_LENGTH = {"ApexClass": 40, "ApexPage": 40, "LightningComponentBundle": 80}
 
 " request file type/name, check that file does not exist, create file and switch
 " buffer to the new file
@@ -36,6 +38,17 @@ function apexMetaXml#createFileAndSwitch(filePath)
 	endif
 	let fileObjects = s:getFiles{typeAndName.fileType}(typeAndName.fileName)
     " fileObjects = {files :[name: 'helloWorld.html', content: '...', path: ['lwc', 'helloWorld']]}
+
+    " check name length
+    let l:maxNameLength = 40
+    if has_key(s:MAX_NAME_LENGTH, typeAndName.fileType) 
+        let l:maxNameLength = s:MAX_NAME_LENGTH[typeAndName.fileType]
+    endif
+
+    if (len(typeAndName.fileName) > l:maxNameLength) 
+        echoerr "File Name '".typeAndName.fileName."' is too long. Max length for ".typeAndName.fileType." name is: ". l:maxNameLength." characters."
+        return 
+    endif
     
     let filePathToEdit = ""
 
@@ -52,6 +65,7 @@ function apexMetaXml#createFileAndSwitch(filePath)
             call apexUtil#warning("File already exists: " . newFilePath)
             continue
         endif
+        
 
         let writeRes = writefile(fileObject.content, newFilePath )
         if 0 == writeRes 
