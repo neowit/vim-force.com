@@ -429,6 +429,10 @@ function! apexUtil#commandLineComplete(arg, line, pos, candidates)
 	return res
 endfunction	
 
+" use apexUtil#getOrElse for providing default value for global variables, i.e. those with g: prefix ONLY
+" e.g. 
+"   apexUtil#getOrElse("g:apex_server_host", "127.0.0.1")
+" @see also apexUtil#getNotEmpty()
 function! apexUtil#getOrElse(var, defaultValue)
     if exists(a:var)
 		let value = eval(a:var)

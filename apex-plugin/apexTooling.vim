@@ -56,6 +56,7 @@ function apexTooling#listCompletions(filePath, attributeMap)
 	let l:extraParams["column"] = attributeMap["column"]
 	let l:extraParams["currentFilePath"] = apexOs#shellescape(a:filePath)
 	let l:extraParams["currentFileContentPath"] = apexOs#shellescape(attributeMap["currentFileContentPath"])
+	let l:extraParams["timeoutMills"] = 30 * 1000 " max completions wait is 30sec
 
     let resMap = apexToolingAsync#executeBlocking("listCompletions", projectPair, l:extraParams, [])
     "if apexOs#isWindows()

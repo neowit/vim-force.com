@@ -946,11 +946,14 @@ function! apexToolingAsync#executeBlocking(action, projectObj, extraParams, disp
     " wait for response to become available
     "let dots = '.'
     let mills = 100
-    while !has_key(l:extraParams, "resMap")
+    let l:maxSleepMils = apexUtil#getNotEmpty( get(l:extraParams, "timeoutMills"), 0) " max wait is indefinite if value is not specified
+    let l:elapsedMills = 0
+    while !has_key(l:extraParams, "resMap") && (l:maxSleepMils == 0 || l:elapsedMills < l:maxSleepMils)
         "echomsg "waiting" . dots
         "let dots .= '.'
         "sleep for NN milliseconds
         exec 'sleep ' .mills. 'm' 
+        let l:elapsedMills += mills
         " redraw screen to reduce chances of accumulating '/ =>' progress characters in
         " status line/window
         redraw
