@@ -125,6 +125,11 @@ endfunction
 "Param1: (optional) file path where signs must be cleared
 "					if not provided then clear signs in all files
 function! s:clearSigns(...) abort
+    if has('nvim')
+        " reset SignColumn highlight
+        setlocal winhighlight=SignColumn:MySignColumnOff
+    endif
+
 	if a:0 > 0
 		try
 			exe ":sign unplace * file=" . a:1
@@ -143,9 +148,17 @@ function! s:clearSigns(...) abort
 endfunction
 
 function! s:defineHighlight()
-    hi SignColumn guifg=green guibg=green ctermfg=2 ctermbg=2
-    hi uncovered guifg=red guibg=red ctermfg=1 ctermbg=1
-    sign define uncovered text=- texthl=uncovered
+    if has('nvim')
+        hi MySignColumnOn guifg=green guibg=green ctermfg=2 ctermbg=2
+        hi MySignColumnOff guifg=foreground guibg=background ctermfg=NONE ctermbg=NONE
+        hi uncovered guifg=red guibg=red ctermfg=1 ctermbg=1
+        sign define uncovered text=- texthl=uncovered
+        setlocal winhighlight=SignColumn:MySignColumnOn
+    else    
+        hi SignColumn guifg=green guibg=green ctermfg=2 ctermbg=2
+        hi uncovered guifg=red guibg=red ctermfg=1 ctermbg=1
+        sign define uncovered text=- texthl=uncovered
+    endif
 endfunction
 
 "Returns: dictionary which looks like so:
