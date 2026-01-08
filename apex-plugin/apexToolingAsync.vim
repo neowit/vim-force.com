@@ -896,7 +896,6 @@ function apexToolingAsync#diffWithRemote(filePath, mode, ...)
         if len(a:paths) > 0
             let modeMsg = 'file' == l:mode ? "files" : "folders"
             if apexUtil#input("Run diff tool to compare local and remote ". modeMsg ." [y/N]? ", "YynN", "N") ==? 'y'
-                echo "\n"
 
                 if 'file' == l:mode
                     let rightFile = a:paths['remoteFile']
@@ -912,6 +911,7 @@ function apexToolingAsync#diffWithRemote(filePath, mode, ...)
                     call apexUtil#compareFiles(srcPath, a:paths['remoteSrcDir'])
                 endif
             endif    
+            echo " "
         else
             if 'file' == l:mode
                 call apexUtil#warning("Failed to retrieve remote file or it does not exist on remote.")
