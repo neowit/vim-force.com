@@ -423,6 +423,9 @@ function apexToolingAsync#retrieveSpecific(filePath, mode, callbackFuncRef, ...)
                     let filePathRelativeProjectFolder = apex#getFilePathRelativeProjectFolder(leftFile)
                     let rightFile = apexOs#joinPath(rightProjectFolder, filePathRelativeProjectFolder)
                     let resObj["remoteFile"] = rightFile
+                    let l:isNoDifferences = !empty( apexUtil#grepFile(responseFilePath, "^MESSAGE:.*No differences.*INFO"))
+                    let resObj["isNoDifferences"] = l:isNoDifferences
+
                 else
                     let resObj["remoteFile"] = ''
                 endif
@@ -892,11 +895,19 @@ function apexToolingAsync#diffWithRemote(filePath, mode, ...)
     function! obj.callbackFuncRef(paths)
         let l:mode = self._mode
         let leftFile = self._leftFile
+        let l:isNoDifferences = a:paths["isNoDifferences"]
         
         if len(a:paths) > 0
             let modeMsg = 'file' == l:mode ? "files" : "folders"
-            if apexUtil#input("Run diff tool to compare local and remote ". modeMsg ." [y/N]? ", "YynN", "N") ==? 'y'
 
+            let l:promptMsg = "Run diff tool to compare local and remote ". modeMsg ." [Y/n]? "
+            let l:defaultAnswer = "Y"
+            if l:isNoDifferences
+                let l:promptMsg = "No differences between local and remote ". modeMsg ." detected. Run diff tool anyway [y/N]? "
+                let l:defaultAnswer = "N"
+            endif
+
+            if apexUtil#input(l:promptMsg, "YynN", l:defaultAnswer) ==? 'y'
                 if 'file' == l:mode
                     let rightFile = a:paths['remoteFile']
                     " compare single files
@@ -912,6 +923,7 @@ function apexToolingAsync#diffWithRemote(filePath, mode, ...)
                 endif
             endif    
             echo " "
+            
         else
             if 'file' == l:mode
                 call apexUtil#warning("Failed to retrieve remote file or it does not exist on remote.")
