@@ -1270,7 +1270,7 @@ endfunction
 
 function! s:startProgressTimer()
     call s:stopProgressTimer()
-    let l:maxRepeats = 20
+    let l:maxRepeats = 1200 "10 min, used to be 20, i.e. 10 sec
     let s:progress.timerId = timer_start(500, s:progress.showProgress, {'repeat': l:maxRepeats})
     let s:timers[s:progress.timerId] = l:maxRepeats
 endfunction    
