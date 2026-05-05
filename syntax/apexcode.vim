@@ -100,7 +100,8 @@ syn region 	apexcodeSelectStatic	start="\[" end="]" fold transparent contains=ap
 " Special escapes
 syn match apexcodeSpecial "\\\d\d\d\|\\."
 " Triple-quoted string (FIRST)
-syn region apexcodeString start=+'''+ end=+'''+ contains=apexcodeSpecial keepend extend
+syn match stringTemplateVariable /\${[^}]\+}/ contained
+syn region apexcodeTripleString start=+'''+ end=+'''+ contains=stringTemplateVariable keepend extend
 " Single-quoted string (only match lone quotes)
 syn region apexcodeString start=+'\%([^']\)\@=+ skip=+\\\\\|\\'+ end=+'\|$+ contains=apexcodeSpecial
 
@@ -172,6 +173,8 @@ hi def link apexcodeSelectOperator	Operator
 hi def link apexcodeSelectConstant	Constant
 hi def link apexcodeSelectDateLiteral Constant
 
+hi def link stringTemplateVariable  Identifier
+hi def link apexcodeTripleString	String
 hi def link apexcodeString			String
 hi def link apexcodeNumber			Number
 hi def link apexcodeDebug			Debug
