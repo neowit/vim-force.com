@@ -97,8 +97,13 @@ syn match	apexcodeSelectDateLiteral	contained "\<\(\d\{4}-[0|1][0-2]-\([0-2]\d\|
 syn match	apexcodeSelectDateLiteral	contained "\<\(\d\{4}-[0|1][0-2]-\([0-2]\d\|3[01]\)\)T\([01][0-9]\|2[0-4]\):[0-5][0-9]:[0-5][0-9]\(Z\|[+-]\([01][0-9]\|2[0-4]\)\>:[0-5][0-9]\)\>"
 syn region 	apexcodeSelectStatic	start="\[" end="]" fold transparent contains=apexcodeSelectKeywords,apexcodeSelectOperator,apexcodeString,apexcodeSelectConstant,apexcodeSelectDateLiteral
 
-syn match   apexcodeSpecial	       "\\\d\d\d\|\\."
-syn region  apexcodeString	       start=+'+  skip=+\\\\\|\\'+  end=+'\|$+	contains=apexcodeSpecial
+" Special escapes
+syn match apexcodeSpecial "\\\d\d\d\|\\."
+" Triple-quoted string (FIRST)
+syn region apexcodeString start=+'''+ end=+'''+ contains=apexcodeSpecial keepend extend
+" Single-quoted string (only match lone quotes)
+syn region apexcodeString start=+'\%([^']\)\@=+ skip=+\\\\\|\\'+ end=+'\|$+ contains=apexcodeSpecial
+
 syn match   apexcodeNumber	       "-\=\<\d\+L\=\>\|0[xX][0-9a-fA-F]\+\>"
 
 
