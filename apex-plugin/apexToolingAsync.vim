@@ -335,14 +335,14 @@ function apexToolingAsync#refreshFile(filePath, ...) abort
     endfunction    
     " =============== END internal callback ====================
 
+    let l:optionalParams = {"commandOverride" : "refreshFile"} " used to pass extra valies to apexToolingAsync#retrieveSpecific()
+
 	if a:0 > 0 && len(a:1) > 0
         " specific project, not necessarily the current one
 		let projectName = apexUtil#unescapeFileName(a:1)
-        call apexToolingAsync#retrieveSpecific(filePath, 'file', obj.callbackFuncRef, projectName )
-    else    
-        " current project
-        call apexToolingAsync#retrieveSpecific(filePath, 'file', obj.callbackFuncRef)
+        let l:optionalParams["projectName"] = projectName
 	endif
+    call apexToolingAsync#retrieveSpecific(filePath, 'file', obj.callbackFuncRef, l:optionalParams)
 
 endfunction
 
@@ -360,23 +360,35 @@ endfunction
 "       as well as original '_...' parameters
 "       e.g.: 
 "       callbackFuncRef({'remoteSrcDir': '...', 'remoteFile': '...', '_param': '...'}
-"Param4: [optional] name of remote <project>.properties file
+"Param4: optionalParams - dictionary that can include following key/values
+"       [optional] commandOverride: 'diffWithRemote'|'refreshFile'
+"       [optional] projectName: name of remote <project>.properties file
+
 "Return: dictionary: {'remoteSrcDir': '/path/to/temp/src...', 'remoteFile': '/path/to/temp/src/.../file'}
-function apexToolingAsync#retrieveSpecific(filePath, mode, callbackFuncRef, ...)
+function apexToolingAsync#retrieveSpecific(filePath, mode, callbackFuncRef, optionalParams)
     let leftFile = a:filePath
     let l:mode = a:mode
     
 	let projectPair = apex#getSFDCProjectPathAndName(leftFile)
 	let projectName = projectPair.name
-    
-	if a:0 > 0 && len(a:1) > 0
-		let projectName = apexUtil#unescapeFileName(a:1)
-	endif
 
     let l:extraParams = {"typesFileFormat" : "packageXml"}
     let l:extraParams["_internalCallbackFuncRef"] = a:callbackFuncRef
     let l:extraParams["_leftFile"] = leftFile
     let l:extraParams["_mode"] = l:mode
+
+    let l:command = "diffWithRemote"
+
+    if has_key(a:optionalParams, "commandOverride")
+        let l:command = a:optionalParams["commandOverride"]
+
+        if "refreshFile" == a:optionalParams["commandOverride"]
+            let l:extraParams["updateSessionDataOnSuccess"] = "true"
+        endif    
+    endif
+    if has_key(a:optionalParams, "projectName")
+        let projectName = apexUtil#unescapeFileName(a:optionalParams["projectName"])
+    endif
 
     if 'file' == l:mode
 
@@ -439,7 +451,7 @@ function apexToolingAsync#retrieveSpecific(filePath, mode, callbackFuncRef, ...)
     " ================= END internal callback ============================
     
     " 'diffWithRemote' here is not a mistake, it is more suitable than 'bilkRetrieve' for current purpose
-    call apexToolingAsync#execute("diffWithRemote", {'name': projectName, 'path': projectPair.path, 'packageName': projectPair.packageName}, l:extraParams, [])
+    call apexToolingAsync#execute(l:command, {'name': projectName, 'path': projectPair.path, 'packageName': projectPair.packageName}, l:extraParams, [])
 endfunction
 
 
@@ -932,14 +944,14 @@ function apexToolingAsync#diffWithRemote(filePath, mode, ...)
     endfunction    
     " =============== END internal callback ====================
     " 
+    let l:optionalParams = {"updateSessionDataOnSuccess" : "false"} " used to pass extra valies to apexToolingAsync#retrieveSpecific()
+
 	if a:0 > 0 && len(a:1) > 0
         " specific project, not necessarily the current one
 		let projectName = apexUtil#unescapeFileName(a:1)
-        call apexToolingAsync#retrieveSpecific(a:filePath, a:mode, obj.callbackFuncRef, projectName)
-    else    
-        " current project
-        call apexToolingAsync#retrieveSpecific(a:filePath, a:mode, obj.callbackFuncRef)
+        let l:optionalParams["projectName"] = projectName
 	endif
+    call apexToolingAsync#retrieveSpecific(a:filePath, a:mode, obj.callbackFuncRef, l:optionalParams)
 
 endfunction	
 
