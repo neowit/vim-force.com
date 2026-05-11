@@ -99,19 +99,22 @@ syn region 	apexcodeSelectStatic	start="\[" end="]" fold transparent contains=ap
 
 " Special escapes
 syn match apexcodeSpecial "\\\d\d\d\|\\." contained
-" Triple-quoted strings first (more specific)
+" Interpolated parameter: ${param}
+syntax match stringTemplateVariable +${[^}]*}+
+
+" Triple-quoted strings
 syntax region apexcodeString
       \ start=+'''+
       \ end=+'''+
       \ keepend
-      \ contains=apexcodeSpecial
+      \ contains=stringTemplateVariable,apexcodeSpecial
 
-" Normal single-quoted strings with escaped quotes
+" Single-quoted strings
 syntax region apexcodeString
       \ start=+'+
       \ skip=+\\\\\|\\'+
       \ end=+'+
-      \ contains=NONE
+      \ contains=stringTemplateVariable
       \ containedin=ALLBUT,apexcodeString
 
 syn match   apexcodeNumber	       "-\=\<\d\+L\=\>\|0[xX][0-9a-fA-F]\+\>"
