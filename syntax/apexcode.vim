@@ -98,12 +98,21 @@ syn match	apexcodeSelectDateLiteral	contained "\<\(\d\{4}-[0|1][0-2]-\([0-2]\d\|
 syn region 	apexcodeSelectStatic	start="\[" end="]" fold transparent contains=apexcodeSelectKeywords,apexcodeSelectOperator,apexcodeString,apexcodeSelectConstant,apexcodeSelectDateLiteral
 
 " Special escapes
-syn match apexcodeSpecial "\\\d\d\d\|\\."
-" Triple-quoted string (FIRST)
-syn match stringTemplateVariable /\${[^}]\+}/ contained
-syn region apexcodeTripleString start=+'''+ end=+'''+ contains=stringTemplateVariable keepend extend
-" Single-quoted string (only match lone quotes)
-syn region apexcodeString start=+'\%([^']\)\@=+ skip=+\\\\\|\\'+ end=+'\|$+ contains=apexcodeSpecial
+syn match apexcodeSpecial "\\\d\d\d\|\\." contained
+" Triple-quoted strings first (more specific)
+syntax region apexcodeString
+      \ start=+'''+
+      \ end=+'''+
+      \ keepend
+      \ contains=apexcodeSpecial
+
+" Normal single-quoted strings with escaped quotes
+syntax region apexcodeString
+      \ start=+'+
+      \ skip=+\\\\\|\\'+
+      \ end=+'+
+      \ contains=NONE
+      \ containedin=ALLBUT,apexcodeString
 
 syn match   apexcodeNumber	       "-\=\<\d\+L\=\>\|0[xX][0-9a-fA-F]\+\>"
 
@@ -174,7 +183,6 @@ hi def link apexcodeSelectConstant	Constant
 hi def link apexcodeSelectDateLiteral Constant
 
 hi def link stringTemplateVariable  Identifier
-hi def link apexcodeTripleString	String
 hi def link apexcodeString			String
 hi def link apexcodeNumber			Number
 hi def link apexcodeDebug			Debug
