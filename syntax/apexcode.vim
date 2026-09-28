@@ -26,10 +26,31 @@ if !exists("g:apex_syntax_case_sensitive") || !g:apex_syntax_case_sensitive
 	syn case ignore
 endif
 
-syn keyword apexcodeCommentTodo     TODO FIXME XXX TBD contained
-syn match   apexcodeLineComment     "\/\/.*" contains=@Spell,apexcodeCommentTodo
-syn region  apexcodeComment			start="/\*"  end="\*/" contains=@Spell,apexcodeCommentTodo
-syn region  apexcodeComment			start="/\*\*"  end="\*/" contains=@Spell,apexcodeCommentTodo
+" ============================================================
+" Comments
+" ============================================================
+
+" TODO-style markers inside comments only
+syn keyword apexcodeCommentTodo TODO FIXME XXX TBD contained
+
+" Documentation comments
+syn region apexcodeDocComment
+      \ start="/\*\*"
+      \ end="\*/"
+      \ keepend
+      \ contains=@Spell,apexcodeCommentTodo
+
+" Regular block comments
+syn region apexcodeComment
+      \ start="/\*"
+      \ end="\*/"
+      \ keepend
+      \ contains=@Spell,apexcodeCommentTodo
+
+" Line comments
+syn match apexcodeLineComment
+      \ "//.*"
+      \ contains=@Spell,apexcodeCommentTodo
 
 syn keyword apexcodeScopeDecl		global class public private protected
 syn keyword apexcodeClassDecl		extends implements interface virtual abstract
@@ -97,25 +118,23 @@ syn match	apexcodeSelectDateLiteral	contained "\<\(\d\{4}-[0|1][0-2]-\([0-2]\d\|
 syn match	apexcodeSelectDateLiteral	contained "\<\(\d\{4}-[0|1][0-2]-\([0-2]\d\|3[01]\)\)T\([01][0-9]\|2[0-4]\):[0-5][0-9]:[0-5][0-9]\(Z\|[+-]\([01][0-9]\|2[0-4]\)\>:[0-5][0-9]\)\>"
 syn region 	apexcodeSelectStatic	start="\[" end="]" fold transparent contains=apexcodeSelectKeywords,apexcodeSelectOperator,apexcodeString,apexcodeSelectConstant,apexcodeSelectDateLiteral
 
-" Special escapes
+" ============================================================
+" String internals
+" ============================================================
+" Escapes only valid inside strings
 syn match apexcodeSpecial "\\\d\d\d\|\\." contained
-" Interpolated parameter: ${param}
-syntax match stringTemplateVariable +${[^}]*}+
 
+" Interpolated variable: ${var}
+syn match stringTemplateVariable "${[^}]*}" contained
+
+" ============================================================
+" Strings
+" ============================================================
 " Triple-quoted strings
-syntax region apexcodeString
-      \ start=+'''+
-      \ end=+'''+
-      \ keepend
-      \ contains=stringTemplateVariable,apexcodeSpecial
+syn region apexcodeString start=+'''+ end=+'''+ keepend contains=apexcodeSpecial,stringTemplateVariable
 
 " Single-quoted strings
-syntax region apexcodeString
-      \ start=+'+
-      \ skip=+\\\\\|\\'+
-      \ end=+'+
-      \ contains=stringTemplateVariable
-      \ containedin=ALLBUT,apexcodeString
+syn region apexcodeString start=+'+ skip=+\\\\\|\\'+ end=+'+ keepend contains=apexcodeSpecial,stringTemplateVariable
 
 syn match   apexcodeNumber	       "-\=\<\d\+L\=\>\|0[xX][0-9a-fA-F]\+\>"
 
