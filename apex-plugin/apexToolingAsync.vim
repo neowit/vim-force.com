@@ -64,31 +64,28 @@ function! s:genericCallback(resultMap)
     "redraw " refresh buffer, just in case if it is :ApexMessage buffer
 endfunction    
 
-" login to SFDC Org
-"Args:
-"Param1: filePath - path to apex file in current project
-"Param2: env - login domain (e.g: login.salesforce.com)
-function apexToolingAsync#login(filePath, projectObj, env)
-	"let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
-    "let obj = {}
-    "let obj.callbackFuncRef = function('s:genericCallback')
-    "
-    let extraParams = {"env": apexOs#shellescape(a:env), "_ignore_missing_apex_properties_file": 1}
-    let authConfigPath = s:getAuthConfigPath(a:projectObj)
-    if empty(authConfigPath)
+" login to SFDC Org using sf CLI
+function apexToolingAsync#login(projectName)
+    if !exists("g:apex_properties_folder") || empty(g:apex_properties_folder)
         call apexUtil#error("Missing required variable g:apex_properties_folder.")
         return
-    else    
-        let extraParams["saveAuthPath"] = apexOs#shellescape(authConfigPath)
-        let authConfigPath = s:getAuthConfig(a:projectObj)
-        if len(authConfigPath) > 0
-            if filereadable(authConfigPath) && "y" !~? apexUtil#input("Auth config already exists, Overwrite ? [y/N] ", "YynN", "N")
-                return '' " user aborted
-            endif    
-
-        endif    
-        call apexToolingAsync#execute("login", a:projectObj, extraParams, [])
     endif
+    let l:propertiesFilePath = apexOs#joinPath([g:apex_properties_folder, a:projectName . ".properties"])
+    let l:fileLines = ["sf.orgAlias=" . a:projectName]
+    if exists("g:apex_sf_cli_path") && !empty(g:apex_sf_cli_path)
+        call add(l:fileLines, "sf.cliPath=" . g:apex_sf_cli_path)
+    endif
+    if !isdirectory(g:apex_properties_folder)
+        call apexOs#createDir(g:apex_properties_folder)
+    endif
+    call writefile(l:fileLines, l:propertiesFilePath)
+    if exists("g:apex_sf_cli_path") && !empty(g:apex_sf_cli_path)
+        let l:sfCommand = apexOs#shellescape(g:apex_sf_cli_path) . " org login web --alias " . apexOs#shellescape(a:projectName)
+    else
+        let l:sfCommand = "sf org login web --alias " . apexOs#shellescape(a:projectName)
+    endif
+    echomsg "Running: " . l:sfCommand
+    call apexOs#exe(l:sfCommand, {"background": 0})
 endfunction
 
 "Args:
@@ -988,28 +985,6 @@ function! apexToolingAsync#executeBlocking(action, projectObj, extraParams, disp
 endfunction    
 " ==================================================================================================
 
-" based on g:apex_properties_folder value see if we can find file
-" {g:apex_properties_folder}/oauth2/{project-name}
-" if yes then assume this file contains oauth2 credentials
-function! s:getAuthConfig(projectObj)
-    let authConfigPath = s:getAuthConfigPath(a:projectObj)
-    if filereadable(authConfigPath)
-        return authConfigPath
-    endif    
-    return ""
-endfunction    
-
-" this method does not check if config actually exists 
-" e.g. before first login
-function! s:getAuthConfigPath(projectObj)
-    if  exists("g:apex_properties_folder") && len(g:apex_properties_folder) > 0
-        let authConfigPath = apexOs#joinPath([g:apex_properties_folder, "oauth2", a:projectObj.name])
-        return authConfigPath
-    endif
-    return ""
-endfunction    
-
-
 "Returns: dictionary: 
 "	{
 "	"success": "true" if RESULT=SUCCESS
@@ -1039,28 +1014,24 @@ function! apexToolingAsync#execute(action, projectObj, extraParams, displayMessa
 		let l:command = l:command  . " --tempFolderPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(g:apex_temp_folder))
 	endif
 
-    let authConfigPath = s:getAuthConfig(a:projectObj)
-    if len(authConfigPath) > 0
-        let l:command = l:command  . " --authConfigPath=" . apexOs#shellescape(authConfigPath)
-    endif    
-
     if len(a:projectObj.packageName) > 0 && 'unpackaged' != a:projectObj.packageName
         let l:command = l:command  . " --packageName=" . apexOs#shellescape(a:projectObj.packageName)
     endif    
 
-    if exists("g:apex_properties_folder") && len(g:apex_properties_folder) > 0
-        let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectObj.name]) . ".properties"
-        if filereadable(projectPropertiesPath)
-            let l:command = l:command  . " --config=" . apexOs#shellescape(projectPropertiesPath)
-        else
-            " if authConfigPath found then it is okay to ignore missing
-            " .properties file which may store login/pass
-            if !get(a:extraParams, "_ignore_missing_apex_properties_file", 0) && empty(authConfigPath)
-                call apexUtil#error("Configured g:apex_properties_folder variable does not point to existing .properties file. Tested path: " . projectPropertiesPath)
-                call apexUtil#info("If you plan to login manually please use :ApexLogin command")
-                return 1
-            endif
-        endif    
+    if !exists("g:apex_properties_folder") || empty(g:apex_properties_folder)
+        call apexUtil#error("Missing required variable g:apex_properties_folder.")
+        return 1
+    endif
+    let projectPropertiesPath = apexOs#joinPath([g:apex_properties_folder, a:projectObj.name]) . ".properties"
+    if filereadable(projectPropertiesPath)
+        let l:command = l:command  . " --config=" . apexOs#shellescape(projectPropertiesPath)
+    else
+        call apexUtil#error("Required .properties file does not exist or is not readable. Tested path: " . projectPropertiesPath)
+        call apexUtil#info("Use :ApexLogin or :ApexInitProject to create it")
+        return 1
+    endif
+    if exists('g:apex_sf_cli_path') && !empty(g:apex_sf_cli_path)
+        let l:command = l:command . " --sf.cliPath=" . apexOs#shellescape(g:apex_sf_cli_path)
     endif
     if len(a:projectObj.path) > 0
         let l:command = l:command  . " --projectPath=" . apexOs#shellescape(apexOs#removeTrailingPathSeparator(a:projectObj.path))
@@ -1425,5 +1396,3 @@ function! s:parseErrorLog(logFilePath, projectPath, displayMessageTypes, isSilen
 	return 1
 
 endfunction
-
-

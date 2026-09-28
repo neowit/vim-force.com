@@ -67,7 +67,6 @@ endfunction
 function apexProject#login(filePath)
 	let projectPair = apex#getSFDCProjectPathAndName(a:filePath)
 	let projectName = projectPair.name " default project name
-    let projectPath = projectPair.path
 
     let projectNameOpt = apexUtil#menu("Which project/org to login to?  ", ["Current", "Another"], "Current")
     if "Current" != projectNameOpt
@@ -75,44 +74,32 @@ function apexProject#login(filePath)
         if len(projectName) < 1
             return ''
         endif    
-        let projectPath = '' " this call i snot linked to specific project location
     endif    
     if len(projectName) < 1
         return
-    endif    
-    let choice = apexUtil#menu("Select target environment: ", ["Production", "Sandbox", "Enter manually"], "Production")
-    let env = "login.salesforce.com"
-    if "Enter manually" == choice
-		let env = input("\nEnter domain name only, e.g. prerelease.force.com or someorg--dev1.my.salesforce.com or di0000000abcqeaw-dev-ed.my.salesforce.com:\n")
-        if len(env) < 1
-            return 0
-        endif    
-    else
-        let envMap = {"Production": "login.salesforce.com", "Sandbox": "test.salesforce.com"}
-        let env = envMap[choice]
     endif
-    echo ""
-
-    let projectRec = {'name': projectName, 'path': projectPath, 'packageName': ''}
-	call apexToolingAsync#login(a:filePath, projectRec, env)
+	call apexToolingAsync#login(projectName)
 endfunction
 
 function s:buildPropertiesFile(projectName) abort
 	let propertiesFilePath = apexOs#joinPath([g:apex_properties_folder, a:projectName . '.properties'])
 	if !filereadable(propertiesFilePath) || 'y' ==? apexUtil#input('File '.propertiesFilePath. ' already exists, would you like to overwrite it y/N? ', 'yYnN', 'n')
 
-		let username = s:askInput('Enter username: ')
-		let password = s:askSecretInput('Enter password: ')
-		let token = s:askInput('Enter security token: ')
-		let orgType = s:askInput('Enter org type (test|login), if blank then defaults to "test": ')
-		if len(orgType) < 1
-			let orgType = 'test'
+		let orgAlias = s:askInput('Enter sf org alias [' . a:projectName . ']: ')
+		if len(orgAlias) < 1
+			let orgAlias = a:projectName
+		endif
+		let cliPathDefault = exists('g:apex_sf_cli_path') ? g:apex_sf_cli_path : ''
+		let cliPath = s:askInput('Enter sf CLI path [' . cliPathDefault . ']: ')
+		if len(cliPath) < 1
+			let cliPath = cliPathDefault
 		endif
 
 		let fileLines = []
-		call add(fileLines, 'sf.username = ' . username)
-		call add(fileLines, 'sf.password = ' . password . token)
-		call add(fileLines, 'sf.serverurl = https://' . orgType . '.salesforce.com')
+		call add(fileLines, 'sf.orgAlias=' . orgAlias)
+		if len(cliPath) > 0
+			call add(fileLines, 'sf.cliPath=' . cliPath)
+		endif
 
 		" make sure properties folder exists
         if !isdirectory(g:apex_properties_folder)
@@ -132,10 +119,6 @@ function s:askInput(message, ...)
 	let value = secret ? inputsecret(a:message) : input(a:message)
 	call inputrestore()
 	return value
-endfunction
-
-function s:askSecretInput(message)
-	return s:askInput(a:message, 1)
 endfunction
 
 function s:buildPackageFile(projectSrcPath)

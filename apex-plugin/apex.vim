@@ -33,7 +33,7 @@ let s:CACHE_FOLDER_NAME = ".vim-force.com"
 let s:PACKAGE_XML_NAME = "package.xml"
 
 " project name completion
-" list .properties file names without extension
+" list .properties file names (sf.orgAlias configs) without extension
 " Args:
 " arg: ArgLead - the leading portion of the argument currently being
 "			   completed on
@@ -42,11 +42,9 @@ let s:PACKAGE_XML_NAME = "package.xml"
 "
 function! apex#listProjectNames(arg, line, pos)
 	let fullPathsProperties = apexOs#glob(g:apex_properties_folder . "**/*.properties")
-	let fullPathsOauth = apexOs#glob(g:apex_properties_folder . "**/oauth2/*")
-    let fullPaths = extend(fullPathsProperties, fullPathsOauth)
 
 	let res = []
-	for fullName in fullPaths
+	for fullName in fullPathsProperties
 		let fName = apexOs#splitPath(fullName).tail
         if fName =~? ".properties$"
             let fName = fnamemodify(fName, ":r") " remove .properties
@@ -426,4 +424,3 @@ function! CloseEmptyQuickfixes()
 		let n = n+1
 	endwhile
 endfun
-

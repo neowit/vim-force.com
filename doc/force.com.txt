@@ -254,7 +254,7 @@ Plugin exposes following commands:                              *apex-commands*
 |ApexGitInit|                       initialise new Git repository for current 
                                     project
 |ApexInitProject|                   initialise new SFDC project
-|ApexLogin|                         login to SFDC org using OAuth2
+|ApexLogin|                         login to SFDC org using sf CLI
 |ApexLog|                           view last log
 |ApexNewFile|                       create new file
 |ApexPrintChanged|                  display all modified files
@@ -557,27 +557,20 @@ project folder will be created in the current or relative to
 |'g:apex_workspace_path'| directory, and the properties file in the path
 specified by |g:apex_properties_folder|.
 
-:|ApexRefreshProject| asks following questions:
+Project initialization asks following questions:
 1. Project name: Whatever string supported by the OS as a folder name.
-2. Username: The SFDC org's user name (email format).
-3. Password: The password for the given user name.
-4. Security token: can be left blank if your IP is white-listed in the Org
-   security settings.
-5. Org type: It must be "login" for a dev/prod org or "test" for a sandbox.
+2. Salesforce org alias: defaults to the project name.
+3. sf CLI path: optional; defaults to |'g:apex_sf_cli_path'| when set.
 
 Once project is setup you can proceed with creation of Class/Page/Trigger using
 :|ApexNewFile|
 
-                                                                    *ApexLogin*
-There are two ways to provide access details to the target SFDC Org.
-Option 1: 
-- via <project name>.properties config file, see |g:apex_properties_folder|
-
-Option 2: 
-- by explicitly calling :|ApexLogin| which will launch OAuth2
-authentication process and save access details in './oauth2' subfolder of
-directory defined by |g:apex_properties_folder| config variable.
-Note - OAuth2 login option has not been tested on MS Windows.
+*ApexLogin*
+Runs `sf org login web --alias <project-name>` for the current or another
+project/org and writes its alias to the matching .properties file. The Salesforce
+CLI must be installed and available on PATH, or configured via
+|'g:apex_sf_cli_path'|. Authenticate through the browser opened by sf CLI.
+The old OAuth2 flow and its oauth2/ folder are no longer read.
 
                                                                     *ApexLog*
 
@@ -1016,11 +1009,12 @@ Windows use double slash, like this: >
 Required
 |'g:apex_backup_folder'|          project backup folder
 |'g:apex_temp_folder'|            temporary folder
-|'g:apex_properties_folder'|      login/pass/token credentials
+|'g:apex_properties_folder'|      folder holding .properties files with sf.orgAlias
 |'g:apex_tooling_force_dot_com_path'|      
                                   full path to tooling.jar
 
 Optional
+|'g:apex_sf_cli_path'|             full path to sf executable
 |'g:apex_diff_cmd'|                 path to file comparison tool
 |'g:apex_ctags_cmd'|                path to exuberant ctags 
 |'g:apex_syntax_case_sensitive'|    defines whether Apex syntax highlighting is case sensitive 
@@ -1072,8 +1066,9 @@ ex: >
 	let g:apex_temp_folder="/tmp/apex/gvim-deployment"
 <
                                                    *'g:apex_properties_folder'*	
-Path to folder with *.property files which contain SFDC orgs access details
-It is recommended to store those files in encrypted folder or partition.
+Path to folder with *.properties files mapping project names to Salesforce CLI
+org aliases. Each file must define `sf.orgAlias=<alias>`; optional
+`sf.cliPath=<path>` overrides the CLI executable for that configuration.
 Note, full path is required.
 Example below assumes that we are using Truecrypt
 
@@ -1081,7 +1076,15 @@ ex: >
 	let g:apex_properties_folder="/media/truecrypt1"
 <
 or for win32, assuming that Truecrypt volume is T: >
-	let g:apex_properties_folder="t:"
+ let g:apex_properties_folder="t:"
+<
+
+                                                        *'g:apex_sf_cli_path'*
+Optional. Full path to the Salesforce CLI executable. Use the sf.exe executable
+on Windows; the .cmd shim is unsupported. When set, this path is passed to the
+tooling client as `--sf.cliPath=` and saved in newly created project configs.
+Ex: >
+ let g:apex_sf_cli_path='C:\\Program Files\\sf\\bin\\sf.exe'
 <
                                                           *force.com-shell_utils*
 Plugin uses some built in shell commands like:
