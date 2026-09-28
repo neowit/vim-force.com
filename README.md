@@ -1,6 +1,6 @@
-# Vim plugin for developing on force.com      
+# vim 9+ & neovim plugin for developing on force.com      
 
-salesforce.com / force.com plugin for Vim version 7.4 (with `job` & `channel` support) or later.  
+salesforce.com / force.com plugin for Vim version 9 (with `job` & `channel` support) or later as well as NVIM v0.11 or later.  
 
 ##### Update September 2023  
 
