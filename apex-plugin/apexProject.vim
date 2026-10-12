@@ -78,7 +78,21 @@ function apexProject#login(filePath)
     if len(projectName) < 1
         return
     endif
-	call apexToolingAsync#login(projectName)
+	let l:target = apexUtil#menu("Select target environment: ", ["Production", "Sandbox", "Enter manually"], "Production")
+	if l:target ==# "Production"
+		let l:instanceUrl = "https://login.salesforce.com"
+	elseif l:target ==# "Sandbox"
+		let l:instanceUrl = "https://test.salesforce.com"
+	else
+		let l:instanceUrl = input("Enter org instance URL (e.g. https://mydomain.my.salesforce.com): ")
+		if empty(l:instanceUrl)
+			return
+		endif
+		if l:instanceUrl !~# '^https\?://'
+			let l:instanceUrl = "https://" . l:instanceUrl
+		endif
+	endif
+	call apexToolingAsync#login(projectName, l:instanceUrl)
 endfunction
 
 function s:buildPropertiesFile(projectName) abort

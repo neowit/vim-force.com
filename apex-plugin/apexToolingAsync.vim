@@ -65,7 +65,7 @@ function! s:genericCallback(resultMap)
 endfunction    
 
 " login to SFDC Org using sf CLI
-function apexToolingAsync#login(projectName)
+function apexToolingAsync#login(projectName, instanceUrl)
     if !exists("g:apex_properties_folder") || empty(g:apex_properties_folder)
         call apexUtil#error("Missing required variable g:apex_properties_folder.")
         return
@@ -80,9 +80,9 @@ function apexToolingAsync#login(projectName)
     endif
     call writefile(l:fileLines, l:propertiesFilePath)
     if exists("g:apex_sf_cli_path") && !empty(g:apex_sf_cli_path)
-        let l:sfCommand = apexOs#shellescape(g:apex_sf_cli_path) . " org login web --alias " . apexOs#shellescape(a:projectName)
+        let l:sfCommand = apexOs#shellescape(g:apex_sf_cli_path) . " org login web --alias " . apexOs#shellescape(a:projectName) . " --instance-url " . apexOs#shellescape(a:instanceUrl)
     else
-        let l:sfCommand = "sf org login web --alias " . apexOs#shellescape(a:projectName)
+        let l:sfCommand = "sf org login web --alias " . apexOs#shellescape(a:projectName) . " --instance-url " . apexOs#shellescape(a:instanceUrl)
     endif
     echomsg "Running: " . l:sfCommand
     call apexOs#exe(l:sfCommand, {"background": 0})
